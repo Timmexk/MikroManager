@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>MikroManager mobiel, ingrijpen op een apparaat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 16px 14px 0; display: flex; flex-direction: column; gap: 12px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <div style="display: flex; align-items: center; gap: 8px">
+    <a href="#apparaten" aria-label="Terug naar apparaten" style="width: 44px; height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: #c4cbd4; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <div style="flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">hEX-PoE-zolder</h1>
+      <div style="color: #98a2af">hEX PoE, <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">192.168.88.3</span></div>
+    </div>
+    <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 3px; font-size: 12.5px; font-weight: 500; color: #0b1f14; background: #3fb97a">Online</span>
+  </div>
+
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 6px; background: #15191e; border: 1px solid #242a32">
+    <div style="padding: 9px 12px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">RouterOS</div><div style="font-weight: 600; font-variant-numeric: tabular-nums">7.20.1</div></div>
+    <div style="padding: 9px 12px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">CPU</div><div style="font-weight: 600; font-variant-numeric: tabular-nums">2%</div></div>
+    <div style="padding: 9px 12px"><div style="font-size: 12.5px; color: #98a2af">PoE</div><div style="font-weight: 600; font-variant-numeric: tabular-nums">13,8 W</div></div>
+  </section>
+
+  <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px">
+      <h2 style="margin: 0; font-size: 13.5px; font-weight: 600">Poorten</h2>
+      <span style="font-size: 12.5px; color: #98a2af">tik een poort aan</span>
+    </div>
+    <div style="display: flex; justify-content: center; padding: 0 12px 12px">
+      <div style="display: inline-flex; align-items: flex-end; gap: 10px; padding: 10px 10px 6px; border-radius: 4px; background: #0a0c0f; border: 1px solid #2c343d">
+        <div style="display: flex; gap: 4px">
+          <sc-for list="{{ports}}" as="p" hint-placeholder-count="5">
+            <button type="button" aria-label="{{p.aria}}" style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 46px; min-height: 64px; padding: 5px 0 3px; border-radius: 4px; border: 1px solid {{p.frame}}; background: {{p.frameBg}}; cursor: pointer">
+              <span style="display: flex; gap: 3px" aria-hidden="true">
+                <span style="width: 10px; height: 5px; background: {{p.link}}"></span>
+                <span style="width: 10px; height: 5px; background: {{p.poe}}"></span>
+              </span>
+              <span style="position: relative; width: 34px; height: 28px; box-sizing: border-box; border: 1.5px solid {{p.jack}}; border-radius: 2px; background: #05070a" aria-hidden="true">
+                <span style="position: absolute; left: 9px; bottom: -1.5px; width: 13px; height: 6px; box-sizing: border-box; border: 1.5px solid {{p.jack}}; border-bottom: 0; background: #0a0c0f"></span>
+              </span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: {{p.num}}">{{p.n}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <button type="button" aria-label="sfp1, geen link" style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 46px; min-height: 64px; padding: 5px 0 3px; border-radius: 4px; border: 1px solid transparent; background: transparent; cursor: pointer">
+          <span style="display: flex; gap: 3px" aria-hidden="true"><span style="width: 10px; height: 5px; background: #333b45"></span></span>
+          <span style="width: 36px; height: 20px; margin-top: 8px; box-sizing: border-box; border: 1.5px solid #3a424d; border-radius: 1px; background: #05070a" aria-hidden="true"></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #98a2af">SFP</span>
+        </button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #242a32; background: #111519">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 14px 4px">
+        <span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500">ether2</span> <span style="color: #c4cbd4">cAP-ax-woonkamer</span></span>
+        <span style="color: #98a2af; font-variant-numeric: tabular-nums">1 Gbps</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px; border-top: 1px solid #1c2229">
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 500">PoE-voeding</span><span style="font-size: 12.5px; color: #98a2af; font-variant-numeric: tabular-nums">levert 6,7 W</span></span>
+        <button type="button" role="switch" aria-checked="true" aria-label="PoE-voeding op ether2" style="flex: 0 0 auto; width: 48px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: #3d8bfd; display: flex; justify-content: flex-end"><span style="width: 16px; height: 16px; border-radius: 8px; background: #ffffff"></span></span>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px; border-top: 1px solid #1c2229">
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 500">Poort ingeschakeld</span><span style="font-size: 12.5px; color: #98a2af">6 wifi-clients zitten achter deze poort</span></span>
+        <button type="button" role="switch" aria-checked="true" aria-label="Poort ether2 ingeschakeld" style="flex: 0 0 auto; width: 48px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: #3d8bfd; display: flex; justify-content: flex-end"><span style="width: 16px; height: 16px; border-radius: 8px; background: #ffffff"></span></span>
+        </button>
+      </div>
+      <div style="padding: 10px 14px 14px; border-top: 1px solid #1c2229">
+        <button type="button" style="width: 100%; height: 48px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">PoE power-cycle (AP reboot)</button>
+      </div>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+    <button type="button" style="height: 48px; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Back-up maken</button>
+    <button type="button" style="height: 48px; padding: 0 10px; border-radius: 6px; border: 1px solid #5a2a27; background: #15191e; color: #ff8b84; font: inherit; font-weight: 500; cursor: pointer">Reboot</button>
+  </div>
+
+  <nav aria-label="Hoofdmenu" style="position: absolute; left: 14px; right: 14px; bottom: 16px; height: 64px; box-sizing: border-box; padding: 5px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; border-radius: 12px; background: #1a1f25; border: 1px solid #333b45; box-shadow: 0 16px 36px rgba(0,0,0,0.6)">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; padding: 0; border: 0; border-radius: 8px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; color: {{t.color}}; background: {{t.bg}}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{t.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+        <span>{{t.label}}</span>
+      </button>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = 'Apparaten';
+    const tabs = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z' },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Meer', icon: 'M5 12h.01M12 12h.01M19 12h.01M5 6h.01M12 6h.01M19 6h.01M5 18h.01M12 18h.01M19 18h.01' },
+    ];
+    const data = [
+      { n: '1', name: 'ether1', poeW: null, hasPoe: false },
+      { n: '2', name: 'ether2', poeW: '6,7', hasPoe: true },
+      { n: '3', name: 'ether3', poeW: '7,1', hasPoe: true },
+      { n: '4', name: 'ether4', poeW: null, hasPoe: true },
+      { n: '5', name: 'ether5', poeW: null, hasPoe: true },
+    ];
+    const selName = 'ether2';
+    return {
+      tabs: tabs.map((t) => ({
+        ...t,
+        color: t.label === active ? '#ffffff' : '#98a2af',
+        iconColor: t.label === active ? '#3d8bfd' : 'currentColor',
+        bg: t.label === active ? '#262d36' : 'transparent',
+      })),
+      ports: data.map((p) => ({
+        n: p.n,
+        aria: p.name + ', link' + (p.poeW ? ', PoE ' + p.poeW + ' W' : ''),
+        link: '#3fb97a',
+        poe: p.poeW ? '#e0a52e' : p.hasPoe ? '#333b45' : 'transparent',
+        jack: p.name === selName ? '#e6e9ed' : '#4a5562',
+        frame: p.name === selName ? '#3d8bfd' : 'transparent',
+        frameBg: p.name === selName ? '#141c28' : 'transparent',
+        num: p.name === selName ? '#ffffff' : '#98a2af',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

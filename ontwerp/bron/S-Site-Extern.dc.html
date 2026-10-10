@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Externe site toevoegen: WireGuard-tunnel alleen voor management</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px">
+    <a href="#instellingen" style="color: #98a2af; text-decoration: none">Instellingen</a>
+    <span style="color: #5d6875" aria-hidden="true">/</span>
+    <a href="#sites" style="color: #98a2af; text-decoration: none">Sites</a>
+    <span style="color: #5d6875" aria-hidden="true">/</span>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600">Site toevoegen</h1>
+    <span style="color: #98a2af">Vakantiehuis</span>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <ol style="flex: 1 1 220px; min-width: 0; margin: 0; padding: 0; list-style: none; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+        <li style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; border-bottom: 1px solid #1c2229; background: {{s.bg}}">
+          <span style="flex: 0 0 auto; width: 26px; height: 26px; box-sizing: border-box; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500; color: {{s.numColor}}; background: {{s.numBg}}; border: 1px solid {{s.numBorder}}">{{s.n}}</span>
+          <span style="min-width: 0"><span style="display: block; font-weight: {{s.weight}}; color: {{s.color}}">{{s.name}}</span><span style="display: block; color: #98a2af">{{s.note}}</span></span>
+        </li>
+      </sc-for>
+    </ol>
+
+    <div style="flex: 4 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Stap 2: hoe bereikt de app deze site</h2>
+        </div>
+        <div role="radiogroup" aria-label="Verbinding met de site" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 10px; padding: 14px">
+          <button type="button" role="radio" aria-checked="true" style="display: flex; flex-direction: column; gap: 3px; min-height: 64px; padding: 10px 12px; border-radius: 6px; border: 1px solid #3d8bfd; background: #141c28; color: inherit; font: inherit; text-align: left; cursor: pointer">
+            <span style="font-weight: 600">Management-tunnel door de app (WireGuard)</span>
+            <span style="color: #c4cbd4">De externe router belt naar Thuis. Werkt met een publiek IP en achter CGNAT.</span>
+          </button>
+          <button type="button" role="radio" aria-checked="false" style="display: flex; flex-direction: column; gap: 3px; min-height: 64px; padding: 10px 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: inherit; font: inherit; text-align: left; cursor: pointer">
+            <span style="font-weight: 600">Bestaande verbinding</span>
+            <span style="color: #98a2af">De router is al bereikbaar via je eigen VPN. Je vult alleen het adres in.</span>
+          </button>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+        <section style="flex: 1 1 380px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #3a424d; overflow: hidden">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 14px; border-bottom: 1px solid #242a32">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Alleen management</h2>
+            <span style="color: #98a2af">De netwerken blijven gescheiden</span>
+          </div>
+          <sc-for list="{{guards}}" as="g" hint-placeholder-count="4">
+            <div style="display: flex; align-items: flex-start; gap: 10px; box-sizing: border-box; padding: 9px 14px; border-bottom: 1px solid #1c2229">
+              <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+              <span><span style="font-weight: 500">{{g.title}}</span> <span style="color: #98a2af">{{g.text}}</span></span>
+            </div>
+          </sc-for>
+        </section>
+
+        <section style="flex: 1 1 380px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 14px; border-bottom: 1px solid #242a32">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Kant van Thuis</h2>
+            <span style="color: #98a2af">Zet de app zelf op hAP-ax2-meterkast</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid #1c2229">
+            <span style="color: #98a2af">Endpoint</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; overflow-wrap: anywhere">hg309a1b2cd.sn.mynetname.net:13231</span>
+            <span style="color: #98a2af">Tunnel</span><span>Thuis <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">10.255.0.1/32</span>, deze site <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">10.255.0.2/32</span></span>
+            <span style="color: #98a2af">Firewall</span><span>UDP 13231 open op WAN. Verkeer uit de tunnel naar je LAN: drop.</span>
+          </div>
+          <sc-for list="{{checks}}" as="c" hint-placeholder-count="2">
+            <div style="display: flex; align-items: flex-start; gap: 10px; box-sizing: border-box; padding: 9px 14px; border-bottom: 1px solid #1c2229">
+              <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: {{c.dot}}" aria-hidden="true"></span>
+              <span>{{c.text}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 8px 4px 14px; border-bottom: 1px solid #242a32">
+          <div style="display: flex; align-items: baseline; gap: 10px"><h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Kant van de externe router</h2><span style="color: #98a2af">Eén keer plakken in de terminal</span></div>
+          <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Script kopiëren</button>
+        </div>
+        <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+          <pre style="margin: 0; padding: 10px 12px; border-radius: 6px; background: #0a0c0f; border: 1px solid #242a32; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.55; color: #c4cbd4; overflow-x: auto">/interface/wireguard add name=mm-wg listen-port=13231
+/interface/wireguard/peers add interface=mm-wg public-key="hT7mQ2vXc9LrE4wYb1NzKp8sUo3aFd6GjZx5CqViW0M=" \
+    endpoint-address=hg309a1b2cd.sn.mynetname.net endpoint-port=13231 \
+    allowed-address=10.255.0.1/32 persistent-keepalive=25s
+/ip/address add address=10.255.0.2/32 network=10.255.0.1 interface=mm-wg
+/ip/firewall/filter
+add chain=mm-tunnel src-address=10.255.0.1 protocol=tcp dst-port=443 action=accept comment="mm: alleen REST API"
+add chain=mm-tunnel action=drop comment="mm: rest van de tunnel dicht"
+add chain=input in-interface=mm-wg action=jump jump-target=mm-tunnel place-before=0 comment="mm: management"
+add chain=forward in-interface=mm-wg connection-nat-state=!dstnat action=drop place-before=0 \
+    comment="mm: niet routeren"
+add chain=forward out-interface=mm-wg connection-state=new action=drop place-before=0 \
+    comment="mm: LAN niet de tunnel in"
+:put [/interface/wireguard get mm-wg public-key]</pre>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px">
+            <label style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 5px">
+              <span style="font-size: 12.5px; color: #98a2af">Public key die de externe router teruggeeft</span>
+              <input type="text" value="Rq8dV1nYt5KzXw2LmC7pJb4sHf0GuE9aOi3TcWvZxNk=" style="height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px; min-height: 44px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span><span><span style="font-weight: 600">Handshake gelukt</span> <span style="color: #98a2af">4 seconden geleden, vanaf een CGNAT-adres</span></span></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px">
+    <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Terug</button>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <span style="color: #98a2af">Hierna: de router toevoegen op 10.255.0.2. Switches en AP's daar gaan via een port forward op de tunnel.</span>
+      <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Verder</button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+const step = (n, name, note, state) => ({
+  n: state === 'done' ? '✓' : n,
+  name, note,
+  bg: state === 'now' ? '#141c28' : 'transparent',
+  weight: state === 'now' ? 600 : 500,
+  color: state === 'todo' ? '#98a2af' : '#e6e9ed',
+  numColor: state === 'done' ? '#0e1114' : state === 'now' ? '#06101f' : '#98a2af',
+  numBg: state === 'done' ? '#3fb97a' : state === 'now' ? '#3d8bfd' : 'transparent',
+  numBorder: state === 'done' ? '#3fb97a' : state === 'now' ? '#3d8bfd' : '#3a424d',
+});
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      steps: [
+        step('1', 'Naam en tijdzone', 'Vakantiehuis, Amsterdam', 'done'),
+        step('2', 'Verbinding', 'Management-tunnel', 'now'),
+        step('3', 'Router toevoegen', 'Adres en inloggegevens', 'todo'),
+        step('4', 'Config inlezen', 'Netwerken, wifi, poorten', 'todo'),
+      ],
+      guards: [
+        { title: 'Geen routes naar elkaars LAN.', text: 'Allowed-address is aan beide kanten alleen het tunneladres, een /32.' },
+        { title: 'Geen internet door de tunnel.', text: 'Er komt geen default route bij; elke site houdt zijn eigen WAN.' },
+        { title: 'Alleen de REST API.', text: 'De firewall laat alleen de app toe op tcp 443; de rest van de tunnel is drop.' },
+        { title: 'Sites zien elkaar niet.', text: 'Verkeer van de ene tunnel naar de andere wordt op Thuis gedropt.' },
+      ],
+      checks: [
+        { dot: '#3fb97a', text: 'Thuis heeft een publiek adres op Kabel, dus de externe router kan inbellen.' },
+        { dot: '#e0a52e', text: 'Op 4G back-up (CGNAT) is het endpoint onbereikbaar; de tunnel komt terug bij failback.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Eerste keer instellen: van lege app naar eerste site</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px">
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600">Eerste keer instellen</h1>
+    <span style="color: #98a2af">Vijf stappen. Er verandert niets op je router tot je daar zelf voor kiest.</span>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <ol style="flex: 1 1 250px; min-width: 0; margin: 0; padding: 0; list-style: none; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <li style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; border-bottom: 1px solid #1c2229; background: {{s.bg}}">
+          <span style="flex: 0 0 auto; width: 26px; height: 26px; box-sizing: border-box; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500; color: {{s.numColor}}; background: {{s.numBg}}; border: 1px solid {{s.numBorder}}">{{s.n}}</span>
+          <span style="min-width: 0"><span style="display: block; font-weight: {{s.weight}}; color: {{s.color}}">{{s.name}}</span><span style="display: block; color: #98a2af">{{s.note}}</span></span>
+        </li>
+      </sc-for>
+    </ol>
+
+    <section style="flex: 2.6 1 520px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="min-height: 52px; display: flex; flex-direction: column; justify-content: center; padding: 6px 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Stap 3: router toevoegen aan Thuis</h2>
+        <div style="color: #98a2af">De app praat met RouterOS via de REST API over https (service www-ssl).</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 14px; align-items: end; padding: 14px">
+        <label style="display: flex; flex-direction: column; gap: 5px">
+          <span style="font-size: 12.5px; color: #98a2af">Adres van de router</span>
+          <input type="text" value="192.168.88.1" style="height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 5px">
+          <span style="font-size: 12.5px; color: #98a2af">Gebruiker op de router</span>
+          <input type="text" value="beheerapp" style="height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 5px">
+          <span style="font-size: 12.5px; color: #98a2af">Wachtwoord</span>
+          <input type="password" value="geheim-wachtwoord" style="height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit">
+        </label>
+        <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verbinding testen</button>
+      </div>
+
+      <div style="margin: 0 14px; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 0 12px; background: #111519; border-bottom: 1px solid #242a32">
+          <span style="display: flex; align-items: center; gap: 9px; font-weight: 600"><span style="width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>Verbonden met hAP-ax2-meterkast</span>
+          <span style="color: #98a2af">hAP ax², RouterOS 7</span>
+        </div>
+        <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; align-items: flex-start; gap: 10px; min-height: 38px; box-sizing: border-box; padding: 9px 12px; border-bottom: 1px solid #1c2229">
+            <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: {{c.dot}}" aria-hidden="true"></span>
+            <span><span>{{c.text}}</span> <span style="color: #98a2af">{{c.note}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin: 14px; padding: 12px; border-radius: 6px; background: #111519; border: 1px solid #242a32">
+        <div style="font-weight: 600">Nog geen aparte gebruiker voor de app?</div>
+        <div style="margin-top: 2px; color: #98a2af">Plak dit in de terminal van de router. Zo zie je in de log van de router wat de app deed en wat jij zelf deed.</div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px">
+          <code style="flex: 1 1 320px; min-width: 0; box-sizing: border-box; padding: 9px 10px; border-radius: 6px; background: #0a0c0f; border: 1px solid #242a32; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #c4cbd4; line-height: 1.55; overflow-x: auto; white-space: pre">/user/group add name=mikromanager \
+    policy=read,write,policy,test,sensitive,reboot,rest-api
+/user/add name=beheerapp group=mikromanager password="lang-wachtwoord"</code>
+          <button type="button" style="align-self: flex-start; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Kopiëren</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-top: 1px solid #242a32; background: #111519">
+        <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Terug</button>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+          <span style="color: #98a2af">Hierna: bestaande netwerken, wifi en poorten inlezen, alleen kijken</span>
+          <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Verder</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":720}}'>
+const step = (n, name, note, state) => ({
+  n: state === 'done' ? '✓' : n,
+  name, note,
+  bg: state === 'now' ? '#141c28' : 'transparent',
+  weight: state === 'now' ? 600 : 500,
+  color: state === 'todo' ? '#98a2af' : '#e6e9ed',
+  numColor: state === 'done' ? '#0e1114' : state === 'now' ? '#06101f' : '#98a2af',
+  numBg: state === 'done' ? '#3fb97a' : state === 'now' ? '#3d8bfd' : 'transparent',
+  numBorder: state === 'done' ? '#3fb97a' : state === 'now' ? '#3d8bfd' : '#3a424d',
+});
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      steps: [
+        step('1', 'Account maken', 'Jij wordt admin', 'done'),
+        step('2', 'Eerste site', 'Thuis, tijdzone Amsterdam', 'done'),
+        step('3', 'Router toevoegen', 'Adres en inloggegevens', 'now'),
+        step('4', 'Configuratie inlezen', 'Netwerken, wifi, poorten', 'todo'),
+        step('5', 'Back-ups en meldingen', 'Elke nacht, push aan', 'todo'),
+      ],
+      checks: [
+        { dot: '#3fb97a', text: 'Service www-ssl staat aan', note: '' },
+        { dot: '#3fb97a', text: 'Gebruiker heeft policy read, write en rest-api', note: '' },
+        { dot: '#e0a52e', text: 'Het certificaat is self-signed.', note: 'Toegestaan voor dit adres; de app pint de fingerprint.' },
+        { dot: '#3fb97a', text: 'Wifi draait op het wifi-package (wifi-qcom), dus beheer via CAPsMAN kan', note: '' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

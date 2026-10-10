@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Veilige modus: bevestigen of rollback</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 760px; height: 560px; box-sizing: border-box; padding: 20px 40px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.45; color: #e6e9ed; background: #07090b">
+  <section role="dialog" aria-label="Wijziging bevestigen" style="width: 620px; border-radius: 6px; background: #15191e; border: 1px solid #2c343d; box-shadow: 0 24px 60px rgba(0,0,0,0.6); overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 52px; padding: 0 18px; border-bottom: 1px solid #242a32">
+      <h1 style="margin: 0; font-size: 16px; font-weight: 600">Wijziging staat op de router</h1>
+      <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 3px; font-size: 12.5px; font-weight: 500; color: #1a1300; background: #e0a52e">Nog niet bevestigd</span>
+    </div>
+
+    <div style="padding: 18px; display: flex; flex-direction: column; gap: 16px">
+      <p style="margin: 0; color: #c4cbd4">Kun je de router nog bereiken en werkt alles zoals bedoeld? Bevestig dan. Doe je niets, dan doet de router zelf een rollback, ook als deze verbinding is weggevallen.</p>
+
+      <div style="display: flex; align-items: center; gap: 18px; padding: 14px 16px; border-radius: 6px; background: #111519; border: 1px solid #242a32">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 34px; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums">0:47</div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <div style="color: #98a2af">tot automatische rollback</div>
+          <div style="height: 6px; border-radius: 3px; background: #242a32"><div style="width: 78%; height: 6px; border-radius: 3px; background: #e0a52e"></div></div>
+        </div>
+      </div>
+
+      <div style="border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; padding: 0 14px; background: #111519; border-bottom: 1px solid #242a32; font-size: 12px; font-weight: 500; color: #98a2af">
+          <span>Toegepast op hAP-ax2-meterkast</span><span>7 stappen, deze 3 met risico</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+          <span style="flex: 1">VLAN 50 toegevoegd aan bridge, tagged op ether2</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+          <span style="flex: 1">PVID van ether4 gewijzigd van 1 naar 50</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 14px">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+          <span style="flex: 1">Firewallregel voor Camera's naar boven verplaatst</span>
+        </div>
+      </div>
+
+      <div style="font-size: 12.5px; color: #98a2af">Alleen bij risico op buitensluiten: VLAN's, poorten, bridge, firewall, WAN, adressen.</div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-top: 1px solid #242a32; background: #111519">
+      <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #5a2a27; background: #15191e; color: #ff8b84; font: inherit; font-weight: 500; cursor: pointer">Nu rollback</button>
+      <button type="button" style="height: 44px; padding: 0 18px; border-radius: 6px; border: 0; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Bevestigen en behouden</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

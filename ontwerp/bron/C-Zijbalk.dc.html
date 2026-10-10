@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Zijbalk uit- en ingeklapt, donker en zakelijk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 380px; height: 660px; box-sizing: border-box; padding: 20px; display: flex; justify-content: center; gap: 24px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0f1215">
+
+  <aside style="width: 216px; box-sizing: border-box; padding: 12px 8px; border-radius: 6px; background: #0b0d10; border: 1px solid #252b33; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px">
+      <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke="#c4cbd4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" fill="#c4cbd4"></path><path d="M21 17h5v6h-5z" fill="#3d8bfd"></path></svg>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.01em">MikroManager</span>
+    </div>
+    <button type="button" aria-label="Site kiezen, nu Thuis" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 8px; border-radius: 6px; border: 1px solid #252b33; background: #161a1f; color: inherit; font: inherit; cursor: pointer; text-align: left">
+      <span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: #0b0d10; background: #3d8bfd">T</span>
+      <span style="flex: 1; font-weight: 500">Thuis</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+    </button>
+    <nav style="display: flex; flex-direction: column; gap: 1px" aria-label="Hoofdmenu uitgeklapt">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="7">
+        <button type="button" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; font: inherit; font-weight: 500; cursor: pointer; text-align: left; color: {{item.color}}; background: {{item.bg}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{item.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{item.icon}}"></path></svg>
+          <span style="flex: 1">{{item.label}}</span>
+          <sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{false}}">
+            <span style="min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 500; display: flex; align-items: center; justify-content: center; color: #1a1300; background: #e0a52e">{{item.badge}}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <button type="button" aria-label="Zijbalk inklappen" style="margin-top: auto; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #9aa4b1; font: inherit; font-weight: 500; cursor: pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM9 4v16M15 10l-2 2 2 2"></path></svg>
+      <span>Inklappen</span>
+    </button>
+  </aside>
+
+  <aside style="width: 60px; box-sizing: border-box; padding: 12px 8px; border-radius: 6px; background: #0b0d10; border: 1px solid #252b33; display: flex; flex-direction: column; align-items: center; gap: 10px">
+    <div style="display: flex; align-items: center; justify-content: center; height: 40px">
+      <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke="#c4cbd4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" fill="#c4cbd4"></path><path d="M21 17h5v6h-5z" fill="#3d8bfd"></path></svg>
+    </div>
+    <button type="button" aria-label="Site kiezen, nu Thuis" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 6px; border: 1px solid #252b33; background: #161a1f; color: inherit; font: inherit; cursor: pointer">
+      <span style="width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: #0b0d10; background: #3d8bfd">T</span>
+    </button>
+    <nav style="display: flex; flex-direction: column; gap: 1px" aria-label="Hoofdmenu ingeklapt">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="7">
+        <button type="button" aria-label="{{item.label}}" style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 6px; border: 0; cursor: pointer; color: {{item.color}}; background: {{item.bg}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{item.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{false}}">
+            <span style="position: absolute; top: 9px; right: 8px; width: 6px; height: 6px; background: #e0a52e" aria-hidden="true"></span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <button type="button" aria-label="Zijbalk uitklappen" style="margin-top: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 6px; border: 0; background: transparent; color: #9aa4b1; cursor: pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM9 4v16M13 10l2 2-2 2"></path></svg>
+    </button>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":380,"height":660}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const items = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z', active: true },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Netwerken', icon: 'M9 3h6v5H9zM3 16h6v5H3zM15 16h6v5h-6zM12 8v4M6 16v-4h12v4' },
+      { label: 'Onderhoud', icon: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', badge: '5' },
+      { label: 'Instellingen', icon: 'M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4M14 4v4M6 10v4M12 16v4' },
+    ];
+    return {
+      nav: items.map((n) => ({
+        ...n,
+        hasBadge: !!n.badge,
+        color: n.active ? '#ffffff' : '#b3bcc8',
+        iconColor: n.active ? '#3d8bfd' : 'currentColor',
+        bg: n.active ? '#1c2128' : 'transparent',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

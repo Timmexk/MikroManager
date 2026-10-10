@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Wie deed wat: wijzigingslog per gebruiker en open sessies</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#onderhoud" style="color: #98a2af; text-decoration: none">Onderhoud</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Wijzigingslog</h1>
+      <span style="color: #98a2af">Wie deed wat, laatste 7 dagen</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+      <select aria-label="Filter op gebruiker" style="height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit">
+        <option>Iedereen</option>
+        <option>admin</option>
+        <option>sanne</option>
+        <option>ruben</option>
+        <option>installateur</option>
+        <option>Buiten de app</option>
+      </select>
+      <select aria-label="Filter op site" style="height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit">
+        <option>Alle sites</option>
+        <option>Thuis</option>
+        <option>Tweede locatie</option>
+        <option>Kantoor</option>
+      </select>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <section style="flex: 2.1 1 560px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="overflow-x: auto">
+        <div style="min-width: 640px">
+          <div style="display: grid; grid-template-columns: 112px 132px 110px minmax(0, 1fr) 116px; gap: 12px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">
+            <span>Wanneer</span><span>Wie</span><span>Site</span><span>Wat</span><span>Afloop</span>
+          </div>
+          <sc-for list="{{log}}" as="l" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: 112px 132px 110px minmax(0, 1fr) 116px; gap: 12px; align-items: center; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #1c2229">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; white-space: nowrap; color: #98a2af">{{l.when}}</span>
+              <span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: {{l.avColor}}; background: {{l.avBg}}; border: 1px {{l.avLine}} {{l.avBorder}}; box-sizing: border-box" aria-hidden="true">{{l.initials}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{l.who}}</span></span>
+              <span style="color: #c4cbd4">{{l.site}}</span>
+              <span style="min-width: 0"><span style="display: block">{{l.what}}</span><span style="display: block; color: #98a2af">{{l.detail}}</span></span>
+              <span style="display: flex; align-items: center; gap: 7px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{l.dot}}" aria-hidden="true"></span>{{l.result}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="min-height: 40px; display: flex; align-items: center; padding: 4px 14px; color: #98a2af">Wijzigingen buiten de app, via WinBox of de terminal, vindt de app in de nachtelijke back-up en zet ze er zonder naam bij.</div>
+    </section>
+
+    <section style="flex: 1 1 300px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Nu ingelogd</h2>
+        <span style="color: #98a2af">3 sessies</span>
+      </div>
+      <sc-for list="{{sessions}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 64px; padding: 8px 14px; border-bottom: 1px solid #1c2229">
+          <div style="min-width: 0">
+            <div><span style="font-weight: 600">{{s.who}}</span> <span style="color: #98a2af">{{s.tag}}</span></div>
+            <div style="color: #98a2af">{{s.device}}</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #98a2af">{{s.ip}}</div>
+          </div>
+          <button type="button" style="flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">{{s.action}}</button>
+        </div>
+      </sc-for>
+      <div style="padding: 10px 14px; color: #98a2af">Mislukte inlogpogingen vandaag: 1, als sanne om 08:55 vanaf <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">192.168.88.34</span>.</div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+const person = { avColor: '#c4cbd4', avBg: '#242a32', avLine: 'solid', avBorder: '#242a32' };
+const outside = { avColor: '#98a2af', avBg: 'transparent', avLine: 'dashed', avBorder: '#5d6875' };
+const row = (when, who, initials, site, what, detail, result, dot, isOutside) => ({
+  when, who, initials, site, what, detail, result, dot, ...(isOutside ? outside : person),
+});
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      log: [
+        row('vandaag 16:40', 'admin', 'HB', 'Thuis', 'PoE power-cycle op ether2', 'hEX-PoE-zolder, eenmalige actie', 'Toegepast', '#3fb97a'),
+        row('vandaag 11:48', 'ruben', 'RJ', 'Thuis', 'Wachtwoord van Thuis-Gast vernieuwd', 'Wifi, 1 stap', 'Toegepast', '#3fb97a'),
+        row('vandaag 10:20', 'sanne', 'SV', 'Thuis', 'Client tasmota-wasmachine een naam gegeven', 'Clients', 'Toegepast', '#3fb97a'),
+        row('gisteren 21:15', 'admin', 'HB', 'Thuis', 'Netwerk Camera’s (VLAN 50) aangemaakt', 'Netwerken, veilige modus', 'Toegepast', '#3fb97a'),
+        row('gisteren 16:05', 'installateur', 'IN', 'Tweede locatie', 'VLAN 20 toegevoegd op 2 poorten', 'Poortmatrix, veilige modus', 'Rollback', '#f0655d'),
+        row('gisteren 15:52', 'installateur', 'IN', 'Tweede locatie', 'Kanaal van het access point gewijzigd', 'Wifi, kanalen en radio’s', 'Toegepast', '#3fb97a'),
+        row('7 okt 21:30', 'admin', 'HB', 'Alle sites', 'Gebruiker installateur gemaakt, verloopt 16 okt', 'Gebruikers', 'Toegepast', '#3fb97a'),
+        row('7 okt 20:11', 'Buiten de app', '?', 'Thuis', 'Firewallregel toegevoegd op hAP-ax2-meterkast', 'Gevonden in de back-up', 'Alleen gezien', '#5d6875', true),
+      ],
+      sessions: [
+        { who: 'admin', tag: 'Admin, dit ben jij', device: 'Chrome op Windows, sinds 13:02', ip: '192.168.88.57', action: 'Uitloggen' },
+        { who: 'sanne', tag: 'Netwerkbeheerder op Thuis', device: 'iPhone, app op beginscherm, sinds 09:12', ip: '192.168.88.101', action: 'Afmelden' },
+        { who: 'installateur', tag: 'tijdelijk, tot 16 okt', device: 'Chrome op Windows, sinds 7 oktober', ip: '10.20.10.44', action: 'Afmelden' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

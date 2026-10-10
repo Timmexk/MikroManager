@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Mobiel: onderhoud</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 16px 14px 0; display: flex; flex-direction: column; gap: 12px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <a href="#terug" aria-label="Terug" style="flex: 0 0 auto; width: 44px; height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: #c4cbd4; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <div style="flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Onderhoud</h1>
+      <div style="font-size: 12.5px; color: #98a2af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Thuis</div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+    <button type="button" aria-pressed="true" style="height: 40px; padding: 0; border: 0; background: #242a32; color: #ffffff; font: inherit; font-weight: 600; cursor: pointer">Updates en back-ups</button>
+    <button type="button" aria-pressed="false" style="height: 40px; padding: 0; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">Wijzigingslog</button>
+  </div>
+
+  <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+    <div style="padding: 11px 14px 12px">
+      <div style="display: flex; align-items: center; gap: 8px; font-weight: 600"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span>RouterOS 7.20.2 voor 5 apparaten</div>
+      <div style="margin-top: 3px; font-size: 12.5px; color: #98a2af">Eerst de access points, dan de switches, de router als laatste. Ongeveer 12 minuten.</div>
+    </div>
+    <sc-for list="{{devices}}" as="d" hint-placeholder-count="5">
+      <div style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-top: 1px solid #1c2229">
+        <span style="flex: 0 0 18px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #98a2af">{{d.n}}</span>
+        <span style="flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.name}}</span>
+        <span style="flex: 0 0 auto; font-size: 12.5px; color: {{d.color}}">{{d.note}}</span>
+      </div>
+    </sc-for>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 0 8px 0 14px; border-top: 1px solid #1c2229">
+      <span>Eerst een back-up maken</span>
+      <button type="button" role="switch" aria-checked="true" aria-label="Eerst een back-up maken" style="width: 48px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: #3d8bfd; display: flex; justify-content: flex-end"><span style="width: 16px; height: 16px; border-radius: 8px; background: #ffffff"></span></span>
+      </button>
+    </div>
+    <div style="display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #1c2229">
+      <button type="button" style="flex: 1; height: 48px; padding: 0; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Vannacht 03:30</button>
+      <button type="button" style="flex: 1; height: 48px; padding: 0; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Nu updaten</button>
+    </div>
+  </section>
+
+  <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px">
+      <h2 style="margin: 0; font-size: 13.5px; font-weight: 600">Back-ups</h2>
+      <button type="button" style="height: 32px; padding: 0 10px; margin-right: -6px; border: 0; border-radius: 6px; background: transparent; color: #6ea8fe; font: inherit; font-weight: 500; cursor: pointer">Nu maken</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px; border-top: 1px solid #1c2229">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0">Vannacht 03:00 gelukt, 5 van 5 apparaten</span>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; min-height: 52px; padding: 4px 14px; border: 0; border-top: 1px solid #1c2229; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0"><span style="display: block">2 configuraties vannacht gewijzigd</span><span style="display: block; font-size: 12.5px; color: #98a2af">hAP-ax2-meterkast en hEX-PoE-zolder, via de app</span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98a2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+    </button>
+  </section>
+  <nav aria-label="Hoofdmenu" style="position: absolute; left: 14px; right: 14px; bottom: 16px; height: 64px; box-sizing: border-box; padding: 5px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; border-radius: 12px; background: #1a1f25; border: 1px solid #333b45; box-shadow: 0 16px 36px rgba(0,0,0,0.6)">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; padding: 0; border: 0; border-radius: 8px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; color: {{t.color}}; background: {{t.bg}}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{t.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+        <span>{{t.label}}</span>
+      </button>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = 'Meer';
+    const tabs = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z' },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Meer', icon: 'M5 12h.01M12 12h.01M19 12h.01M5 6h.01M12 6h.01M19 6h.01M5 18h.01M12 18h.01M19 18h.01' },
+    ];
+    const page = (() => {
+      const dev = (n, name, note, warn) => ({ n, name, note, color: warn ? '#e0a52e' : '#98a2af' });
+      return {
+        devices: [
+          dev('1', 'cAP-ax-woonkamer', 'wifi 2 min down'),
+          dev('2', 'cAP-ax-overloop', 'wifi 2 min down'),
+          dev('3', 'hEX-PoE-zolder', 'beide AP’s kort down'),
+          dev('4', 'CRS310-kantoor', 'ook firmware', true),
+          dev('5', 'hAP-ax2-meterkast', 'WAN 2 min down'),
+        ],
+      };
+    })();
+    return {
+      tabs: tabs.map((t) => ({
+        ...t,
+        color: t.label === active ? '#ffffff' : '#98a2af',
+        iconColor: t.label === active ? '#3d8bfd' : 'currentColor',
+        bg: t.label === active ? '#262d36' : 'transparent',
+      })),
+      ...page,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Wifi-inzicht: kanaalplan, advies en zwakke clients</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#wifi" style="color: #98a2af; text-decoration: none">Wifi</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Inzicht</h1>
+      <span style="color: #98a2af">Thuis, omgevingsscan van vannacht 04:00</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <div style="display: flex; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+        <button type="button" style="height: 36px; padding: 0 12px; border: 0; background: #242a32; color: #ffffff; font: inherit; font-weight: 500; cursor: pointer">5 GHz</button>
+        <button type="button" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">2,4 GHz</button>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Nu scannen</button>
+    </div>
+  </header>
+
+  <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+      <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Kanaalplan 5 GHz</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: #98a2af">
+        <span style="display: flex; align-items: center; gap: 5px"><span style="width: 12px; height: 10px; background: #3987e5"></span>Eigen access point</span>
+        <span style="display: flex; align-items: center; gap: 5px"><span style="box-sizing: border-box; width: 12px; height: 10px; background: #333b45; border: 1px solid #6b7785"></span>Naburige netwerken</span>
+      </div>
+    </div>
+    <div style="overflow-x: auto">
+      <div style="min-width: 760px; padding: 12px 14px 14px">
+        <sc-for list="{{plan}}" as="row" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; align-items: center; height: 40px">
+            <span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{row.label}}</span><span style="font-size: 12px; color: #98a2af">{{row.sub}}</span></span>
+            <div style="position: relative; height: 32px; background: repeating-linear-gradient(90deg, #242a32 0, #242a32 1px, #111519 1px, #111519 5.2632%)">
+              <sc-for list="{{row.blocks}}" as="b" hint-placeholder-count="1">
+                <div style="position: absolute; top: 3px; bottom: 3px; left: {{b.left}}; width: {{b.width}}; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; color: {{b.color}}; background: {{b.bg}}; border: 1px solid {{b.border}}">{{b.text}}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; margin-top: 4px">
+          <span style="font-size: 12px; color: #98a2af">Kanaal</span>
+          <div>
+            <div style="position: relative; height: 16px; font-size: 11.5px; color: #98a2af; font-variant-numeric: tabular-nums">
+              <span style="position: absolute; left: 0">36</span>
+              <span style="position: absolute; left: 21.05%">52</span>
+              <span style="position: absolute; left: 42.1%">100</span>
+              <span style="position: absolute; left: 63.16%">116</span>
+              <span style="position: absolute; left: 84.21%">132</span>
+            </div>
+            <div style="position: relative; height: 18px; margin-top: 4px">
+              <span style="position: absolute; left: 21.05%; right: 0; top: 0; height: 2px; background: #6b7785"></span>
+              <span style="position: absolute; left: 21.05%; top: 5px; font-size: 11.5px; color: #98a2af">Vanaf kanaal 52: DFS, eerst radardetectie (CAC)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <section style="flex: 1 1 380px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Advies</h2>
+      </div>
+      <div style="display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #1c2229">
+        <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <div><div style="font-weight: 500">hAP-ax2-meterkast deelt zijn kanaal met 3 naburige netwerken (co-channel)</div><div style="color: #98a2af">Kanaal 132 tot 144 is vrij: geen naburig netwerk gehoord. Wel DFS, dus eerst 1 minuut CAC.</div></div>
+          <div><button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Kanaal aanpassen</button></div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #1c2229">
+        <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span>
+        <div style="flex: 1; min-width: 0"><div style="font-weight: 500">tasmota-wasmachine is een sticky client: hangt aan een ver access point</div><div style="color: #98a2af">cAP-ax-woonkamer hoort hem op -61 dBm, nu zit hij op -78 dBm.</div></div>
+      </div>
+      <div style="display: flex; gap: 10px; padding: 12px 14px">
+        <span style="flex: 0 0 auto; margin-top: 5px; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+        <div style="flex: 1; min-width: 0"><div style="font-weight: 500">2,4 GHz is goed verdeeld</div><div style="color: #98a2af">De drie access points staan op kanaal 1, 6 en 11 zonder overlap.</div></div>
+      </div>
+    </section>
+
+    <div style="flex: 1.4 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Clients met zwak signaal</h2>
+          <span style="color: #98a2af">3 van 13</span>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 520px">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.25fr) 68px 52px 62px; gap: 12px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32">
+              <span>Naam</span><span>Access point</span><span>Band</span><span style="text-align: right">dBm</span><span style="text-align: right">Retries</span>
+            </div>
+            <sc-for list="{{weak}}" as="c" hint-placeholder-count="3">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.25fr) 68px 52px 62px; gap: 12px; align-items: center; height: 38px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+                <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.name}}</span>
+                <span style="color: #c4cbd4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.ap}}</span>
+                <span style="color: #98a2af">{{c.band}}</span>
+                <span style="text-align: right; font-variant-numeric: tabular-nums">{{c.signal}}</span>
+                <span style="text-align: right; font-variant-numeric: tabular-nums">{{c.retries}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); border-radius: 6px; background: #15191e; border: 1px solid #242a32">
+        <div style="padding: 11px 14px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">Roaming vandaag</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">14</div></div>
+        <div style="padding: 11px 14px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">Fast transition (802.11r)</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">13</div></div>
+        <div style="padding: 11px 14px"><div style="font-size: 12.5px; color: #98a2af">Volledige re-associatie</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">1 <span style="font-size: 13px; font-weight: 400; color: #98a2af">Pixel-8 om 14:22</span></div></div>
+      </section>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const slot = 100 / 19;
+    const pct = (n) => (n * slot).toFixed(2) + '%';
+    const own = (start, text) => ({ left: pct(start), width: pct(4), text, color: '#06101f', bg: '#3987e5', border: '#3987e5' });
+    const other = (start, text) => ({ left: pct(start), width: pct(4), text, color: '#e6e9ed', bg: '#333b45', border: '#6b7785' });
+    return {
+      plan: [
+        { label: 'hAP-ax2-meterkast', sub: '1 client', blocks: [own(0, '36 tot 48, 80 MHz')] },
+        { label: 'cAP-ax-woonkamer', sub: '4 clients', blocks: [own(4, '52 tot 64, 80 MHz')] },
+        { label: 'cAP-ax-overloop', sub: '3 clients', blocks: [own(8, '100 tot 112, 80 MHz')] },
+        { label: 'Naburig', sub: '5 netwerken gehoord', blocks: [other(0, '3 netwerken, tot -71 dBm'), other(8, '1 netwerk, -82 dBm'), other(12, '1 netwerk, -84 dBm')] },
+      ],
+      weak: [
+        { name: 'tasmota-wasmachine', ap: 'cAP-ax-overloop', band: '2,4 GHz', signal: '-78', retries: '14%' },
+        { name: 'Galaxy-Tab-S9', ap: 'cAP-ax-overloop', band: '5 GHz', signal: '-74', retries: '6%' },
+        { name: 'roborock-s8', ap: 'cAP-ax-woonkamer', band: '2,4 GHz', signal: '-72', retries: '9%' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

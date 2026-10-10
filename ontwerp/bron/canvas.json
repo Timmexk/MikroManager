@@ -1,0 +1,666 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-09T16:15:00Z"
+ },
+ "title": "MikroManager ontwerp",
+ "launch": {
+  "view": "canvas",
+  "page": "ronde3"
+ },
+ "pages": [
+  {
+   "id": "verkenning",
+   "name": "Verkenning A, B, C"
+  },
+  {
+   "id": "c2",
+   "name": "C uitgewerkt"
+  },
+  {
+   "id": "idee",
+   "name": "Naam en ideeën"
+  },
+  {
+   "id": "ronde3",
+   "name": "Naam, toegang en wifi"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1360,
+   "h": 1300,
+   "title": "A · Smoked glass, desktop",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "A-Zijbalk.dc.html": {
+   "x": 1440,
+   "y": 0,
+   "w": 380,
+   "h": 660,
+   "title": "A · Zijbalk uit- en ingeklapt"
+  },
+  "A-Mobiel.dc.html": {
+   "x": 1900,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "A · Mobiel",
+   "radius": 36
+  },
+  "B-Desktop.dc.html": {
+   "x": 0,
+   "y": 1720,
+   "w": 1360,
+   "h": 1400,
+   "title": "B · Licht en strak, desktop",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "B-Zijbalk.dc.html": {
+   "x": 1440,
+   "y": 1720,
+   "w": 380,
+   "h": 660,
+   "title": "B · Zijbalk uit- en ingeklapt"
+  },
+  "B-Mobiel.dc.html": {
+   "x": 1900,
+   "y": 1720,
+   "w": 390,
+   "h": 844,
+   "title": "B · Mobiel",
+   "radius": 36
+  },
+  "C-Desktop.dc.html": {
+   "x": 0,
+   "y": 3540,
+   "w": 1360,
+   "h": 940,
+   "title": "C · Donker en zakelijk, desktop",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C-Zijbalk.dc.html": {
+   "x": 1440,
+   "y": 3540,
+   "w": 380,
+   "h": 660,
+   "title": "C · Zijbalk uit- en ingeklapt"
+  },
+  "C-Mobiel.dc.html": {
+   "x": 1900,
+   "y": 3540,
+   "w": 390,
+   "h": 844,
+   "title": "C · Mobiel",
+   "radius": 36
+  },
+  "C2-Overzicht.dc.html": {
+   "page": "c2",
+   "x": 0,
+   "y": 0,
+   "w": 1360,
+   "h": 970,
+   "title": "Overzicht, donker",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Overzicht-Licht.dc.html": {
+   "page": "c2",
+   "x": 1440,
+   "y": 0,
+   "w": 1360,
+   "h": 970,
+   "title": "Overzicht, licht",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Netwerken.dc.html": {
+   "page": "c2",
+   "x": 2880,
+   "y": 0,
+   "w": 1360,
+   "h": 1200,
+   "title": "Netwerken: WAN, VLAN's en poortmatrix",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Apparaat.dc.html": {
+   "page": "c2",
+   "x": 0,
+   "y": 1360,
+   "w": 1360,
+   "h": 900,
+   "title": "Apparaat met poortkaart",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Clients.dc.html": {
+   "page": "c2",
+   "x": 1440,
+   "y": 1360,
+   "w": 1360,
+   "h": 900,
+   "title": "Clients met detail en historie",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Topologie.dc.html": {
+   "page": "c2",
+   "x": 2880,
+   "y": 1360,
+   "w": 1360,
+   "h": 840,
+   "title": "Topologie",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "C2-Mobiel-Status.dc.html": {
+   "page": "c2",
+   "x": 0,
+   "y": 2680,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: status",
+   "radius": 36
+  },
+  "C2-Mobiel-Client.dc.html": {
+   "page": "c2",
+   "x": 470,
+   "y": 2680,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: client beheren",
+   "radius": 36
+  },
+  "C2-Mobiel-Apparaat.dc.html": {
+   "page": "c2",
+   "x": 940,
+   "y": 2680,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: ingrijpen op een apparaat",
+   "radius": 36
+  },
+  "N-Namen.dc.html": {
+   "page": "idee",
+   "x": 0,
+   "y": 260,
+   "w": 1360,
+   "h": 600,
+   "title": "Naamkandidaten, ronde 1"
+  },
+  "N2-Namen.dc.html": {
+   "page": "idee",
+   "x": 1440,
+   "y": 260,
+   "w": 1360,
+   "h": 560,
+   "title": "Naamkandidaten, ronde 2"
+  },
+  "I-Meldingen.dc.html": {
+   "page": "idee",
+   "x": 3600,
+   "y": 2420,
+   "w": 1120,
+   "h": 700,
+   "title": "Pushmeldingen",
+   "expand": "fill"
+  },
+  "I-Veilige-modus.dc.html": {
+   "page": "idee",
+   "x": 0,
+   "y": 1280,
+   "w": 760,
+   "h": 560,
+   "title": "Veilige modus"
+  },
+  "I-Snelzoeken.dc.html": {
+   "page": "idee",
+   "x": 840,
+   "y": 1280,
+   "w": 760,
+   "h": 560,
+   "title": "Snelzoeken"
+  },
+  "I-Ontdekken.dc.html": {
+   "page": "idee",
+   "x": 1680,
+   "y": 1280,
+   "w": 900,
+   "h": 620,
+   "title": "Apparaten ontdekken"
+  },
+  "I-Wijzigingslog.dc.html": {
+   "page": "idee",
+   "x": 2660,
+   "y": 1280,
+   "w": 1120,
+   "h": 580,
+   "title": "Wijzigingslog",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "I-Wifi-inzicht.dc.html": {
+   "page": "idee",
+   "x": 0,
+   "y": 2420,
+   "w": 1120,
+   "h": 736,
+   "title": "Wifi-inzicht",
+   "expand": "fill"
+  },
+  "I-Gastentoegang.dc.html": {
+   "page": "idee",
+   "x": 1200,
+   "y": 2420,
+   "w": 1120,
+   "h": 572,
+   "title": "Gastentoegang",
+   "expand": "fill"
+  },
+  "I-Sjablonen.dc.html": {
+   "page": "idee",
+   "x": 2400,
+   "y": 2420,
+   "w": 1120,
+   "h": 852,
+   "title": "Site-sjablonen",
+   "expand": "fill"
+  },
+  "N3-Namen.dc.html": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 0,
+   "w": 1360,
+   "h": 620,
+   "title": "Naamkandidaten, ronde 3: Tik en Mikro"
+  },
+  "T-Login.dc.html": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 1060,
+   "w": 1120,
+   "h": 740,
+   "title": "Inloggen",
+   "expand": "fill"
+  },
+  "T-Login-Mobiel.dc.html": {
+   "page": "ronde3",
+   "x": 1200,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "Inloggen, mobiel",
+   "radius": 36
+  },
+  "T-Gebruikers.dc.html": {
+   "page": "ronde3",
+   "x": 1670,
+   "y": 1060,
+   "w": 1360,
+   "h": 860,
+   "title": "Gebruikers: rol per site",
+   "expand": "fill"
+  },
+  "T-Rollen.dc.html": {
+   "page": "ronde3",
+   "x": 4310,
+   "y": 1060,
+   "w": 1120,
+   "h": 902,
+   "title": "Wat mag elke rol",
+   "expand": "fill"
+  },
+  "W-Overzicht.dc.html": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 2340,
+   "w": 1360,
+   "h": 900,
+   "title": "Wifi: overzicht",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "W-Bewerken.dc.html": {
+   "page": "ronde3",
+   "x": 1440,
+   "y": 2340,
+   "w": 1360,
+   "h": 950,
+   "title": "Wifi: netwerk bewerken",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "W-Radios.dc.html": {
+   "page": "ronde3",
+   "x": 2880,
+   "y": 2340,
+   "w": 1360,
+   "h": 920,
+   "title": "Wifi: kanalen en radio's",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "P-Poortmatrix.dc.html": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 3680,
+   "w": 1360,
+   "h": 900,
+   "title": "Poortmatrix bewerken (klik op een cel, geen poort op slot)",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "S-Opslaan.dc.html": {
+   "page": "ronde3",
+   "x": 1440,
+   "y": 3680,
+   "w": 1120,
+   "h": 736,
+   "title": "Opslaan per pagina",
+   "expand": "fill"
+  },
+  "S-Eerste-keer.dc.html": {
+   "page": "ronde3",
+   "x": 2640,
+   "y": 3680,
+   "w": 1120,
+   "h": 764,
+   "title": "Eerste keer instellen",
+   "expand": "fill"
+  },
+  "S-Meldingencentrum.dc.html": {
+   "page": "ronde3",
+   "x": 3840,
+   "y": 3680,
+   "w": 900,
+   "h": 760,
+   "title": "Meldingencentrum, vanuit de bel in de zijbalk",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "S-Wie-deed-wat.dc.html": {
+   "page": "ronde3",
+   "x": 4820,
+   "y": 3680,
+   "w": 1280,
+   "h": 726,
+   "title": "Wijzigingslog: wie deed wat",
+   "expand": "fill"
+  },
+  "N4-MikroManager.dc.html": {
+   "page": "ronde3",
+   "x": 1440,
+   "y": 0,
+   "w": 1000,
+   "h": 620,
+   "title": "MikroManager: eerste drie symbolen"
+  },
+  "O-Onderhoud.dc.html": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 5020,
+   "w": 1360,
+   "h": 1014,
+   "title": "Onderhoud: updates en back-ups",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "O-Instellingen.dc.html": {
+   "page": "ronde3",
+   "x": 1440,
+   "y": 5020,
+   "w": 1360,
+   "h": 900,
+   "title": "Instellingen: deze site en hele app",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "M-Wifi.dc.html": {
+   "page": "ronde3",
+   "x": 2880,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: wifi",
+   "radius": 36
+  },
+  "M-Wifi-Bewerken.dc.html": {
+   "page": "ronde3",
+   "x": 3350,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: wifi-netwerk bewerken",
+   "radius": 36
+  },
+  "M-Poorten.dc.html": {
+   "page": "ronde3",
+   "x": 3820,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: poorten en VLAN's",
+   "radius": 36
+  },
+  "M-Meldingen.dc.html": {
+   "page": "ronde3",
+   "x": 4290,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: meldingen",
+   "radius": 36
+  },
+  "M-Onderhoud.dc.html": {
+   "page": "ronde3",
+   "x": 4760,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: onderhoud",
+   "radius": 36
+  },
+  "M-Meer.dc.html": {
+   "page": "ronde3",
+   "x": 5230,
+   "y": 5020,
+   "w": 390,
+   "h": 844,
+   "title": "Mobiel: meer",
+   "radius": 36
+  },
+  "T-Gebruiker-Nieuw.dc.html": {
+   "page": "ronde3",
+   "x": 3110,
+   "y": 1060,
+   "w": 1120,
+   "h": 834,
+   "title": "Gebruiker toevoegen, ook tijdelijk",
+   "expand": "fill"
+  },
+  "N5-Pictogrammen.dc.html": {
+   "page": "ronde3",
+   "x": 2520,
+   "y": 0,
+   "w": 1360,
+   "h": 680,
+   "title": "MikroManager: zes pictogrammen"
+  },
+  "N6-Pictogram-Keuze.dc.html": {
+   "page": "ronde3",
+   "x": 3960,
+   "y": 0,
+   "w": 1360,
+   "h": 720,
+   "title": "Kiezen: switch 1, switch 2 of router 1"
+  },
+  "S-Site-Extern.dc.html": {
+   "page": "ronde3",
+   "x": 6180,
+   "y": 3680,
+   "w": 1280,
+   "h": 1054,
+   "title": "Externe site toevoegen: tunnel alleen voor management",
+   "expand": "fill"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "A-Zijbalk.dc.html",
+  "A-Mobiel.dc.html",
+  "B-Desktop.dc.html",
+  "B-Zijbalk.dc.html",
+  "B-Mobiel.dc.html",
+  "C-Desktop.dc.html",
+  "C-Zijbalk.dc.html",
+  "C-Mobiel.dc.html",
+  "C2-Overzicht.dc.html",
+  "C2-Overzicht-Licht.dc.html",
+  "C2-Netwerken.dc.html",
+  "C2-Apparaat.dc.html",
+  "C2-Clients.dc.html",
+  "C2-Topologie.dc.html",
+  "C2-Mobiel-Status.dc.html",
+  "C2-Mobiel-Client.dc.html",
+  "C2-Mobiel-Apparaat.dc.html",
+  "N-Namen.dc.html",
+  "N2-Namen.dc.html",
+  "I-Meldingen.dc.html",
+  "I-Veilige-modus.dc.html",
+  "I-Snelzoeken.dc.html",
+  "I-Ontdekken.dc.html",
+  "I-Wijzigingslog.dc.html",
+  "I-Wifi-inzicht.dc.html",
+  "I-Gastentoegang.dc.html",
+  "I-Sjablonen.dc.html",
+  "N3-Namen.dc.html",
+  "T-Login.dc.html",
+  "T-Login-Mobiel.dc.html",
+  "T-Gebruikers.dc.html",
+  "T-Gebruiker-Nieuw.dc.html",
+  "T-Rollen.dc.html",
+  "W-Overzicht.dc.html",
+  "W-Bewerken.dc.html",
+  "W-Radios.dc.html",
+  "P-Poortmatrix.dc.html",
+  "S-Opslaan.dc.html",
+  "S-Eerste-keer.dc.html",
+  "S-Meldingencentrum.dc.html",
+  "S-Wie-deed-wat.dc.html",
+  "S-Site-Extern.dc.html",
+  "N4-MikroManager.dc.html",
+  "N5-Pictogrammen.dc.html",
+  "N6-Pictogram-Keuze.dc.html",
+  "O-Onderhoud.dc.html",
+  "O-Instellingen.dc.html",
+  "M-Wifi.dc.html",
+  "M-Wifi-Bewerken.dc.html",
+  "M-Poorten.dc.html",
+  "M-Meldingen.dc.html",
+  "M-Onderhoud.dc.html",
+  "M-Meer.dc.html"
+ ],
+ "notes": {
+  "titleA": {
+   "x": 0,
+   "y": -300,
+   "text": "A. Smoked glass",
+   "kind": "title1",
+   "maxW": 2290
+  },
+  "titleB": {
+   "x": 0,
+   "y": 1420,
+   "text": "B. Licht en strak",
+   "kind": "title1",
+   "maxW": 2290
+  },
+  "titleC": {
+   "x": 0,
+   "y": 3240,
+   "text": "C. Donker en zakelijk",
+   "kind": "title1",
+   "maxW": 2290
+  },
+  "titleC2": {
+   "page": "c2",
+   "x": 0,
+   "y": -300,
+   "text": "C uitgewerkt: desktop",
+   "kind": "title1",
+   "maxW": 4240
+  },
+  "titleC2m": {
+   "page": "c2",
+   "x": 0,
+   "y": 2380,
+   "text": "C uitgewerkt: mobiel",
+   "kind": "title1",
+   "maxW": 1330
+  },
+  "titleI1": {
+   "page": "idee",
+   "x": 0,
+   "y": 980,
+   "text": "Ideeën: veiliger en sneller beheren",
+   "kind": "title1",
+   "maxW": 3780
+  },
+  "titleI2": {
+   "page": "idee",
+   "x": 0,
+   "y": 2120,
+   "text": "Ideeën: inzicht en extra's",
+   "kind": "title1",
+   "maxW": 4720
+  },
+  "titleR1": {
+   "page": "ronde3",
+   "x": 0,
+   "y": -300,
+   "text": "Naam en pictogram",
+   "kind": "title1",
+   "maxW": 5320
+  },
+  "titleR2": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 760,
+   "text": "Inloggen, gebruikers en rollen",
+   "kind": "title1",
+   "maxW": 5430
+  },
+  "titleR3": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 2040,
+   "text": "Wifi",
+   "kind": "title1",
+   "maxW": 4240
+  },
+  "titleR4": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 3380,
+   "text": "Poortmatrix bewerken en stroomlijnen",
+   "kind": "title1",
+   "maxW": 7460
+  },
+  "titleR5": {
+   "page": "ronde3",
+   "x": 0,
+   "y": 4720,
+   "text": "Onderhoud, instellingen en mobiel",
+   "kind": "title1",
+   "maxW": 5620
+  }
+ },
+ "designSystems": []
+}

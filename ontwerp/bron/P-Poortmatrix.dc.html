@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Poortmatrix bewerken: klikken per cel, opslaan met veilige modus</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <aside style="flex: 0 0 auto; width: {{sideW}}; box-sizing: border-box; padding: 12px 8px; background: #0a0c0f; border-right: 1px solid #242a32; display: flex; flex-direction: column; gap: 10px; transition: width 0.2s ease">
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; justify-content: {{sideJustify}}">
+      <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke="#c4cbd4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" fill="#c4cbd4"></path><path d="M21 17h5v6h-5z" fill="#3d8bfd"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.01em">MikroManager</span>
+      </sc-if>
+    </div>
+    <button type="button" aria-label="Site kiezen, nu Thuis" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 8px; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: inherit; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: #0a0c0f; background: #3d8bfd">T</span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1; font-weight: 500">Thuis</span>
+      </sc-if>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98a2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+      </sc-if>
+    </button>
+    <button type="button" aria-label="Zoeken, Ctrl K" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid #242a32; background: transparent; color: #98a2af; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1">Zoeken</span>
+      </sc-if>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 1px 5px; border-radius: 3px; border: 1px solid #2c343d">Ctrl K</span>
+      </sc-if>
+    </button>
+    <nav style="display: flex; flex-direction: column; gap: 1px" aria-label="Hoofdmenu">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="8">
+        <button type="button" aria-label="{{item.label}}" style="position: relative; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; font: inherit; font-weight: 500; cursor: pointer; text-align: left; color: {{item.color}}; background: {{item.bg}}; justify-content: {{item.justify}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{item.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{item.icon}}"></path></svg>
+          <sc-if value="{{item.showLabel}}" hint-placeholder-val="{{true}}">
+            <span style="flex: 1">{{item.label}}</span>
+          </sc-if>
+          <sc-if value="{{item.showBadge}}" hint-placeholder-val="{{false}}">
+            <span style="min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 500; display: flex; align-items: center; justify-content: center; color: #1a1300; background: #e0a52e">{{item.badge}}</span>
+          </sc-if>
+          <sc-if value="{{item.showDot}}" hint-placeholder-val="{{false}}">
+            <span style="position: absolute; top: 10px; right: 8px; width: 6px; height: 6px; background: #e0a52e" aria-hidden="true"></span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <button type="button" aria-label="Meldingen, 2 vragen aandacht" style="margin-top: auto; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #b3bcc8; font: inherit; font-weight: 500; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="position: relative; flex: 0 0 auto; display: flex">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9zM10 20a2.2 2.2 0 0 0 4 0"></path></svg>
+        <span style="position: absolute; top: -7px; right: -9px; min-width: 15px; height: 15px; box-sizing: border-box; padding: 0 3px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; line-height: 15px; text-align: center; color: #1a1300; background: #e0a52e">2</span>
+      </span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1">Meldingen</span>
+      </sc-if>
+    </button>
+    <button type="button" aria-label="Account van admin" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 8px; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: inherit; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="flex: 0 0 auto; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; color: #c4cbd4; background: #242a32" aria-hidden="true">HB</span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 500">admin</span><span style="font-size: 12px; color: #98a2af">Admin, alle sites</span></span>
+      </sc-if>
+    </button>
+    <button type="button" onClick="{{toggle}}" aria-label="Zijbalk in- of uitklappen" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #98a2af; font: inherit; font-weight: 500; cursor: pointer; justify-content: {{sideJustify}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{toggleIcon}}"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span>Inklappen</span>
+      </sc-if>
+    </button>
+  </aside>
+
+  <main style="position: relative; flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 14px">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <a href="#netwerken" style="color: #98a2af; text-decoration: none">Netwerken</a>
+        <span style="color: #5d6875" aria-hidden="true">/</span>
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600">Poortmatrix</h1>
+        <span style="color: #98a2af">Thuis</span>
+      </div>
+      <div style="display: flex; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+        <button type="button" aria-pressed="false" style="height: 36px; padding: 0 12px; border: 0; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">hAP-ax2-meterkast</button>
+        <button type="button" aria-pressed="true" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #242a32; color: #ffffff; font: inherit; font-weight: 500; cursor: pointer">CRS310-kantoor</button>
+        <button type="button" aria-pressed="false" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">hEX-PoE-zolder</button>
+      </div>
+    </header>
+
+    <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 4px 14px">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">CRS310-kantoor</h2>
+        <span style="color: #98a2af">Klik op een cel: leeg, tagged, untagged. Een poort heeft één PVID.</span>
+      </div>
+      <div style="overflow-x: auto">
+        <div style="min-width: 840px">
+          <div style="display: grid; grid-template-columns: 150px repeat(10, minmax(0, 1fr)); gap: 6px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32">
+            <span>Poort</span>
+            <sc-for list="{{ports}}" as="p" hint-placeholder-count="10">
+              <span style="text-align: center; font-family: 'IBM Plex Mono', monospace">{{p.n}} <span style="font-weight: 400; color: #6ea8fe">{{p.mark}}</span></span>
+            </sc-for>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px repeat(10, minmax(0, 1fr)); gap: 6px; align-items: center; min-height: 34px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+            <span style="color: #98a2af">Aangesloten</span>
+            <sc-for list="{{ports}}" as="p" hint-placeholder-count="10">
+              <span style="text-align: center; font-size: 12px; color: {{p.peerColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.peer}}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{matrix}}" as="row" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 150px repeat(10, minmax(0, 1fr)); gap: 6px; align-items: center; height: 46px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+              <span><span style="font-weight: 500">{{row.name}}</span> <span style="color: #98a2af; font-variant-numeric: tabular-nums">{{row.vlan}}</span></span>
+              <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="10">
+                <button type="button" onClick="{{c.click}}" aria-label="{{c.aria}}" style="box-sizing: border-box; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: {{c.color}}; background: {{c.bg}}; border: 1px {{c.line}} {{c.border}}; box-shadow: {{c.ring}}; cursor: {{c.cursor}}">{{c.t}}</button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px 18px; min-height: 40px; align-items: center; padding: 6px 14px; font-size: 12.5px; color: #98a2af">
+        <span style="display: flex; align-items: center; gap: 7px"><span style="box-sizing: border-box; width: 22px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: #0e1114; background: #c4cbd4">U</span>untagged</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="box-sizing: border-box; width: 22px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: #c4cbd4; border: 1px solid #98a2af">T</span>tagged</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="box-sizing: border-box; width: 22px; height: 20px; border-radius: 3px; border: 1px solid #1c2229; box-shadow: 0 0 0 2px #3d8bfd"></span>gewijzigd, nog niet opgeslagen</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 1px 5px; border-radius: 3px; border: 1px solid #3a424d; color: #c4cbd4">mgmt</span>via deze poort bereikt de app de switch nu; wijzigen mag</span>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+      <section style="flex: 1.3 1 420px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Wijzigingen op deze pagina</h2>
+          <span style="color: #98a2af">{{countText}}</span>
+        </div>
+        <sc-for list="{{changes}}" as="ch" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+            <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span>
+            <span>{{ch.text}}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{clean}}" hint-placeholder-val="{{false}}">
+          <div style="min-height: 40px; display: flex; align-items: center; padding: 0 14px; color: #98a2af">Niets gewijzigd. De matrix is gelijk aan de router.</div>
+        </sc-if>
+      </section>
+
+      <section style="flex: 1 1 360px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Pre-check</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 4px 14px; border-bottom: 1px solid #1c2229"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{mgmtDot}}" aria-hidden="true"></span><span>{{mgmtText}}</span></div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; border-bottom: 1px solid #1c2229"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{untaggedDot}}" aria-hidden="true"></span><span>{{untaggedText}}</span></div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span><span>VLAN 50 bestaat al op hAP-ax2-meterkast en hEX-PoE-zolder</span></div>
+      </section>
+    </div>
+
+    <sc-if value="{{dirty}}" hint-placeholder-val="{{true}}">
+      <div style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 6px 8px 6px 14px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d; box-shadow: 0 10px 30px rgba(0,0,0,0.45)">
+        <div style="display: flex; align-items: center; gap: 9px; min-width: 0"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span><span><span style="font-weight: 600">{{countText}} niet opgeslagen</span> <span style="color: #98a2af">Met veilige modus: zonder bevestiging volgt na 2 minuten een rollback.</span></span></div>
+        <div style="display: flex; gap: 8px">
+          <button type="button" onClick="{{reset}}" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #3a424d; background: transparent; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verwerpen</button>
+          <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Bekijken en opslaan</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"collapsed":{"editor":"boolean","default":false},"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+  state = { collapsed: null, cur: null };
+
+  renderVals() {
+    const collapsed = this.state.collapsed ?? this.props.collapsed ?? false;
+    const expanded = !collapsed;
+    const active = 'Netwerken';
+    const navItems = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z' },
+      { label: 'Topologie', icon: 'M9 3h6v4H9zM3 17h6v4H3zM15 17h6v4h-6zM12 7v5M6 17v-5h12v5' },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Netwerken', icon: 'M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 17l9 5 9-5' },
+      { label: 'Onderhoud', icon: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', badge: '5' },
+      { label: 'Instellingen', icon: 'M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4M14 4v4M6 10v4M12 16v4' },
+    ];
+    const page = (() => {
+      // One string per VLAN, one character per port: U untagged, T tagged, - not a member.
+      const nets = [
+        { name: 'LAN', vlan: '1' },
+        { name: 'IoT', vlan: '30' },
+        { name: 'Gasten', vlan: '40' },
+        { name: "Camera's", vlan: '50' },
+      ];
+      const orig = ['UUUUUU-UUU', 'TT----U---', 'TT--------', 'T---------'];
+      const start = ['UUUUUU--UU', 'TT----U---', 'TT--------', 'TT-----U--'];
+      const cur = this.state.cur ?? start;
+      const portList = [
+        { n: '1', peer: 'router' }, { n: '2', peer: 'hEX-PoE' }, { n: '3', peer: 'nas' }, { n: '4', peer: 'homeassistant' },
+        { n: '5', peer: 'werk-pc' }, { n: '6', peer: 'adguard' }, { n: '7', peer: '' }, { n: '8', peer: '' },
+        { n: 'S1', peer: '' }, { n: 'S2', peer: '' },
+      ];
+      // The port the app's own traffic arrives on, read from the bridge host table. Informative only.
+      const MGMT = 0;
+
+      const setCell = (r, p) => () => {
+        const next = cur.map((s) => s.split(''));
+        const v = next[r][p];
+        const nv = v === '-' ? 'T' : v === 'T' ? 'U' : '-';
+        if (nv === 'U') next.forEach((row, i) => { if (i !== r && row[p] === 'U') row[p] = '-'; });
+        next[r][p] = nv;
+        this.setState({ cur: next.map((a) => a.join('')) });
+      };
+
+      const word = { U: 'untagged', T: 'tagged', '-': 'geen member' };
+      const matrix = nets.map((net, r) => ({
+        ...net,
+        cells: cur[r].split('').map((v, p) => {
+          const changed = v !== orig[r][p];
+          return {
+            t: v === '-' ? '' : v,
+            color: v === 'U' ? '#0e1114' : '#c4cbd4',
+            bg: v === 'U' ? '#c4cbd4' : 'transparent',
+            border: v === 'U' ? '#c4cbd4' : v === 'T' ? '#98a2af' : '#2c343d',
+            line: 'solid',
+            ring: changed ? '0 0 0 2px #3d8bfd' : 'none',
+            cursor: 'pointer',
+            aria: 'Poort ' + portList[p].n + ', ' + net.name + ': ' + word[v] + (p === MGMT ? ', management-poort' : ''),
+            click: setCell(r, p),
+          };
+        }),
+      }));
+
+      // Describe the difference with the router per port, the way the review step will list it.
+      const changes = [];
+      let missingUntagged = 0;
+      portList.forEach((port, p) => {
+        const label = 'Poort ' + port.n + (port.peer ? ' (' + port.peer + ')' : '');
+        const uOf = (m) => { const i = m.findIndex((s) => s[p] === 'U'); return i < 0 ? null : nets[i].name; };
+        const before = uOf(orig);
+        const after = uOf(cur);
+        if (before !== after) changes.push({ text: label + ': PVID van ' + (before || 'geen') + ' naar ' + (after || 'geen') });
+        if (before && !after) missingUntagged += 1;
+        nets.forEach((net, r) => {
+          const was = orig[r][p] === 'T';
+          const is = cur[r][p] === 'T';
+          if (was !== is) changes.push({ text: label + ': ' + net.name + ' tagged ' + (is ? 'toegevoegd' : 'verwijderd') });
+        });
+      });
+      const count = changes.length;
+      const mgmtTouched = nets.some((net, r) => cur[r][MGMT] !== orig[r][MGMT]);
+
+      return {
+        ports: portList.map((p, i) => ({ ...p, peerColor: p.peer ? '#c4cbd4' : '#5d6875', peer: p.peer || 'vrij', mark: i === MGMT ? 'mgmt' : '' })),
+        mgmtDot: mgmtTouched ? '#e0a52e' : '#3fb97a',
+        mgmtText: mgmtTouched
+          ? 'Je wijzigt poort 1, waarover de app deze switch nu bereikt. Valt de verbinding weg, dan volgt een rollback.'
+          : 'De app bereikt deze switch nu via poort 1; die poort wijzig je niet',
+        matrix,
+        changes,
+        dirty: count > 0,
+        clean: count === 0,
+        countText: count === 1 ? '1 wijziging' : count + ' wijzigingen',
+        untaggedDot: missingUntagged ? '#e0a52e' : '#3fb97a',
+        untaggedText: missingUntagged
+          ? (missingUntagged === 1 ? '1 poort heeft' : missingUntagged + ' poorten hebben') + ' geen PVID meer: untagged clients vallen daar weg'
+          : 'Elke gebruikte poort heeft één PVID',
+        reset: () => this.setState({ cur: orig }),
+      };
+    })();
+    return {
+      expanded,
+      sideW: expanded ? '216px' : '60px',
+      sideJustify: expanded ? 'flex-start' : 'center',
+      toggleIcon: expanded ? 'M4 4h16v16H4zM9 4v16M15 10l-2 2 2 2' : 'M4 4h16v16H4zM9 4v16M13 10l2 2-2 2',
+      toggle: () => this.setState({ collapsed: !collapsed }),
+      nav: navItems.map((n) => ({
+        ...n,
+        color: n.label === active ? '#ffffff' : '#b3bcc8',
+        iconColor: n.label === active ? '#3d8bfd' : 'currentColor',
+        bg: n.label === active ? '#1c2128' : 'transparent',
+        justify: expanded ? 'flex-start' : 'center',
+        showLabel: expanded,
+        showBadge: expanded && !!n.badge,
+        showDot: !expanded && !!n.badge,
+      })),
+      ...page,
+    };
+  }
+}
+</script>
+</body>
+</html>

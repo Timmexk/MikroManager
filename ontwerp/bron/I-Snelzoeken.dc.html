@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Snelzoeken met Ctrl+K</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 760px; height: 560px; box-sizing: border-box; padding: 40px 40px 0; display: flex; align-items: flex-start; justify-content: center; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #07090b">
+  <section role="dialog" aria-label="Snelzoeken" style="width: 640px; border-radius: 6px; background: #15191e; border: 1px solid #2c343d; box-shadow: 0 24px 60px rgba(0,0,0,0.6); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px; border-bottom: 1px solid #242a32; color: #98a2af">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg>
+      <input type="search" aria-label="Zoek of typ een opdracht" value="woonk" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: #e6e9ed">
+      <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 3px; border: 1px solid #3a424d; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #c4cbd4">Esc</span>
+    </label>
+
+    <div style="padding: 10px 16px 4px; font-size: 12px; font-weight: 500; color: #98a2af">Apparaten</div>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: #1b2636; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0"><span style="font-weight: 500">cAP-ax-woonkamer</span> <span style="color: #98a2af">access point, 6 clients</span></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #c4cbd4">192.168.88.11</span>
+      <span style="display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 3px; border: 1px solid #3a424d; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #c4cbd4">Enter</span>
+    </button>
+
+    <div style="padding: 10px 16px 4px; font-size: 12px; font-weight: 500; color: #98a2af">Clients</div>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0"><span style="font-weight: 500">sonos-woonkamer</span> <span style="color: #98a2af">Sonos, Thuis-IoT</span></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #c4cbd4">192.168.30.25</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0"><span style="font-weight: 500">tv-woonkamer</span> <span style="color: #98a2af">bedraad, hEX-PoE-zolder ether4</span></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #c4cbd4">192.168.88.24</span>
+    </button>
+
+    <div style="padding: 10px 16px 4px; font-size: 12px; font-weight: 500; color: #98a2af">Poorten</div>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span>
+      <span style="flex: 1; min-width: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500">ether2</span> <span style="color: #98a2af">op hEX-PoE-zolder, comment AP woonkamer, PoE 6,7 W</span></span>
+    </button>
+
+    <div style="padding: 10px 16px 4px; font-size: 12px; font-weight: 500; color: #98a2af">Acties</div>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98a2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M13 3L5 14h6l-1 7 8-11h-6z"></path></svg>
+      <span style="flex: 1; min-width: 0">cAP-ax-woonkamer rebooten via PoE power-cycle</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98a2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M13 3L5 14h6l-1 7 8-11h-6z"></path></svg>
+      <span style="flex: 1; min-width: 0">sonos-woonkamer een static lease geven</span>
+    </button>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; margin-top: 8px; padding: 0 16px; border-top: 1px solid #242a32; background: #111519; font-size: 12.5px; color: #98a2af">
+      <span>Pijltjes om te kiezen, Enter om te openen</span>
+      <span>Zoekt ook op IP, MAC en vendor</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

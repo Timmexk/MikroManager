@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>MikroManager overzicht, licht</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#1a66d9}a:hover{color:#0f4aa3}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #14181d; background: #f3f4f6">
+
+  <aside style="flex: 0 0 auto; width: {{sideW}}; box-sizing: border-box; padding: 12px 8px; background: #ffffff; border-right: 1px solid #dfe3e8; display: flex; flex-direction: column; gap: 10px; transition: width 0.2s ease">
+    <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; justify-content: {{sideJustify}}">
+      <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke="#333b45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" fill="#333b45"></path><path d="M21 17h5v6h-5z" fill="#1a66d9"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.01em">MikroManager</span>
+      </sc-if>
+    </div>
+    <button type="button" aria-label="Site kiezen, nu Thuis" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 8px; border-radius: 6px; border: 1px solid #dfe3e8; background: #f7f8fa; color: inherit; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="flex: 0 0 auto; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: #ffffff; background: #1a66d9">T</span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1; font-weight: 500">Thuis</span>
+      </sc-if>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5c6672" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+      </sc-if>
+    </button>
+    <button type="button" aria-label="Zoeken, Ctrl K" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid #dfe3e8; background: transparent; color: #5c6672; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1">Zoeken</span>
+      </sc-if>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 1px 5px; border-radius: 3px; border: 1px solid #dfe3e8">Ctrl K</span>
+      </sc-if>
+    </button>
+    <nav style="display: flex; flex-direction: column; gap: 1px" aria-label="Hoofdmenu">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="8">
+        <button type="button" aria-label="{{item.label}}" style="position: relative; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; font: inherit; font-weight: 500; cursor: pointer; text-align: left; color: {{item.color}}; background: {{item.bg}}; justify-content: {{item.justify}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{item.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{item.icon}}"></path></svg>
+          <sc-if value="{{item.showLabel}}" hint-placeholder-val="{{true}}">
+            <span style="flex: 1">{{item.label}}</span>
+          </sc-if>
+          <sc-if value="{{item.showBadge}}" hint-placeholder-val="{{false}}">
+            <span style="min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 500; display: flex; align-items: center; justify-content: center; color: #3d2a00; background: #f3c44f">{{item.badge}}</span>
+          </sc-if>
+          <sc-if value="{{item.showDot}}" hint-placeholder-val="{{false}}">
+            <span style="position: absolute; top: 10px; right: 8px; width: 6px; height: 6px; background: #d99a00" aria-hidden="true"></span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <button type="button" aria-label="Meldingen, 2 vragen aandacht" style="margin-top: auto; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #333b45; font: inherit; font-weight: 500; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="position: relative; flex: 0 0 auto; display: flex">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9zM10 20a2.2 2.2 0 0 0 4 0"></path></svg>
+        <span style="position: absolute; top: -7px; right: -9px; min-width: 15px; height: 15px; box-sizing: border-box; padding: 0 3px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; line-height: 15px; text-align: center; color: #3d2a00; background: #f3c44f">2</span>
+      </span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1">Meldingen</span>
+      </sc-if>
+    </button>
+    <button type="button" aria-label="Account van admin" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 8px; border-radius: 6px; border: 1px solid #dfe3e8; background: #f7f8fa; color: inherit; font: inherit; cursor: pointer; text-align: left; justify-content: {{sideJustify}}">
+      <span style="flex: 0 0 auto; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; color: #333b45; background: #eceff3" aria-hidden="true">HB</span>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 500">admin</span><span style="font-size: 12px; color: #5c6672">Admin, alle sites</span></span>
+      </sc-if>
+    </button>
+    <button type="button" onClick="{{toggle}}" aria-label="Zijbalk in- of uitklappen" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #5c6672; font: inherit; font-weight: 500; cursor: pointer; justify-content: {{sideJustify}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{toggleIcon}}"></path></svg>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <span>Inklappen</span>
+      </sc-if>
+    </button>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px">
+
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600">Overzicht</h1>
+        <span style="color: #5c6672">Thuis</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+        <span style="color: #5c6672; font-variant-numeric: tabular-nums">bijgewerkt 17:30:12</span>
+      </div>
+    </header>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8">
+      <div style="padding: 11px 16px; border-right: 1px solid #dfe3e8">
+        <div style="font-size: 12.5px; color: #5c6672">WAN</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600"><span style="width: 8px; height: 8px; background: #22a565"></span>Kabel actief</div>
+      </div>
+      <div style="padding: 11px 16px; border-right: 1px solid #dfe3e8">
+        <div style="font-size: 12.5px; color: #5c6672">Apparaten</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums"><span style="width: 8px; height: 8px; background: #22a565"></span>5 van 5 online</div>
+      </div>
+      <div style="padding: 11px 16px; border-right: 1px solid #dfe3e8">
+        <div style="font-size: 12.5px; color: #5c6672">Clients</div>
+        <div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">19 <span style="font-size: 13px; font-weight: 400; color: #5c6672">13 wifi, 6 bedraad</span></div>
+      </div>
+      <div style="padding: 11px 16px">
+        <div style="font-size: 12.5px; color: #5c6672">Aandacht</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums"><span style="width: 8px; height: 8px; background: #d99a00"></span>2 punten</div>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px">
+      <section style="flex: 3 1 560px; min-width: 0; border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 44px; padding: 0 14px">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">WAN-verbindingen <span style="font-weight: 400; color: #5c6672">2, automatische failover</span></h2>
+          <a href="C2-Netwerken.dc.html" style="text-decoration: none; font-weight: 500">Details</a>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 640px">
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) 84px 150px 160px 66px; gap: 14px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #5c6672; background: #f7f8fa; border-top: 1px solid #dfe3e8; border-bottom: 1px solid #dfe3e8">
+              <span>Verbinding</span><span>Rol</span><span>Publiek IP</span><span>Nu</span><span style="text-align: right">Vandaag</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) 84px 150px 160px 66px; gap: 14px; align-items: center; height: 54px; padding: 0 14px; border-bottom: 1px solid #eceff3">
+              <span style="display: flex; align-items: center; gap: 9px; min-width: 0"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #22a565" aria-hidden="true"></span><span style="min-width: 0"><span style="display: block; font-weight: 600; line-height: 1.3">Kabel</span><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.3; color: #333b45">ether1, DHCP</span></span></span>
+              <span><span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 3px; font-size: 12.5px; font-weight: 500; color: #0e5c38; background: #dff3e8">Actief</span></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #333b45">203.0.113.42</span>
+              <span style="font-variant-numeric: tabular-nums">38,0 <span style="color: #5c6672">down</span> 6,2 <span style="color: #5c6672">up</span></span>
+              <span style="text-align: right; font-variant-numeric: tabular-nums">41,2 GB</span>
+            </div>
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) 84px 150px 160px 66px; gap: 14px; align-items: center; height: 54px; padding: 0 14px; border-bottom: 1px solid #eceff3">
+              <span style="display: flex; align-items: center; gap: 9px; min-width: 0"><span style="flex: 0 0 auto; box-sizing: border-box; width: 8px; height: 8px; border: 2px solid #5c6672" aria-hidden="true"></span><span style="min-width: 0"><span style="display: block; font-weight: 600; line-height: 1.3">4G back-up</span><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.3; color: #333b45">lte1, LTE</span></span></span>
+              <span><span style="display: inline-flex; align-items: center; height: 22px; padding: 0 8px; box-sizing: border-box; border-radius: 3px; font-size: 12.5px; font-weight: 500; color: #333b45; border: 1px solid #c5ccd5">Stand-by</span></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #333b45">10.64.12.7 <span style="font-family: 'IBM Plex Sans', sans-serif; color: #5c6672">CGNAT</span></span>
+              <span style="color: #5c6672">bereikbaar, geen verkeer</span>
+              <span style="text-align: right; font-variant-numeric: tabular-nums">0 MB</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 6px 14px; color: #5c6672">
+          <span>Laatste failover: 2 okt 03:12, 35 minuten op 4G back-up.</span>
+          <a href="C2-Netwerken.dc.html" style="text-decoration: none; font-weight: 500">Geschiedenis</a>
+        </div>
+      </section>
+
+      <section style="flex: 2 1 340px; min-width: 0; border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8; overflow: hidden">
+        <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #dfe3e8">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Aandacht</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-bottom: 1px solid #eceff3">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #d99a00" aria-hidden="true"></span>
+          <span style="flex: 1; min-width: 0">RouterOS 7.20.2 beschikbaar voor 5 apparaten</span>
+          <a href="#updates" style="text-decoration: none; font-weight: 500">Bekijken</a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-bottom: 1px solid #eceff3">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #d99a00" aria-hidden="true"></span>
+          <span style="flex: 1; min-width: 0">Firmware van CRS310-kantoor loopt achter (7.19.4)</span>
+          <a href="#updates" style="text-decoration: none; font-weight: 500">Updaten</a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; color: #5c6672">
+          <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #22a565" aria-hidden="true"></span>
+          <span style="flex: 1; min-width: 0">Back-up van vannacht 03:00 is gelukt, 2 configuraties gewijzigd</span>
+        </div>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+      <div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <section style="border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8; overflow: hidden">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 14px">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Apparaten</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #5c6672">
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; background: #22a565"></span>Link</span>
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; background: #d99a00"></span>PoE</span>
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; background: #1a66d9"></span>WAN</span>
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 9px; height: 9px; background: #cfd5dc"></span>Geen link</span>
+            </div>
+          </div>
+          <div style="overflow-x: auto">
+            <div style="min-width: 640px">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) 104px 130px 44px; gap: 14px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #5c6672; background: #f7f8fa; border-top: 1px solid #dfe3e8; border-bottom: 1px solid #dfe3e8">
+                <span>Naam</span><span>Model</span><span>IP-adres</span><span>Poorten</span><span style="text-align: right">CPU</span>
+              </div>
+              <sc-for list="{{devices}}" as="d" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) 104px 130px 44px; gap: 14px; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #eceff3">
+                  <span style="display: flex; align-items: center; gap: 9px; min-width: 0">
+                    <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #22a565" aria-hidden="true"></span>
+                    <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.name}}</span>
+                  </span>
+                  <span style="color: #5c6672; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.model}}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #333b45">{{d.ip}}</span>
+                  <span style="display: flex; gap: 2px" aria-hidden="true">
+                    <sc-for list="{{d.ports}}" as="p" hint-placeholder-count="5">
+                      <span style="width: 10px; height: 10px; background: {{p.c}}; margin-left: {{p.ml}}"></span>
+                    </sc-for>
+                  </span>
+                  <span style="text-align: right; font-variant-numeric: tabular-nums">{{d.cpu}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+
+        <section style="border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8; overflow: hidden">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Wifi-netwerken</h2>
+            <span style="color: #5c6672">13 clients op 3 access points</span>
+          </div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 80px minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 14px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #5c6672; background: #f7f8fa; border-top: 1px solid #dfe3e8; border-bottom: 1px solid #dfe3e8">
+            <span>SSID</span><span>VLAN</span><span>Beveiliging</span><span>Banden</span><span style="text-align: right">Clients</span>
+          </div>
+          <sc-for list="{{wlans}}" as="w" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 80px minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 14px; align-items: center; height: 38px; padding: 0 14px; border-bottom: 1px solid #eceff3">
+              <span style="font-weight: 500">{{w.ssid}}</span>
+              <span style="font-variant-numeric: tabular-nums; color: #333b45">{{w.vlan}}</span>
+              <span style="color: #5c6672">{{w.sec}}</span>
+              <span style="color: #5c6672">{{w.bands}}</span>
+              <span style="text-align: right; font-variant-numeric: tabular-nums">{{w.clients}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+
+      <div style="flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <section style="border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 14px; border-bottom: 1px solid #dfe3e8">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Verkeer <span style="font-weight: 400; color: #5c6672">laatste 6 uur</span></h2>
+            <div style="display: flex; gap: 14px; font-size: 12px; color: #5c6672">
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 12px; height: 2px; background: #2a78d6"></span>Download</span>
+              <span style="display: flex; align-items: center; gap: 5px"><span style="width: 12px; height: 2px; background: #eb6834"></span>Upload</span>
+            </div>
+          </div>
+          <div style="padding: 14px; display: flex; gap: 8px">
+            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 190px; font-size: 11.5px; color: #5c6672; text-align: right; font-variant-numeric: tabular-nums">
+              <span>50 Mbps</span><span>25 Mbps</span><span>0</span>
+            </div>
+            <div style="flex: 1; min-width: 0">
+              <svg viewBox="0 0 600 200" preserveAspectRatio="none" role="img" aria-label="Download en upload over de laatste 6 uur" style="display: block; width: 100%; height: 190px">
+                <line x1="0" y1="1" x2="600" y2="1" stroke="#eceff3" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="100" x2="600" y2="100" stroke="#eceff3" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+                <line x1="0" y1="199" x2="600" y2="199" stroke="#dfe3e8" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+                <path d="M0.0,46.7L12.5,35.8L25.0,57.9L37.5,81.7L50.0,83.1L62.5,75.6L75.0,79.9L87.5,85.9L100.0,71.2L112.5,45.4L125.0,43.2L137.5,74.8L150.0,111.4L162.5,129.5L175.0,141.0L187.5,163.5L200.0,183.0L212.5,173.8L225.0,144.4L237.5,130.7L250.0,146.2L262.5,165.9L275.0,169.3L287.5,169.7L300.0,183.5L312.5,194.3L325.0,173.8L337.5,128.4L350.0,94.4L362.5,87.5L375.0,86.9L387.5,75.9L400.0,70.0L412.5,86.4L425.0,106.7L437.5,99.1L450.0,66.3L462.5,42.3L475.0,42.8L487.5,48.9L500.0,46.4L512.5,53.7L525.0,88.7L537.5,132.2L550.0,149.1L562.5,137.9L575.0,128.9L587.5,136.0L600.0,140.7L600,200L0,200Z" fill="#2a78d6" opacity="0.10"></path>
+                <path d="M0.0,46.7L12.5,35.8L25.0,57.9L37.5,81.7L50.0,83.1L62.5,75.6L75.0,79.9L87.5,85.9L100.0,71.2L112.5,45.4L125.0,43.2L137.5,74.8L150.0,111.4L162.5,129.5L175.0,141.0L187.5,163.5L200.0,183.0L212.5,173.8L225.0,144.4L237.5,130.7L250.0,146.2L262.5,165.9L275.0,169.3L287.5,169.7L300.0,183.5L312.5,194.3L325.0,173.8L337.5,128.4L350.0,94.4L362.5,87.5L375.0,86.9L387.5,75.9L400.0,70.0L412.5,86.4L425.0,106.7L437.5,99.1L450.0,66.3L462.5,42.3L475.0,42.8L487.5,48.9L500.0,46.4L512.5,53.7L525.0,88.7L537.5,132.2L550.0,149.1L562.5,137.9L575.0,128.9L587.5,136.0L600.0,140.7" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+                <path d="M0.0,174.7L12.5,177.8L25.0,177.9L37.5,173.2L50.0,170.0L62.5,173.6L75.0,181.3L87.5,186.5L100.0,188.8L112.5,192.5L125.0,197.5L137.5,198.0L150.0,192.5L162.5,186.4L175.0,185.9L187.5,188.9L200.0,189.8L212.5,188.6L225.0,189.8L237.5,193.0L250.0,192.1L262.5,184.2L275.0,175.3L287.5,171.4L300.0,171.2L312.5,169.6L325.0,167.5L337.5,169.7L350.0,175.6L362.5,178.4L375.0,174.6L387.5,169.2L400.0,168.2L412.5,170.0L425.0,170.3L437.5,170.3L450.0,175.2L462.5,184.8L475.0,191.7L487.5,191.8L500.0,189.2L512.5,189.2L525.0,190.3L537.5,188.2L550.0,185.0L562.5,186.7L575.0,193.5L587.5,198.0L600.0,196.8" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+              <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 11.5px; color: #5c6672; font-variant-numeric: tabular-nums">
+                <span>11:30</span><span>13:30</span><span>15:30</span><span>17:30</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8; overflow: hidden">
+          <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #dfe3e8">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Log</h2>
+          </div>
+          <sc-for list="{{log}}" as="l" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 4px 14px; border-bottom: 1px solid #eceff3">
+              <span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{l.c}}" aria-hidden="true"></span>
+              <span style="flex: 1; min-width: 0; color: #333b45">{{l.text}}</span>
+              <span style="flex: 0 0 auto; color: #5c6672; font-variant-numeric: tabular-nums">{{l.time}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"collapsed":{"editor":"boolean","default":false},"$preview":{"width":1360,"height":920}}'>
+class Component extends DCLogic {
+  state = { collapsed: null };
+
+  renderVals() {
+    const collapsed = this.state.collapsed ?? this.props.collapsed ?? false;
+    const expanded = !collapsed;
+    const active = 'Overzicht';
+    const navItems = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z' },
+      { label: 'Topologie', icon: 'M9 3h6v4H9zM3 17h6v4H3zM15 17h6v4h-6zM12 7v5M6 17v-5h12v5' },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Netwerken', icon: 'M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 17l9 5 9-5' },
+      { label: 'Onderhoud', icon: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', badge: '5' },
+      { label: 'Instellingen', icon: 'M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4M14 4v4M6 10v4M12 16v4' },
+    ];
+    const up = '#22a565', poe = '#d99a00', wan = '#1a66d9', off = '#cfd5dc';
+    const ports = (list) => list.map((c) => (Array.isArray(c) ? { c: c[0], ml: '6px' } : { c, ml: '0px' }));
+    return {
+      expanded,
+      sideW: expanded ? '216px' : '60px',
+      sideJustify: expanded ? 'flex-start' : 'center',
+      toggleIcon: expanded ? 'M4 4h16v16H4zM9 4v16M15 10l-2 2 2 2' : 'M4 4h16v16H4zM9 4v16M13 10l2 2-2 2',
+      toggle: () => this.setState({ collapsed: !collapsed }),
+      nav: navItems.map((n) => ({
+        ...n,
+        color: n.label === active ? '#14181d' : '#333b45',
+        iconColor: n.label === active ? '#1a66d9' : 'currentColor',
+        bg: n.label === active ? '#eef3fb' : 'transparent',
+        justify: expanded ? 'flex-start' : 'center',
+        showLabel: expanded,
+        showBadge: expanded && !!n.badge,
+        showDot: !expanded && !!n.badge,
+      })),
+      devices: [
+        { name: 'hAP-ax2-meterkast', model: 'hAP ax², router', ip: '192.168.88.1', ports: ports([wan, up, off, off, off]), cpu: '17%', uptime: '19 d 1 u' },
+        { name: 'CRS310-kantoor', model: 'CRS310-8G+2S+', ip: '192.168.88.2', ports: ports([up, up, up, up, up, up, off, off, [off], off]), cpu: '4%', uptime: '41 d 0 u' },
+        { name: 'hEX-PoE-zolder', model: 'hEX PoE', ip: '192.168.88.3', ports: ports([up, poe, poe, up, up, [off]]), cpu: '2%', uptime: '41 d 0 u' },
+        { name: 'cAP-ax-woonkamer', model: 'cAP ax, 6 clients', ip: '192.168.88.11', ports: ports([up, off]), cpu: '3%', uptime: '12 d 0 u' },
+        { name: 'cAP-ax-overloop', model: 'cAP ax, 4 clients', ip: '192.168.88.12', ports: ports([up, off]), cpu: '4%', uptime: '12 d 0 u' },
+      ],
+      wlans: [
+        { ssid: 'Thuis', vlan: 'geen', sec: 'WPA2 + WPA3', bands: '2,4 en 5 GHz', clients: '6' },
+        { ssid: 'Thuis-IoT', vlan: '30', sec: 'WPA2', bands: '2,4 en 5 GHz', clients: '6' },
+        { ssid: 'Thuis-Gast', vlan: '40', sec: 'WPA2 + WPA3', bands: '5 GHz', clients: '1' },
+      ],
+      log: [
+        { c: '#8b95a3', text: 'OnePlus-Nord verbonden met Thuis-Gast', time: '14:05' },
+        { c: '#22a565', text: 'Back-up opgeslagen, 2 configuraties gewijzigd', time: '03:00' },
+        { c: '#22a565', text: 'Failback naar Kabel na 35 minuten', time: '2 okt' },
+        { c: '#d99a00', text: 'Kabel down, failover naar 4G back-up', time: '2 okt' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

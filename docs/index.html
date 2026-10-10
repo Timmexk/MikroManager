@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="MikroManager: zelf gehoste beheeromgeving voor MikroTik-netwerken. Het ontwerp is klaar, de bouw is nog niet gestart.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<title>MikroManager</title>
+<style>
+/* Layout: one left-aligned column of text beside framed screens; every feature names the RouterOS menu it touches. */
+:root {
+  color-scheme: dark;
+  --bg: #0e1114; --bar: #0a0c0f; --panel: #15191e; --head: #111519;
+  --line: #242a32; --line-2: #1c2229;
+  --fg: #e6e9ed; --fg-2: #c4cbd4; --muted: #98a2af;
+  --accent: #3d8bfd; --accent-ink: #06101f; --link: #6ea8fe;
+  --ok: #3fb97a; --warn: #e0a52e; --bad: #f0655d; --off: #333b45;
+  --code-bg: #0a0c0f; --frame: #2c343d; --shade: rgba(0, 0, 0, 0.5);
+  --ok-ink: #06140c; --screen: #0e1114; --screen-light: #f3f4f6; --backdrop: rgba(4, 6, 8, 0.82);
+  --sans: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f3f4f6; --bar: #ffffff; --panel: #ffffff; --head: #f7f8fa;
+    --line: #dfe3e8; --line-2: #eceff3;
+    --fg: #14181d; --fg-2: #333b45; --muted: #5c6672;
+    --accent: #1a66d9; --accent-ink: #ffffff; --link: #1a66d9;
+    --ok: #1c8a52; --warn: #a66c00; --bad: #c8372d; --off: #c9d0d8;
+    --code-bg: #f7f8fa; --frame: #c9d0d8; --shade: rgba(20, 24, 29, 0.16);
+    --ok-ink: #ffffff; --backdrop: rgba(20, 24, 29, 0.6);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f4f6; --bar: #ffffff; --panel: #ffffff; --head: #f7f8fa;
+  --line: #dfe3e8; --line-2: #eceff3;
+  --fg: #14181d; --fg-2: #333b45; --muted: #5c6672;
+  --accent: #1a66d9; --accent-ink: #ffffff; --link: #1a66d9;
+  --ok: #1c8a52; --warn: #a66c00; --bad: #c8372d; --off: #c9d0d8;
+  --code-bg: #f7f8fa; --frame: #c9d0d8; --shade: rgba(20, 24, 29, 0.16);
+    --ok-ink: #ffffff; --backdrop: rgba(20, 24, 29, 0.6);
+}
+
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/ibm-plex-sans-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/ibm-plex-sans-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/ibm-plex-sans-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/ibm-plex-sans-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2'); }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+a { color: var(--link); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+code, pre, .mono { font-family: var(--mono); }
+code { font-size: 0.86em; padding: 1px 5px; border-radius: 3px; background: var(--code-bg); border: 1px solid var(--line); color: var(--fg-2); white-space: nowrap; }
+img { display: block; max-width: 100%; height: auto; }
+
+.wrap { width: 100%; max-width: 1180px; margin-inline: auto; padding-inline: 20px; }
+.dot { flex: 0 0 auto; width: 8px; height: 8px; background: var(--off); }
+.dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.accent { background: var(--accent); }
+.muted { color: var(--muted); }
+
+/* bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bar); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; gap: 18px; min-height: 56px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-size: 17px; letter-spacing: 0.01em; }
+.brand b { font-weight: 600; } .brand span { font-weight: 400; color: var(--muted); }
+.mark .n { stroke: var(--fg-2); } .mark .f { fill: var(--fg-2); } .mark .a { fill: var(--accent); }
+.bar nav { display: flex; gap: 4px; margin-left: auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.bar nav a { flex: 0 0 auto; padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 14.5px; }
+.bar nav a:hover { color: var(--fg); background: var(--panel); }
+.theme { flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg-2); font: inherit; font-size: 14px; cursor: pointer; }
+.theme:hover { border-color: var(--frame); color: var(--fg); }
+@media (max-width: 760px) { .bar nav { display: none; } .theme { margin-left: auto; } }
+
+/* hero */
+.hero { padding-block: 56px 28px; }
+.hero h1 { max-width: 17ch; font-size: clamp(32px, 5.2vw, 52px); letter-spacing: -0.015em; }
+.hero .lede { max-width: 62ch; margin-top: 18px; font-size: 18px; color: var(--fg-2); }
+.status { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 22px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); font-size: 14.5px; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.btn { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 6px; border: 1px solid var(--frame); background: var(--panel); color: var(--fg); text-decoration: none; font-weight: 500; }
+.btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.ports { display: flex; gap: 3px; margin-top: 34px; }
+.ports i { width: 12px; height: 12px; background: var(--off); }
+.ports .up { background: var(--ok); } .ports .poe { background: var(--warn); } .ports .wan { background: var(--accent); } .ports .gap { margin-left: 9px; }
+.ports-key { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ports-key span { display: inline-flex; align-items: center; gap: 6px; }
+
+.shot { display: block; border-radius: 8px; border: 1px solid var(--frame); background: var(--screen); overflow: hidden; box-shadow: 0 18px 50px var(--shade); }
+.shot.only-light { background: var(--screen-light); }
+.shot img { width: 100%; }
+.hero-shot { margin-top: 36px; }
+.only-light { display: none; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .only-light { display: block; } :root:not([data-theme="dark"]) .only-dark { display: none; } }
+:root[data-theme="light"] .only-light { display: block; } :root[data-theme="light"] .only-dark { display: none; }
+.note { margin-top: 12px; font-size: 13.5px; color: var(--muted); }
+
+/* sections */
+section { padding-block: 44px; }
+section + section { border-top: 1px solid var(--line); }
+.sec-head { display: flex; flex-direction: column; gap: 8px; max-width: 70ch; margin-bottom: 30px; }
+.sec-head h2 { font-size: clamp(24px, 3.2vw, 30px); letter-spacing: -0.01em; }
+.sec-head p { color: var(--fg-2); }
+
+.feature { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); gap: 36px; align-items: center; padding-block: 26px; }
+.feature + .feature { border-top: 1px solid var(--line-2); }
+.feature.flip { grid-template-columns: minmax(0, 8fr) minmax(0, 5fr); }
+.feature.flip .text { order: 2; }
+.feature .text { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.feature h3 { font-size: 21px; }
+.feature p { color: var(--fg-2); }
+.touch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.touch .mono { font-size: 12.5px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--line); background: var(--code-bg); color: var(--fg-2); }
+.points { display: flex; flex-direction: column; gap: 7px; margin: 2px 0 0; padding: 0; list-style: none; }
+.points li { display: flex; gap: 10px; color: var(--fg-2); }
+.points li::before { content: ''; flex: 0 0 auto; width: 8px; height: 8px; margin-top: 9px; background: var(--ok); }
+.open { display: flex; gap: 10px; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); font-size: 14.5px; color: var(--fg-2); }
+.open .dot { margin-top: 8px; }
+@media (max-width: 880px) { .feature, .feature.flip { grid-template-columns: minmax(0, 1fr); gap: 18px; } .feature.flip .text { order: 0; } }
+
+/* phones */
+.phones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.phones figure { margin: 0; display: flex; flex-direction: column; gap: 9px; }
+.phones .shot { border-radius: 22px; }
+.phones figcaption { font-size: 14px; color: var(--muted); }
+@media (max-width: 760px) { .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.rules li { display: flex; gap: 12px; padding-block: 14px; border-top: 1px solid var(--line-2); }
+.rules .dot { margin-top: 9px; }
+.rules b { display: block; font-weight: 600; color: var(--fg); }
+.rules span { color: var(--fg-2); }
+@media (max-width: 760px) { .rules { grid-template-columns: minmax(0, 1fr); } }
+.codebox { margin-top: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--code-bg); overflow: hidden; }
+.codebox .cap { padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--head); font-size: 13.5px; color: var(--muted); }
+.codebox pre { margin: 0; padding: 12px 14px; overflow-x: auto; font-size: 13px; line-height: 1.6; color: var(--fg-2); }
+.codebox pre b { font-weight: 500; color: var(--link); }
+
+/* table */
+.table { border-radius: 6px; border: 1px solid var(--line); background: var(--panel); overflow-x: auto; }
+table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+thead th { background: var(--head); border-bottom-color: var(--line); font-size: 13px; font-weight: 500; color: var(--muted); }
+tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
+tbody th { font-weight: 500; }
+td .dot { display: inline-block; margin-right: 8px; }
+td.no { color: var(--muted); }
+td .ring { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border: 1px solid var(--muted); }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.steps li { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); }
+.steps .n { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; border: 1px solid var(--frame); color: var(--muted); }
+.steps .done .n { border-color: var(--ok); background: var(--ok); color: var(--ok-ink); }
+.steps .next .n { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.steps .next { border-color: var(--accent); }
+.steps b { font-weight: 600; }
+.steps span { font-size: 14.5px; color: var(--fg-2); }
+.steps .state { font-size: 13px; color: var(--muted); }
+@media (max-width: 880px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+.docs { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; font-size: 15px; }
+
+/* gallery */
+.group { margin-top: 30px; }
+.group h3 { font-size: 15px; font-weight: 500; color: var(--muted); margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.grid.mobile { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+@media (max-width: 560px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .grid.mobile { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tile { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: zoom-in; }
+.tile .shot { border-radius: 6px; box-shadow: none; }
+.grid.mobile .tile .shot { border-radius: 12px; }
+.tile:hover .shot { border-color: var(--accent); }
+.tile span { font-size: 13.5px; color: var(--fg-2); }
+
+dialog.viewer { width: min(1400px, 100vw - 24px); max-width: none; max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--frame); border-radius: 8px; background: var(--panel); color: var(--fg); overflow: hidden; }
+dialog.viewer::backdrop { background: var(--backdrop); }
+.viewer .top { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); }
+.viewer .top b { font-weight: 600; } .viewer .top .cap { flex: 1; min-width: 0; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer button { height: 36px; min-width: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--head); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; }
+.viewer button:hover { border-color: var(--frame); }
+.viewer .stage { max-height: calc(100vh - 24px - 54px); overflow: auto; background: var(--screen); }
+.viewer .stage img { width: 100%; }
+.viewer .stage.narrow img { width: min(100%, 420px); margin-inline: auto; }
+
+footer { padding-block: 30px 46px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+footer p + p { margin-top: 8px; }
+footer p { max-width: 90ch; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="MikroManager, naar boven">
+      <svg class="mark" width="28" height="28" viewBox="0 0 40 40" aria-hidden="true"><path class="n" d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path class="f" d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z"></path><path class="a" d="M21 17h5v6h-5z"></path></svg>
+      <span><b>Mikro</b>Manager</span>
+    </a>
+    <nav aria-label="Op deze pagina">
+      <a href="#functies">Functies</a>
+      <a href="#mobiel">Mobiel</a>
+      <a href="#uitgangspunten">Uitgangspunten</a>
+      <a href="#rollen">Rollen</a>
+      <a href="#stand">Stand van zaken</a>
+      <a href="#schermen">Alle schermen</a>
+    </nav>
+    <button type="button" class="theme" id="theme-toggle" aria-label="Wissel tussen donker en licht thema">Thema</button>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="status"><span class="dot warn" aria-hidden="true"></span><span><b>Ontwerp klaar.</b> De bouw is nog niet gestart.</span></div>
+    <h1>Eén scherm voor al je MikroTik-apparaten</h1>
+    <p class="lede">MikroManager is een zelf gehoste webapp die via de REST API met RouterOS 7 praat. Routers, switches en access points op één plek, opgezet zoals UniFi Network en Omada, met de termen die je uit RouterOS kent.</p>
+    <div class="cta">
+      <a class="btn primary" href="#functies">Bekijk wat het doet</a>
+      <a class="btn" href="#stand">Stand van zaken</a>
+    </div>
+    <div class="ports" aria-hidden="true"><i class="wan"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="poe"></i><i class="poe"></i><i class="up"></i><i></i><i class="gap"></i><i></i></div>
+    <div class="ports-key"><span><i class="dot ok"></i>link</span><span><i class="dot warn"></i>PoE</span><span><i class="dot accent"></i>WAN</span><span><i class="dot"></i>geen link</span><span>Zo toont de app elke poort.</span></div>
+    <a class="shot hero-shot only-dark" href="schermen/overzicht.webp" data-view="overzicht"><img src="schermen/overzicht.webp" width="1360" height="970" alt="Het overzicht van de site Thuis: WAN-verbindingen met failover, vijf apparaten met hun poorten, de wifi-netwerken, het verkeer van de laatste zes uur en de log."></a>
+    <a class="shot hero-shot only-light" href="schermen/overzicht-licht.webp" data-view="overzicht-licht"><img src="schermen/overzicht-licht.webp" width="1360" height="970" alt="Het overzicht van de site Thuis in het lichte thema."></a>
+    <p class="note">Alle schermen op deze pagina zijn ontwerpen met verzonnen data. De apparaten, clients en adressen bestaan niet.</p>
+  </div>
+
+  <section id="functies">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Wat je ermee doet</h2>
+        <p>Bij elk onderdeel staat welk menu van RouterOS het leest of wijzigt. Alles wat de app op een router aanmaakt, herken je aan <code>mm-</code> in de naam.</p>
+      </div>
+      <div class="feature">
+        <div class="text">
+          <div class="touch"><span>Leest</span><span class="mono">/interface</span><span class="mono">/ip/neighbor</span><span class="mono">/interface/bridge/host</span></div>
+          <h3>Apparaten, clients en topologie</h3>
+          <p>Een poortkaart per apparaat met link, PoE en VLAN&#x27;s. Clients met signaal over 24 uur en historie. De topologie komt uit neighbors (LLDP en MNDP) en de bridge-hosts.</p>
+          <ul class="points"><li><span>Reboot, PoE power-cycle en een poort uitschakelen vanaf de poortkaart</span></li><li><span>Client een naam geven, een static lease maken, disconnecten of blokkeren</span></li><li><span>Zoeken met Ctrl K op naam, IP, MAC en vendor</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/apparaat.webp" data-view="apparaat"><img src="schermen/apparaat.webp" width="1360" height="900" loading="lazy" alt="De pagina van de switch hEX-PoE-zolder met een poortkaart, de gekozen poort ether2 en de configuratie-versies."></a>
+      </div>
+      <div class="feature flip">
+        <div class="text">
+          <div class="touch"><span>Wijzigt</span><span class="mono">/interface/wifi</span></div>
+          <h3>Wifi via CAPsMAN, ingesteld per SSID</h3>
+          <p>Elk wifi-netwerk heeft een eigen security-profiel, datapath en configuratie. Snelle roaming (802.11r), steering (802.11k/v), client-isolatie en SSID verbergen zet je dus per SSID aan of uit. Rechts staat welke stappen er op de router worden uitgevoerd voordat je opslaat.</p>
+          <ul class="points"><li><span>Per access point en per band kiezen waar een SSID uitzendt</span></li><li><span>Kanaal, kanaalbreedte en zendvermogen per radio, met de naburige netwerken erbij</span></li><li><span>Inzicht in co-channel, sticky clients en roaming</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/wifi-bewerken.webp" data-view="wifi-bewerken"><img src="schermen/wifi-bewerken.webp" width="1360" height="950" loading="lazy" alt="Het wifi-netwerk Thuis-IoT bewerken: beveiliging, uitzenden per access point en band, geavanceerde instellingen voor dit SSID en de lijst met stappen."></a>
+      </div>
+      <div class="feature">
+        <div class="text">
+          <div class="touch"><span>Wijzigt</span><span class="mono">/interface/bridge/vlan</span><span class="mono">/interface/bridge/port</span></div>
+          <h3>VLAN&#x27;s per poort, met één klik per cel</h3>
+          <p>Rijen zijn de netwerken, kolommen de poorten. Een klik wisselt tussen leeg, tagged en untagged. Onder de matrix staat in gewone taal wat er verandert, met een pre-check.</p>
+          <ul class="points"><li><span>Geen poort op slot, ook de uplink niet</span></li><li><span>De app herkent via welke poort hij het apparaat bereikt en zet daar mgmt bij</span></li><li><span>Een poort heeft één PVID</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/poortmatrix.webp" data-view="poortmatrix"><img src="schermen/poortmatrix.webp" width="1360" height="900" loading="lazy" alt="De poortmatrix van CRS310-kantoor met twee gewijzigde cellen, de lijst met wijzigingen en de pre-check."></a>
+      </div>
+      <div class="feature flip">
+        <div class="text">
+          <div class="touch"><span>Wijzigt</span><span class="mono">/system/scheduler</span><span class="mono">/system/script</span></div>
+          <h3>Buitengesloten? Het apparaat doet zelf een rollback</h3>
+          <p>Bij VLAN&#x27;s, poorten, bridge, firewall, adressen en een back-up terugzetten loopt na het toepassen een time-out. Bevestig je dat alles werkt, dan blijft de wijziging staan. Doe je niets, dan zet het apparaat de oude situatie terug, ook als de verbinding met de app weg is.</p>
+          <div class="open"><span class="dot warn" aria-hidden="true"></span><span>RouterOS biedt safe mode niet aan via de REST API. Hoe de app dit zelf regelt, moet nog op echte hardware worden bewezen.</span></div>
+        </div>
+        <a class="shot" href="schermen/veilige-modus.webp" data-view="veilige-modus"><img src="schermen/veilige-modus.webp" width="760" height="560" loading="lazy" alt="Het venster van de veilige modus met een aflopende tijd tot de automatische rollback en de knoppen Nu rollback en Bevestigen en behouden."></a>
+      </div>
+      <div class="feature">
+        <div class="text">
+          <div class="touch"><span>Wijzigt</span><span class="mono">/system/package/update</span><span class="mono">/system/routerboard</span></div><div class="touch"><span>Leest</span><span class="mono">/export</span></div>
+          <h3>Updates op volgorde, back-ups met diff</h3>
+          <p>RouterOS en RouterBOOT updaten in de juiste volgorde: eerst de access points, dan de switches, de router als laatste. Elke nacht een export per apparaat, met een nieuwe versie alleen als er iets is veranderd.</p>
+          <ul class="points"><li><span>De volgende start pas als het vorige apparaat weer online is</span></li><li><span>De wijzigingslog toont wie wat deed, ook buiten de app om</span></li><li><span>Pushmeldingen per gebeurtenis, met stille uren</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/onderhoud.webp" data-view="onderhoud"><img src="schermen/onderhoud.webp" width="1360" height="1014" loading="lazy" alt="De pagina Onderhoud met vijf apparaten die een update krijgen in vaste volgorde en de back-ups per apparaat."></a>
+      </div>
+      <div class="feature flip">
+        <div class="text">
+          <div class="touch"><span>Raakt</span><span class="mono">niets op de router</span></div>
+          <h3>Per gebruiker een rol per site</h3>
+          <p>Een gebruiker beheert wifi en clients. Een netwerkbeheerder beheert alle netwerken van de site. Een admin mag alles op alle sites. Tijdelijke toegang is een einddatum op een account, bijvoorbeeld voor een installateur.</p>
+          <ul class="points"><li><span>Inloggen met wachtwoord of passkey</span></li><li><span>Open sessies bekijken en afmelden</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/gebruikers.webp" data-view="gebruikers"><img src="schermen/gebruikers.webp" width="1360" height="860" loading="lazy" alt="De gebruikerslijst met per gebruiker de rol op drie sites, en rechts het account Installateur met tijdelijke toegang tot 16 oktober."></a>
+      </div>
+      <div class="feature">
+        <div class="text">
+          <div class="touch"><span>Wijzigt</span><span class="mono">/interface/wireguard</span><span class="mono">/ip/firewall/filter</span></div>
+          <h3>Een tweede locatie zonder de netwerken te koppelen</h3>
+          <p>De externe router zet zelf een WireGuard-tunnel op naar je thuislocatie. Dat werkt met een publiek IP en achter CGNAT. De tunnel laat alleen de REST API door.</p>
+          <ul class="points"><li><span>Geen routes naar elkaars LAN: allowed-address is alleen het tunneladres</span></li><li><span>Geen internetverkeer door de tunnel</span></li><li><span>Sites zien elkaar niet en mogen dezelfde subnetten gebruiken</span></li></ul>
+        </div>
+        <a class="shot" href="schermen/externe-site.webp" data-view="externe-site"><img src="schermen/externe-site.webp" width="1280" height="1054" loading="lazy" alt="Een externe site toevoegen: de keuze voor een management-tunnel, de vier garanties, de instellingen aan de kant van Thuis en het script voor de externe router."></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="mobiel">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Op je telefoon</h2>
+        <p>Dezelfde app, met een eigen navigatiebalk onderaan. Bedoeld om onderweg in te grijpen: een access point power-cyclen, een wifi-wachtwoord vernieuwen, een poort omzetten.</p>
+      </div>
+      <div class="phones">
+        <figure><a class="shot" href="schermen/mobiel-overzicht.webp" data-view="mobiel-overzicht"><img src="schermen/mobiel-overzicht.webp" width="390" height="844" loading="lazy" alt="Mobiel scherm: Overzicht"></a><figcaption>Overzicht</figcaption></figure>
+        <figure><a class="shot" href="schermen/mobiel-wifi.webp" data-view="mobiel-wifi"><img src="schermen/mobiel-wifi.webp" width="390" height="844" loading="lazy" alt="Mobiel scherm: Wifi"></a><figcaption>Wifi</figcaption></figure>
+        <figure><a class="shot" href="schermen/mobiel-poorten.webp" data-view="mobiel-poorten"><img src="schermen/mobiel-poorten.webp" width="390" height="844" loading="lazy" alt="Mobiel scherm: Poorten en VLAN&#x27;s"></a><figcaption>Poorten en VLAN&#x27;s</figcaption></figure>
+        <figure><a class="shot" href="schermen/mobiel-apparaat.webp" data-view="mobiel-apparaat"><img src="schermen/mobiel-apparaat.webp" width="390" height="844" loading="lazy" alt="Mobiel scherm: Ingrijpen op een apparaat"></a><figcaption>Ingrijpen op een apparaat</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="uitgangspunten">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Vaste uitgangspunten</h2>
+        <p>Deze regels gelden voor elk scherm en elke functie.</p>
+      </div>
+      <ul class="rules">
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>De app raakt alleen aan wat hij zelf heeft gemaakt</b>Objecten zonder <code>mm-</code> in de naam of <code>mm:</code> in de comment worden gelezen, nooit gewijzigd.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>Eerst zien, dan toepassen</b>Bij elke wijziging zie je de stappen die op de router worden uitgevoerd voordat er iets gebeurt.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>Opslaan per pagina</b>Je wijzigt, slaat op en gaat dan pas verder. Wil je weg terwijl er iets klaarstaat, dan vraagt de app wat ermee moet gebeuren.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>Veilige modus bij alles wat je kan buitensluiten</b>VLAN's, poorten, bridge, firewall, adressen en een back-up terugzetten.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>Geen poort op slot</b>Ook de poort waarover de app het apparaat bereikt mag je wijzigen. De app waarschuwt en de veilige modus vangt een vergissing op.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>WAN is alleen kijken</b>De app toont failover en verbruik, maar past de WAN-configuratie niet aan.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b><code>vlan-filtering</code> blijft zoals het staat</b>De app zet het op geen enkele bridge aan of uit.</span></li>
+        <li><span class="dot ok" aria-hidden="true"></span><span><b>De management-tunnel is alleen voor management</b>Geen route naar je LAN en geen internetverkeer door de tunnel.</span></li>
+      </ul>
+      <div class="codebox">
+        <div class="cap">Zo ziet één SSID eruit op de router. Vier objecten, alle vier herkenbaar.</div>
+<pre>security       <b>mm-</b>thuis-iot       wpa2-psk, passphrase, ft
+datapath       <b>mm-</b>thuis-iot       bridge=bridge vlan-id=30
+configuration  <b>mm-</b>thuis-iot-2g    ssid, country, security, datapath, channel
+configuration  <b>mm-</b>thuis-iot-5g    ssid, country, security, datapath, channel</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="rollen">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Rollen</h2>
+        <p>Elke gebruiker krijgt per site één rol. Admin geldt altijd voor alle sites. Tijdelijke toegang is een einddatum op een account, bij elke rol.</p>
+      </div>
+      <div class="table">
+        <table>
+          <thead><tr><th scope="col">Wat iemand mag</th><th scope="col">Gebruiker</th><th scope="col">Netwerkbeheerder</th><th scope="col">Admin</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Wifi-netwerken aanmaken en wijzigen, ook de wachtwoorden</th><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Clients een naam geven, blokkeren of verbreken</th><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Kanalen en radio&#x27;s</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">VLAN&#x27;s, DHCP en adressen</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Poortmatrix, PoE en poorten</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Firewall</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Gastentoegang en vouchers</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Updates, reboot en back-up maken</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Apparaten toevoegen of verwijderen</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Site-instellingen en de verbinding met de router</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Templates toepassen en een back-up terugzetten</th><td class="no">Nee</td><td class="no">Nee</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Sites en gebruikers beheren</th><td class="no">Nee</td><td class="no">Nee</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+            <tr><th scope="row">Wijzigingslog en open sessies van de eigen sites</th><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="ring" aria-hidden="true"></span>Alleen bekijken</td><td><span class="dot ok" aria-hidden="true"></span>Ja</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="stand">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Stand van zaken</h2>
+        <p>Er is een proefversie en een compleet ontwerp. Er wordt pas gebouwd nadat de aannames op echte apparaten zijn nagelopen.</p>
+      </div>
+      <ol class="steps">
+        <li class="done"><span class="n">1</span><b>Proefversie v0.1</b><span>Eén container met FastAPI en React. Werkt tegen een RouterOS-simulator, nooit op echte hardware gedraaid.</span><span class="state">Klaar</span></li>
+        <li class="done"><span class="n">2</span><b>Ontwerp</b><span>40 schermen voor desktop en mobiel, met de ontwerpbesluiten erbij.</span><span class="state">Klaar</span></li>
+        <li class="next"><span class="n">3</span><b>Hardwareproef</b><span>Een testlijst op een router, een switch en een access point. Het belangrijkste punt: hoe de rollback van de veilige modus werkt zonder verbinding.</span><span class="state">Volgende stap</span></li>
+        <li><span class="n">4</span><b>Bouw</b><span>In acht fasen. Eerst alles wat alleen leest, dan wifi, dan wat je kan buitensluiten.</span><span class="state">Nog niet gestart</span></li>
+      </ol>
+      <div class="docs">
+        <span class="muted">In de repository, voor wie toegang heeft:</span>
+        <a href="https://github.com/Timmexk/MikroManager/blob/main/ontwerp/ontwerpbesluiten.md">Ontwerpbesluiten</a>
+        <a href="https://github.com/Timmexk/MikroManager/blob/main/ontwerp/hardware-testlijst.md">Testlijst voor hardware</a>
+        <a href="https://github.com/Timmexk/MikroManager/blob/main/ontwerp/bouwplan.md">Bouwplan</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="schermen">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Alle schermen</h2>
+        <p>Klik op een scherm om het groot te bekijken.</p>
+      </div>
+      <div class="group"><h3>Dagelijks beheer</h3><div class="grid"><a class="tile" href="schermen/overzicht.webp" data-view="overzicht"><span class="shot"><img src="schermen/klein/overzicht.webp" width="1360" height="970" loading="lazy" alt=""></span><span>Overzicht</span></a><a class="tile" href="schermen/overzicht-licht.webp" data-view="overzicht-licht"><span class="shot"><img src="schermen/klein/overzicht-licht.webp" width="1360" height="970" loading="lazy" alt=""></span><span>Overzicht, licht thema</span></a><a class="tile" href="schermen/topologie.webp" data-view="topologie"><span class="shot"><img src="schermen/klein/topologie.webp" width="1360" height="840" loading="lazy" alt=""></span><span>Topologie</span></a><a class="tile" href="schermen/apparaat.webp" data-view="apparaat"><span class="shot"><img src="schermen/klein/apparaat.webp" width="1360" height="900" loading="lazy" alt=""></span><span>Apparaat</span></a><a class="tile" href="schermen/clients.webp" data-view="clients"><span class="shot"><img src="schermen/klein/clients.webp" width="1360" height="900" loading="lazy" alt=""></span><span>Clients</span></a><a class="tile" href="schermen/snelzoeken.webp" data-view="snelzoeken"><span class="shot"><img src="schermen/klein/snelzoeken.webp" width="760" height="560" loading="lazy" alt=""></span><span>Snelzoeken</span></a><a class="tile" href="schermen/meldingencentrum.webp" data-view="meldingencentrum"><span class="shot"><img src="schermen/klein/meldingencentrum.webp" width="900" height="760" loading="lazy" alt=""></span><span>Meldingencentrum</span></a></div></div>
+      <div class="group"><h3>Wifi</h3><div class="grid"><a class="tile" href="schermen/wifi-overzicht.webp" data-view="wifi-overzicht"><span class="shot"><img src="schermen/klein/wifi-overzicht.webp" width="1360" height="900" loading="lazy" alt=""></span><span>Wifi: overzicht</span></a><a class="tile" href="schermen/wifi-bewerken.webp" data-view="wifi-bewerken"><span class="shot"><img src="schermen/klein/wifi-bewerken.webp" width="1360" height="950" loading="lazy" alt=""></span><span>Wifi: netwerk bewerken</span></a><a class="tile" href="schermen/wifi-kanalen.webp" data-view="wifi-kanalen"><span class="shot"><img src="schermen/klein/wifi-kanalen.webp" width="1360" height="920" loading="lazy" alt=""></span><span>Wifi: kanalen en radio’s</span></a><a class="tile" href="schermen/wifi-inzicht.webp" data-view="wifi-inzicht"><span class="shot"><img src="schermen/klein/wifi-inzicht.webp" width="1120" height="736" loading="lazy" alt=""></span><span>Wifi: inzicht</span></a><a class="tile" href="schermen/wifi-gasten.webp" data-view="wifi-gasten"><span class="shot"><img src="schermen/klein/wifi-gasten.webp" width="1120" height="572" loading="lazy" alt=""></span><span>Wifi: gasten</span></a></div></div>
+      <div class="group"><h3>Netwerken en veilige modus</h3><div class="grid"><a class="tile" href="schermen/netwerken.webp" data-view="netwerken"><span class="shot"><img src="schermen/klein/netwerken.webp" width="1360" height="1200" loading="lazy" alt=""></span><span>Netwerken</span></a><a class="tile" href="schermen/poortmatrix.webp" data-view="poortmatrix"><span class="shot"><img src="schermen/klein/poortmatrix.webp" width="1360" height="900" loading="lazy" alt=""></span><span>Poortmatrix bewerken</span></a><a class="tile" href="schermen/veilige-modus.webp" data-view="veilige-modus"><span class="shot"><img src="schermen/klein/veilige-modus.webp" width="760" height="560" loading="lazy" alt=""></span><span>Veilige modus</span></a><a class="tile" href="schermen/opslaan-per-pagina.webp" data-view="opslaan-per-pagina"><span class="shot"><img src="schermen/klein/opslaan-per-pagina.webp" width="1120" height="736" loading="lazy" alt=""></span><span>Opslaan per pagina</span></a></div></div>
+      <div class="group"><h3>Onderhoud</h3><div class="grid"><a class="tile" href="schermen/onderhoud.webp" data-view="onderhoud"><span class="shot"><img src="schermen/klein/onderhoud.webp" width="1360" height="1014" loading="lazy" alt=""></span><span>Onderhoud</span></a><a class="tile" href="schermen/wijzigingslog.webp" data-view="wijzigingslog"><span class="shot"><img src="schermen/klein/wijzigingslog.webp" width="1120" height="580" loading="lazy" alt=""></span><span>Wijzigingslog</span></a><a class="tile" href="schermen/wie-deed-wat.webp" data-view="wie-deed-wat"><span class="shot"><img src="schermen/klein/wie-deed-wat.webp" width="1280" height="726" loading="lazy" alt=""></span><span>Wijzigingslog: wie deed wat</span></a><a class="tile" href="schermen/instellingen.webp" data-view="instellingen"><span class="shot"><img src="schermen/klein/instellingen.webp" width="1360" height="900" loading="lazy" alt=""></span><span>Instellingen</span></a><a class="tile" href="schermen/pushmeldingen.webp" data-view="pushmeldingen"><span class="shot"><img src="schermen/klein/pushmeldingen.webp" width="1120" height="700" loading="lazy" alt=""></span><span>Pushmeldingen</span></a></div></div>
+      <div class="group"><h3>Toegang</h3><div class="grid"><a class="tile" href="schermen/inloggen.webp" data-view="inloggen"><span class="shot"><img src="schermen/klein/inloggen.webp" width="1120" height="740" loading="lazy" alt=""></span><span>Inloggen</span></a><a class="tile" href="schermen/gebruikers.webp" data-view="gebruikers"><span class="shot"><img src="schermen/klein/gebruikers.webp" width="1360" height="860" loading="lazy" alt=""></span><span>Gebruikers</span></a><a class="tile" href="schermen/gebruiker-toevoegen.webp" data-view="gebruiker-toevoegen"><span class="shot"><img src="schermen/klein/gebruiker-toevoegen.webp" width="1120" height="834" loading="lazy" alt=""></span><span>Gebruiker toevoegen</span></a><a class="tile" href="schermen/rollen.webp" data-view="rollen"><span class="shot"><img src="schermen/klein/rollen.webp" width="1120" height="902" loading="lazy" alt=""></span><span>Rollen</span></a></div></div>
+      <div class="group"><h3>Sites</h3><div class="grid"><a class="tile" href="schermen/eerste-keer-instellen.webp" data-view="eerste-keer-instellen"><span class="shot"><img src="schermen/klein/eerste-keer-instellen.webp" width="1120" height="764" loading="lazy" alt=""></span><span>Eerste keer instellen</span></a><a class="tile" href="schermen/externe-site.webp" data-view="externe-site"><span class="shot"><img src="schermen/klein/externe-site.webp" width="1280" height="1054" loading="lazy" alt=""></span><span>Externe site toevoegen</span></a><a class="tile" href="schermen/apparaten-ontdekken.webp" data-view="apparaten-ontdekken"><span class="shot"><img src="schermen/klein/apparaten-ontdekken.webp" width="900" height="620" loading="lazy" alt=""></span><span>Apparaten ontdekken</span></a><a class="tile" href="schermen/templates.webp" data-view="templates"><span class="shot"><img src="schermen/klein/templates.webp" width="1120" height="852" loading="lazy" alt=""></span><span>Templates</span></a></div></div>
+      <div class="group"><h3>Mobiel</h3><div class="grid mobile"><a class="tile" href="schermen/mobiel-overzicht.webp" data-view="mobiel-overzicht"><span class="shot"><img src="schermen/klein/mobiel-overzicht.webp" width="390" height="844" loading="lazy" alt=""></span><span>Overzicht</span></a><a class="tile" href="schermen/mobiel-client.webp" data-view="mobiel-client"><span class="shot"><img src="schermen/klein/mobiel-client.webp" width="390" height="844" loading="lazy" alt=""></span><span>Client</span></a><a class="tile" href="schermen/mobiel-apparaat.webp" data-view="mobiel-apparaat"><span class="shot"><img src="schermen/klein/mobiel-apparaat.webp" width="390" height="844" loading="lazy" alt=""></span><span>Apparaat</span></a><a class="tile" href="schermen/mobiel-wifi.webp" data-view="mobiel-wifi"><span class="shot"><img src="schermen/klein/mobiel-wifi.webp" width="390" height="844" loading="lazy" alt=""></span><span>Wifi</span></a><a class="tile" href="schermen/mobiel-wifi-bewerken.webp" data-view="mobiel-wifi-bewerken"><span class="shot"><img src="schermen/klein/mobiel-wifi-bewerken.webp" width="390" height="844" loading="lazy" alt=""></span><span>Wifi-netwerk bewerken</span></a><a class="tile" href="schermen/mobiel-poorten.webp" data-view="mobiel-poorten"><span class="shot"><img src="schermen/klein/mobiel-poorten.webp" width="390" height="844" loading="lazy" alt=""></span><span>Poorten en VLAN’s</span></a><a class="tile" href="schermen/mobiel-meldingen.webp" data-view="mobiel-meldingen"><span class="shot"><img src="schermen/klein/mobiel-meldingen.webp" width="390" height="844" loading="lazy" alt=""></span><span>Meldingen</span></a><a class="tile" href="schermen/mobiel-onderhoud.webp" data-view="mobiel-onderhoud"><span class="shot"><img src="schermen/klein/mobiel-onderhoud.webp" width="390" height="844" loading="lazy" alt=""></span><span>Onderhoud</span></a><a class="tile" href="schermen/mobiel-meer.webp" data-view="mobiel-meer"><span class="shot"><img src="schermen/klein/mobiel-meer.webp" width="390" height="844" loading="lazy" alt=""></span><span>Meer</span></a><a class="tile" href="schermen/mobiel-inloggen.webp" data-view="mobiel-inloggen"><span class="shot"><img src="schermen/klein/mobiel-inloggen.webp" width="390" height="844" loading="lazy" alt=""></span><span>Inloggen</span></a></div></div>
+      <div class="group"><h3>Naam en pictogram</h3><div class="grid"><a class="tile" href="schermen/pictogram.webp" data-view="pictogram"><span class="shot"><img src="schermen/klein/pictogram.webp" width="1360" height="720" loading="lazy" alt=""></span><span>Pictogram</span></a></div></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>MikroManager is een persoonlijk project en geen product van MikroTik. MikroTik en RouterOS zijn handelsmerken van SIA Mikrotīkls. UniFi is een handelsmerk van Ubiquiti en Omada van TP-Link. Dit project is aan geen van deze bedrijven verbonden.</p>
+    <p>Lettertypen: IBM Plex Sans en IBM Plex Mono, SIL Open Font License 1.1.</p>
+  </div>
+</footer>
+
+<dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+  <div class="top">
+    <b id="viewer-title"></b><span class="cap" id="viewer-cap"></span>
+    <button type="button" id="viewer-prev" aria-label="Vorig scherm">←</button>
+    <button type="button" id="viewer-next" aria-label="Volgend scherm">→</button>
+    <button type="button" id="viewer-close">Sluiten</button>
+  </div>
+  <div class="stage" id="viewer-stage"><img id="viewer-img" alt=""></div>
+</dialog>
+
+<script>
+(function () {
+  var SHOTS = [{"slug": "overzicht", "title": "Overzicht", "caption": "WAN, apparaten, clients en wat aandacht vraagt op één pagina.", "mobile": false}, {"slug": "overzicht-licht", "title": "Overzicht, licht thema", "caption": "Hetzelfde scherm in het lichte thema.", "mobile": false}, {"slug": "topologie", "title": "Topologie", "caption": "Backbone op basis van neighbors (LLDP en MNDP) en bridge-hosts.", "mobile": false}, {"slug": "apparaat", "title": "Apparaat", "caption": "Poortkaart met link, PoE, VLAN’s en configuratie-versies.", "mobile": false}, {"slug": "clients", "title": "Clients", "caption": "Lijst met detail, signaal over 24 uur en historie.", "mobile": false}, {"slug": "snelzoeken", "title": "Snelzoeken", "caption": "Ctrl K zoekt op naam, IP, MAC en vendor en biedt acties aan.", "mobile": false}, {"slug": "meldingencentrum", "title": "Meldingencentrum", "caption": "Opent vanuit de bel in de zijbalk.", "mobile": false}, {"slug": "wifi-overzicht", "title": "Wifi: overzicht", "caption": "SSID’s, access points en signaalsterkte van de clients.", "mobile": false}, {"slug": "wifi-bewerken", "title": "Wifi: netwerk bewerken", "caption": "Alle instellingen gelden voor één SSID. Rechts staat wat er op de router verandert.", "mobile": false}, {"slug": "wifi-kanalen", "title": "Wifi: kanalen en radio’s", "caption": "Kanaalplan per band met naburige netwerken, kanaalbreedte en zendvermogen.", "mobile": false}, {"slug": "wifi-inzicht", "title": "Wifi: inzicht", "caption": "Co-channel, sticky clients en roaming van vandaag.", "mobile": false}, {"slug": "wifi-gasten", "title": "Wifi: gasten", "caption": "QR-code, wachtwoord en vouchers voor het gastnetwerk.", "mobile": false}, {"slug": "netwerken", "title": "Netwerken", "caption": "WAN-verbindingen met failover-geschiedenis, lokale netwerken en de poortmatrix.", "mobile": false}, {"slug": "poortmatrix", "title": "Poortmatrix bewerken", "caption": "Klik op een cel: leeg, tagged, untagged. Geen poort staat op slot.", "mobile": false}, {"slug": "veilige-modus", "title": "Veilige modus", "caption": "Bevestig je niet, dan volgt een rollback, ook als de verbinding weg is.", "mobile": false}, {"slug": "opslaan-per-pagina", "title": "Opslaan per pagina", "caption": "De balk onderaan en de vraag bij het verlaten van een pagina.", "mobile": false}, {"slug": "onderhoud", "title": "Onderhoud", "caption": "Updates op volgorde en back-ups met diff.", "mobile": false}, {"slug": "wijzigingslog", "title": "Wijzigingslog", "caption": "Elke wijziging met diff, ook wat buiten de app is gedaan.", "mobile": false}, {"slug": "wie-deed-wat", "title": "Wijzigingslog: wie deed wat", "caption": "Per gebruiker en per site, met de open sessies.", "mobile": false}, {"slug": "instellingen", "title": "Instellingen", "caption": "Wat bij de site hoort en wat voor de hele app geldt, staat apart.", "mobile": false}, {"slug": "pushmeldingen", "title": "Pushmeldingen", "caption": "Per gebeurtenis aan of uit, met stille uren.", "mobile": false}, {"slug": "inloggen", "title": "Inloggen", "caption": "Wachtwoord of passkey.", "mobile": false}, {"slug": "gebruikers", "title": "Gebruikers", "caption": "Per gebruiker een rol per site, met tijdelijke toegang.", "mobile": false}, {"slug": "gebruiker-toevoegen", "title": "Gebruiker toevoegen", "caption": "Rechts staat wat de gebruiker straks mag.", "mobile": false}, {"slug": "rollen", "title": "Rollen", "caption": "Gebruiker, Netwerkbeheerder en Admin naast elkaar.", "mobile": false}, {"slug": "eerste-keer-instellen", "title": "Eerste keer instellen", "caption": "Vijf stappen. Er verandert niets op de router tot je daarvoor kiest.", "mobile": false}, {"slug": "externe-site", "title": "Externe site toevoegen", "caption": "Een WireGuard-tunnel die alleen management doorlaat.", "mobile": false}, {"slug": "apparaten-ontdekken", "title": "Apparaten ontdekken", "caption": "Via neighbor discovery en een scan van het subnet.", "mobile": false}, {"slug": "templates", "title": "Templates", "caption": "Een vaste set netwerken en instellingen voor een nieuwe locatie.", "mobile": false}, {"slug": "mobiel-overzicht", "title": "Mobiel: overzicht", "caption": "", "mobile": true}, {"slug": "mobiel-client", "title": "Mobiel: client", "caption": "", "mobile": true}, {"slug": "mobiel-apparaat", "title": "Mobiel: apparaat", "caption": "", "mobile": true}, {"slug": "mobiel-wifi", "title": "Mobiel: wifi", "caption": "", "mobile": true}, {"slug": "mobiel-wifi-bewerken", "title": "Mobiel: wifi-netwerk bewerken", "caption": "", "mobile": true}, {"slug": "mobiel-poorten", "title": "Mobiel: poorten en VLAN’s", "caption": "", "mobile": true}, {"slug": "mobiel-meldingen", "title": "Mobiel: meldingen", "caption": "", "mobile": true}, {"slug": "mobiel-onderhoud", "title": "Mobiel: onderhoud", "caption": "", "mobile": true}, {"slug": "mobiel-meer", "title": "Mobiel: meer", "caption": "", "mobile": true}, {"slug": "mobiel-inloggen", "title": "Mobiel: inloggen", "caption": "", "mobile": true}, {"slug": "pictogram", "title": "Pictogram", "caption": "De drie kandidaten; gekozen is switch 1.", "mobile": false}];
+  var root = document.documentElement;
+
+  // theme: a per-viewer convenience, the page follows the system setting without it
+  var btn = document.getElementById('theme-toggle');
+  function current() {
+    var t = root.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function label() { btn.textContent = current() === 'dark' ? 'Licht thema' : 'Donker thema'; }
+  try { var saved = localStorage.getItem('mm-theme'); if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved); } catch (e) {}
+  label();
+  btn.addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('mm-theme', next); } catch (e) {}
+    label();
+  });
+
+  // viewer
+  var dlg = document.getElementById('viewer');
+  if (!dlg || typeof dlg.showModal !== 'function') return;
+  var img = document.getElementById('viewer-img'), title = document.getElementById('viewer-title');
+  var cap = document.getElementById('viewer-cap'), stage = document.getElementById('viewer-stage');
+  var at = 0;
+  function show(i) {
+    at = (i + SHOTS.length) % SHOTS.length;
+    var s = SHOTS[at];
+    img.src = 'schermen/' + s.slug + '.webp';
+    img.alt = s.title;
+    title.textContent = s.title;
+    cap.textContent = s.caption || '';
+    stage.className = 'stage' + (s.mobile ? ' narrow' : '');
+    stage.scrollTop = 0;
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('[data-view]') : null;
+    if (!a) return;
+    var slug = a.getAttribute('data-view');
+    for (var i = 0; i < SHOTS.length; i++) if (SHOTS[i].slug === slug) { e.preventDefault(); show(i); dlg.showModal(); return; }
+  });
+  document.getElementById('viewer-prev').addEventListener('click', function () { show(at - 1); });
+  document.getElementById('viewer-next').addEventListener('click', function () { show(at + 1); });
+  document.getElementById('viewer-close').addEventListener('click', function () { dlg.close(); });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') show(at - 1);
+    if (e.key === 'ArrowRight') show(at + 1);
+  });
+})();
+</script>
+</body>
+</html>

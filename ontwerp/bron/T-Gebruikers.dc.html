@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Gebruikers: per gebruiker een rol per site</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#instellingen" style="color: #98a2af; text-decoration: none">Instellingen</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Gebruikers</h1>
+      <span style="color: #98a2af">Alleen voor admins</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div style="display: flex; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+        <button type="button" aria-pressed="true" style="height: 36px; padding: 0 12px; border: 0; background: #242a32; color: #ffffff; font: inherit; font-weight: 500; cursor: pointer">Gebruikers 6</button>
+        <button type="button" aria-pressed="false" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">Rollen</button>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Gebruiker toevoegen</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <section style="flex: 2 1 720px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="overflow-x: auto">
+        <div style="min-width: 760px">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 130px) 96px 114px; gap: 10px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">
+            <span>Gebruiker</span><span>Thuis</span><span>Tweede locatie</span><span>Kantoor</span><span>Laatst actief</span><span>Status</span>
+          </div>
+          <sc-for list="{{users}}" as="u" hint-placeholder-count="6">
+            <button type="button" aria-pressed="{{u.pressed}}" style="display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 130px) 96px 114px; gap: 10px; align-items: center; width: 100%; box-sizing: border-box; min-height: 56px; padding: 6px 14px; border: 0; border-bottom: 1px solid #1c2229; background: {{u.bg}}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+              <span style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                <span style="flex: 0 0 auto; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #c4cbd4; background: #242a32" aria-hidden="true">{{u.initials}}</span>
+                <span style="min-width: 0"><span style="display: block; font-weight: 500; color: {{u.nameColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.name}}</span><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #98a2af; white-space: nowrap">{{u.login}}</span></span>
+              </span>
+              <sc-for list="{{u.cells}}" as="c" hint-placeholder-count="3">
+                <span style="grid-column: span {{c.span}}; display: flex; align-items: center; gap: 7px; color: {{c.color}}; font-weight: {{c.weight}}"><span style="flex: 0 0 auto; width: 8px; height: 8px; box-sizing: border-box; background: {{c.dot}}; border: 1px solid {{c.ring}}" aria-hidden="true"></span>{{c.text}}</span>
+              </sc-for>
+              <span style="color: #98a2af">{{u.seen}}</span>
+              <span style="display: flex; align-items: center; gap: 7px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{u.dot}}" aria-hidden="true"></span>{{u.status}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px 18px; min-height: 40px; align-items: center; padding: 6px 14px; font-size: 12.5px; color: #98a2af">
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span>Admin: alles, op alle sites</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 8px; height: 8px; background: #c4cbd4" aria-hidden="true"></span>Netwerkbeheerder: de netwerken van die site</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="width: 8px; height: 8px; box-sizing: border-box; border: 2px solid #c4cbd4" aria-hidden="true"></span>Gebruiker: wifi en clients, de rest alleen bekijken</span>
+      </div>
+    </section>
+
+    <section style="flex: 1 1 400px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 6px 14px; border-bottom: 1px solid #242a32">
+        <div>
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Installateur</h2>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #98a2af">installateur</div>
+        </div>
+        <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #5a2a27; background: #111519; color: #ff8b84; font: inherit; font-weight: 500; cursor: pointer">Uitschakelen</button>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 4px 8px 4px 14px; border-bottom: 1px solid #242a32">
+        <div style="min-width: 0"><div style="font-weight: 500">Admin</div><div style="color: #98a2af">Mag alles op alle sites, ook gebruikers beheren</div></div>
+        <button type="button" role="switch" aria-checked="false" aria-label="Admin" style="flex: 0 0 auto; width: 48px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: #2c343d; display: flex; justify-content: flex-start"><span style="width: 16px; height: 16px; border-radius: 8px; background: #98a2af"></span></span>
+        </button>
+      </div>
+
+      <div style="padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">Rol per site</div>
+      <sc-for list="{{sites}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 9px 14px 10px; border-bottom: 1px solid #1c2229; background: {{s.bg}}">
+          <div style="display: flex; justify-content: space-between; gap: 10px"><span style="font-weight: 500">{{s.name}}</span><span style="font-size: 12.5px; color: #6ea8fe">{{s.note}}</span></div>
+          <div role="radiogroup" aria-label="Rol op {{s.name}}" style="display: grid; grid-template-columns: 0.7fr 1fr 1.4fr; border-radius: 6px; border: 1px solid #2c343d; overflow: hidden">
+            <sc-for list="{{s.roles}}" as="r" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{r.checked}}" style="height: 36px; padding: 0 6px; border: 0; border-left: 1px solid {{r.sep}}; background: {{r.bg}}; color: {{r.color}}; font: inherit; font-weight: {{r.weight}}; cursor: pointer">{{r.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="padding: 10px 14px 12px; border-bottom: 1px solid #1c2229; background: #1b1810">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 600"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span>Tijdelijke toegang</div>
+          <button type="button" role="switch" aria-checked="true" aria-label="Tijdelijke toegang" style="flex: 0 0 auto; width: 48px; height: 36px; margin-right: -6px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: #3d8bfd; display: flex; justify-content: flex-end"><span style="width: 16px; height: 16px; border-radius: 8px; background: #ffffff"></span></span>
+          </button>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-top: 6px">
+          <label style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 130px">
+            <span style="font-size: 12.5px; color: #98a2af">Verloopt op</span>
+            <input type="date" value="2026-10-16" style="height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; color-scheme: dark">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px; flex: 0 1 100px">
+            <span style="font-size: 12.5px; color: #98a2af">Om</span>
+            <input type="time" value="18:00" style="height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; color-scheme: dark">
+          </label>
+          <button type="button" style="height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Nu intrekken</button>
+        </div>
+        <div style="margin-top: 8px; color: #c4cbd4">Over 7 dagen. Daarna kan dit account niet meer inloggen en worden open sessies afgemeld.</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 5px 12px; padding: 12px 14px">
+        <span style="color: #98a2af">Wachtwoord</span><span>Ingesteld op 7 oktober</span>
+        <span style="color: #98a2af">Passkeys</span><span>Geen</span>
+        <span style="color: #98a2af">Open sessie</span><span>Chrome op Windows, <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">10.20.10.44</span></span>
+      </div>
+    </section>
+
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 6px 8px 6px 14px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d; box-shadow: 0 10px 30px rgba(0,0,0,0.45)">
+    <div style="display: flex; align-items: center; gap: 9px; min-width: 0"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span><span><span style="font-weight: 600">1 wijziging niet opgeslagen</span> <span style="color: #98a2af">Installateur op Kantoor: van Geen naar Netwerkbeheerder</span></span></div>
+    <div style="display: flex; gap: 8px">
+      <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #3a424d; background: transparent; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verwerpen</button>
+      <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Opslaan</button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":860}}'>
+// One role per user per site. Admin is not a site role: it covers every site.
+const cell = (role) => role === 'Admin'
+  ? { text: 'Admin, alle sites', span: 3, color: '#e6e9ed', weight: 600, dot: '#3d8bfd', ring: '#3d8bfd' }
+  : role === 'Netwerkbeheerder'
+    ? { text: role, span: 1, color: '#e6e9ed', weight: 500, dot: '#c4cbd4', ring: '#c4cbd4' }
+    : role === 'Gebruiker'
+      ? { text: role, span: 1, color: '#c4cbd4', weight: 400, dot: 'transparent', ring: '#c4cbd4' }
+      : { text: 'Geen', span: 1, color: '#5d6875', weight: 400, dot: 'transparent', ring: 'transparent' };
+const user = (name, login, initials, roles, seen, status, dot, flags = {}) => ({
+  name, login, initials, seen, status, dot,
+  cells: roles.map(cell),
+  pressed: flags.selected ? 'true' : 'false',
+  bg: flags.selected ? '#141c28' : 'transparent',
+  nameColor: flags.off ? '#98a2af' : '#e6e9ed',
+});
+const pickRole = (name, picked, was) => ({
+  name,
+  note: was ? 'Gewijzigd, was: ' + was : '',
+  bg: was ? '#141c28' : 'transparent',
+  roles: ['Geen', 'Gebruiker', 'Netwerkbeheerder'].map((label, i) => ({
+    label,
+    checked: label === picked ? 'true' : 'false',
+    bg: label === picked ? '#242a32' : '#111519',
+    color: label === picked ? '#ffffff' : '#98a2af',
+    weight: label === picked ? 600 : 400,
+    sep: i === 0 ? 'transparent' : '#2c343d',
+  })),
+});
+class Component extends DCLogic {
+  renderVals() {
+    const ok = '#3fb97a';
+    return {
+      users: [
+        user('Hoofdbeheerder', 'admin', 'HB', ['Admin'], 'Nu', 'Actief', ok),
+        user('Sanne de Vries', 'sanne', 'SV', ['Netwerkbeheerder', 'Gebruiker', 'Geen'], 'Vandaag 10:20', 'Actief', ok),
+        user('Ruben Jacobs', 'ruben', 'RJ', ['Gebruiker', 'Gebruiker', 'Geen'], 'Vandaag 11:48', 'Actief', ok),
+        user('Installateur', 'installateur', 'IN', ['Geen', 'Netwerkbeheerder', 'Geen'], 'Gisteren 16:05', 'Verloopt 16 okt', '#e0a52e', { selected: true }),
+        user('Lotte Peeters', 'lotte', 'LP', ['Gebruiker', 'Geen', 'Geen'], '2 oktober', 'Actief', ok),
+        user('Oud beheeraccount', 'beheer-oud', 'OB', ['Geen', 'Geen', 'Geen'], '14 augustus', 'Uitgeschakeld', '#5d6875', { off: true }),
+      ],
+      sites: [
+        pickRole('Thuis', 'Geen'),
+        pickRole('Tweede locatie', 'Netwerkbeheerder'),
+        pickRole('Kantoor', 'Netwerkbeheerder', 'Geen'),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

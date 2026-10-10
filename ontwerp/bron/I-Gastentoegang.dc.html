@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Gastentoegang: QR-code en vouchers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#wifi" style="color: #98a2af; text-decoration: none">Wifi</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Gasten</h1>
+      <span style="color: #98a2af">Thuis, netwerk Gasten (VLAN 40, geïsoleerd)</span>
+    </div>
+    <button type="button" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Vouchers maken</button>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <section style="flex: 1 1 320px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Thuis-Gast</h2>
+        <span style="color: #98a2af">1 gast verbonden</span>
+      </div>
+      <div style="padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 14px">
+        <div style="width: 196px; height: 196px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; border-radius: 6px; background: #ffffff; border: 1px dashed #8b95a3; color: #333b45; font-weight: 500">QR-code om te verbinden met Thuis-Gast</div>
+        <div style="color: #98a2af; text-align: center">Scannen met de camera verbindt direct, zonder het wachtwoord te typen.</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 100px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 44px; padding: 0 14px; border-top: 1px solid #1c2229">
+        <span style="color: #98a2af">Wachtwoord</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">welkom-bij-ons</span>
+        <button type="button" style="height: 36px; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Vernieuwen</button>
+      </div>
+      <div style="display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #1c2229">
+        <button type="button" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Afdrukken</button>
+        <button type="button" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Delen</button>
+      </div>
+    </section>
+
+    <div style="flex: 2.2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); border-radius: 6px; background: #15191e; border: 1px solid #242a32">
+        <div style="padding: 11px 14px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">Vouchers in gebruik</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">2</div></div>
+        <div style="padding: 11px 14px; border-right: 1px solid #242a32"><div style="font-size: 12.5px; color: #98a2af">Nog niet gebruikt</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">4</div></div>
+        <div style="padding: 11px 14px"><div style="font-size: 12.5px; color: #98a2af">Verlopen deze week</div><div style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">3</div></div>
+      </section>
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 14px">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Vouchers</h2>
+          <div style="display: flex; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+            <button type="button" style="height: 36px; padding: 0 12px; border: 0; background: #242a32; color: #ffffff; font: inherit; font-weight: 500; cursor: pointer">Actief</button>
+            <button type="button" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">Verlopen</button>
+          </div>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 600px">
+            <div style="display: grid; grid-template-columns: 96px minmax(0, 1.7fr) 76px minmax(0, 1fr) 100px; gap: 12px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32">
+              <span>Code</span><span>Geldig</span><span>Rate limit</span><span>Gebruikt door</span><span>Status</span>
+            </div>
+            <sc-for list="{{vouchers}}" as="v" hint-placeholder-count="6">
+              <div style="display: grid; grid-template-columns: 96px minmax(0, 1.7fr) 76px minmax(0, 1fr) 100px; gap: 12px; align-items: center; height: 40px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500">{{v.code}}</span>
+                <span style="color: #c4cbd4">{{v.valid}}</span>
+                <span style="color: #98a2af; font-variant-numeric: tabular-nums">{{v.speed}}</span>
+                <span style="color: #c4cbd4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{v.user}}</span>
+                <span style="display: flex; align-items: center; gap: 7px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{v.dot}}" aria-hidden="true"></span>{{v.status}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="min-height: 40px; display: flex; align-items: center; padding: 4px 14px; color: #98a2af">Vouchers gebruiken de hotspot van RouterOS op het gastnetwerk; de QR-code werkt ook zonder.</div>
+      </section>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":680}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      vouchers: [
+        { code: 'K7M2-QX4D', valid: '24 uur, nog 20 uur', speed: '20 Mbps', user: 'OnePlus-Nord', status: 'In gebruik', dot: '#3fb97a' },
+        { code: 'P3HN-8TRA', valid: '7 dagen, nog 5 dagen', speed: '20 Mbps', user: 'Galaxy-A54', status: 'In gebruik', dot: '#3fb97a' },
+        { code: 'W9CE-2LFB', valid: '24 uur na eerste gebruik', speed: '20 Mbps', user: '', status: 'Ongebruikt', dot: '#5d6875' },
+        { code: 'D4VY-6JKS', valid: '24 uur na eerste gebruik', speed: '20 Mbps', user: '', status: 'Ongebruikt', dot: '#5d6875' },
+        { code: 'T8RU-1MZP', valid: '7 dagen na eerste gebruik', speed: '50 Mbps', user: '', status: 'Ongebruikt', dot: '#5d6875' },
+        { code: 'B2GA-5NWE', valid: '7 dagen na eerste gebruik', speed: '50 Mbps', user: '', status: 'Ongebruikt', dot: '#5d6875' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

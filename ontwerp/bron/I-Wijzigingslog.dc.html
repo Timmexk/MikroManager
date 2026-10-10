@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Wijzigingslog met verschil en terugzetten</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#onderhoud" style="color: #98a2af; text-decoration: none">Onderhoud</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Wijzigingslog</h1>
+      <span style="color: #98a2af">Thuis, alles wat aan de configuratie is veranderd</span>
+    </div>
+    <div style="display: flex; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+      <button type="button" style="height: 36px; padding: 0 12px; border: 0; background: #242a32; color: #ffffff; font: inherit; font-weight: 500; cursor: pointer">Alles</button>
+      <button type="button" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">Via de app</button>
+      <button type="button" style="height: 36px; padding: 0 12px; border: 0; border-left: 1px solid #242a32; background: #15191e; color: #98a2af; font: inherit; cursor: pointer">Buiten de app</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <section style="flex: 3 1 480px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 110px 96px minmax(0, 1fr); gap: 12px; padding: 8px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">
+        <span>Wanneer</span><span>Door</span><span>Wat</span>
+      </div>
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+        <button type="button" onClick="{{r.pick}}" style="display: grid; grid-template-columns: 110px 96px minmax(0, 1fr); gap: 12px; align-items: center; width: 100%; box-sizing: border-box; min-height: 52px; padding: 6px 14px; border: 0; border-bottom: 1px solid #1c2229; background: {{r.bg}}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+          <span style="color: #98a2af; font-variant-numeric: tabular-nums">{{r.when}}</span>
+          <span style="display: flex; align-items: center; gap: 7px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{r.dot}}" aria-hidden="true"></span>{{r.by}}</span>
+          <span style="min-width: 0; display: flex; flex-direction: column">
+            <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.what}}</span>
+            <span style="font-size: 12.5px; color: #98a2af">{{r.where}}</span>
+          </span>
+        </button>
+      </sc-for>
+    </section>
+
+    <section style="flex: 4 1 480px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #242a32">
+        <div style="min-width: 0">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">{{sel.what}}</h2>
+          <div style="color: #98a2af">{{sel.where}}, {{sel.when}}, door {{sel.by}}</div>
+        </div>
+        <sc-if value="{{sel.canRevert}}" hint-placeholder-val="{{true}}">
+          <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #5a2a27; background: #111519; color: #ff8b84; font: inherit; font-weight: 500; cursor: pointer">Terugzetten</button>
+        </sc-if>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; min-height: 36px; padding: 0 14px; border-bottom: 1px solid #242a32; background: #111519; font-size: 12.5px; color: #98a2af">
+        <span>{{sel.summary}}</span>
+      </div>
+      <div style="overflow-x: auto; padding: 10px 0">
+        <div style="min-width: 560px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.7">
+          <sc-for list="{{sel.diff}}" as="d" hint-placeholder-count="8">
+            <div style="display: flex; gap: 10px; padding: 0 14px; white-space: pre; color: {{d.color}}; background: {{d.bg}}"><span style="flex: 0 0 10px">{{d.sign}}</span><span>{{d.text}}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":720}}'>
+class Component extends DCLogic {
+  state = { sel: 1 };
+
+  renderVals() {
+    const ctx = (text) => ({ sign: ' ', text, color: '#98a2af', bg: 'transparent' });
+    const add = (text) => ({ sign: '+', text, color: '#8fe0b3', bg: 'rgba(63,185,122,0.12)' });
+    const del = (text) => ({ sign: '-', text, color: '#ff9a93', bg: 'rgba(240,101,93,0.12)' });
+    const app = '#3d8bfd', out = '#e0a52e', sys = '#5d6875';
+    const data = [
+      { when: 'vandaag 16:40', by: 'admin', dot: app, what: 'PoE power-cycle op ether2', where: 'hEX-PoE-zolder', canRevert: false, summary: 'Eenmalige actie, geen wijziging in de configuratie',
+        diff: [ctx('Geen verschil in de configuratie.')] },
+      { when: 'vandaag 11:48', by: 'ruben', dot: app, what: 'Wachtwoord van Thuis-Gast vernieuwd', where: 'hAP-ax2-meterkast', canRevert: true, summary: '1 stap, geen veilige modus nodig',
+        diff: [ctx('/interface wifi security'), del('set [find name=mm-sec-gast] passphrase="********"'), add('set [find name=mm-sec-gast] passphrase="********"'), ctx('De wachtwoorden zelf staan niet in de log.')] },
+      { when: 'vandaag 03:00', by: 'gepland', dot: sys, what: 'Back-up, 2 configuraties gewijzigd', where: 'alle apparaten', canRevert: false, summary: 'Nachtelijke export vergeleken met de vorige versie',
+        diff: [ctx('Zie de wijziging van gisteren 21:15.')] },
+      { when: 'gisteren 21:15', by: 'admin', dot: app, what: 'Netwerk Camera\'s (VLAN 50) aangemaakt', where: 'hAP-ax2-meterkast en hEX-PoE-zolder', canRevert: true, summary: '7 stappen, bevestigd in veilige modus na 12 seconden',
+        diff: [ctx('/interface vlan'), add('add name=mm-camera-s vlan-id=50 interface=bridge'), ctx('/ip address'), add('add address=192.168.50.1/24 interface=mm-camera-s'), ctx('/ip dhcp-server'), add('add name=mm-dhcp-camera-s interface=mm-camera-s address-pool=mm-pool-camera-s')] },
+      { when: 'gisteren 03:00', by: 'gepland', dot: sys, what: 'Back-up, 1 configuratie gewijzigd', where: 'alle apparaten', canRevert: false, summary: 'Nachtelijke export vergeleken met de vorige versie',
+        diff: [ctx('Zie de wijziging van 7 okt 20:11.')] },
+      { when: '7 okt 20:11', by: 'buiten de app', dot: out, what: 'Firewallregel toegevoegd', where: 'hAP-ax2-meterkast', canRevert: true, summary: 'Niet via de app gedaan, gevonden door back-ups te vergelijken',
+        diff: [ctx('/ip firewall filter'), add('add chain=forward action=accept src-address=192.168.88.21 dst-address=192.168.30.0/24 comment="HA naar IoT"')] },
+      { when: '2 okt 03:12', by: 'router', dot: sys, what: 'Failover naar 4G back-up', where: 'hAP-ax2-meterkast', canRevert: false, summary: 'Netwatch: 1.1.1.1 via Kabel down',
+        diff: [ctx('/ip route'), del('distance=1 gateway=203.0.113.1 (actief)'), add('distance=2 gateway=10.64.12.1 (actief)')] },
+      { when: '28 sep 03:00', by: 'gepland', dot: sys, what: 'Back-up, 1 configuratie gewijzigd', where: 'hEX-PoE-zolder', canRevert: false, summary: '11 regels anders dan de vorige versie',
+        diff: [ctx('Zie de configuratie-versies van hEX-PoE-zolder.')] },
+    ];
+    const selIndex = this.state.sel;
+    return {
+      sel: data[selIndex] ?? data[0],
+      rows: data.map((r, i) => ({ ...r, bg: i === selIndex ? '#141c28' : 'transparent', pick: () => this.setState({ sel: i }) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

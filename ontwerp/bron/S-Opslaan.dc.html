@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Opslaan per pagina: de balk en de vraag bij weggaan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px">
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600">Opslaan per pagina</h1>
+    <span style="color: #98a2af">Je wijzigt op een pagina, slaat op, en gaat dan pas verder. Zoals bij UniFi en Omada.</span>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <section style="flex: 1.15 1 440px; min-width: 0; border-radius: 6px; border: 1px solid #242a32; overflow: hidden; background: #07090b">
+      <div style="padding: 9px 14px; font-size: 12.5px; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">Als je weg wilt terwijl er nog iets klaarstaat</div>
+      <div style="padding: 34px 22px; display: flex; justify-content: center">
+        <div role="dialog" aria-label="Niet-opgeslagen wijzigingen" style="width: 100%; max-width: 460px; border-radius: 6px; background: #15191e; border: 1px solid #2c343d; box-shadow: 0 24px 60px rgba(0,0,0,0.6); overflow: hidden">
+          <div style="padding: 16px 18px 0">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Wifi heeft nog 2 wijzigingen die niet zijn opgeslagen</h2>
+            <p style="margin: 8px 0 0; color: #c4cbd4">Je wilt naar Clients. Wat moet er eerst met deze wijzigingen gebeuren?</p>
+          </div>
+          <div style="margin: 14px 18px 0; border-radius: 6px; border: 1px solid #242a32; overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px; border-bottom: 1px solid #1c2229"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span><span>Thuis-IoT: security van WPA2 naar WPA2 + WPA3</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span><span>Thuis-IoT: 5 GHz uit op alle access points</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px">
+            <button type="button" style="height: 44px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Opslaan en doorgaan</button>
+            <div style="display: flex; gap: 8px">
+              <button type="button" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Hier blijven</button>
+              <button type="button" style="flex: 1; height: 44px; border-radius: 6px; border: 1px solid #5a2a27; background: #111519; color: #ff8b84; font: inherit; font-weight: 500; cursor: pointer">Verwerpen en doorgaan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 10px 14px; color: #98a2af; background: #111519; border-top: 1px solid #242a32">Dezelfde vraag komt bij wisselen van site en bij uitloggen. Sluit je het tabblad, dan waarschuwt de browser zelf. De router is nooit half aangepast: er gaat pas iets heen bij opslaan.</div>
+    </section>
+
+    <section style="flex: 1 1 400px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">De balk onderaan elke pagina</h2>
+      </div>
+
+      <div style="padding: 12px 14px; border-bottom: 1px solid #1c2229; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12.5px; color: #98a2af">Niets gewijzigd</div>
+        <div style="min-height: 40px; display: flex; align-items: center; padding: 0 12px; border-radius: 6px; border: 1px dashed #2c343d; color: #98a2af">Geen balk. De pagina is gelijk aan de router.</div>
+      </div>
+
+      <div style="padding: 12px 14px; border-bottom: 1px solid #1c2229; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12.5px; color: #98a2af">Iets gewijzigd</div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 6px 6px 6px 12px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d">
+          <span style="display: flex; align-items: center; gap: 9px"><span style="width: 8px; height: 8px; background: #3d8bfd" aria-hidden="true"></span><span style="font-weight: 600">2 wijzigingen niet opgeslagen</span></span>
+          <span style="display: flex; gap: 6px">
+            <button type="button" style="height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid #3a424d; background: transparent; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verwerpen</button>
+            <button type="button" style="height: 40px; padding: 0 14px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Opslaan en toepassen</button>
+          </span>
+        </div>
+      </div>
+
+      <div style="padding: 12px 14px; border-bottom: 1px solid #1c2229; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12.5px; color: #98a2af">Iets gewijzigd dat je kan buitensluiten</div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 6px 6px 6px 12px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d">
+          <span style="display: flex; align-items: center; gap: 9px"><span style="width: 8px; height: 8px; background: #e0a52e" aria-hidden="true"></span><span><span style="font-weight: 600">2 wijzigingen</span> <span style="color: #98a2af">met veilige modus</span></span></span>
+          <span style="display: flex; gap: 6px">
+            <button type="button" style="height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid #3a424d; background: transparent; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verwerpen</button>
+            <button type="button" style="height: 40px; padding: 0 14px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Bekijken en opslaan</button>
+          </span>
+        </div>
+      </div>
+
+      <div style="padding: 12px 14px; border-bottom: 1px solid #1c2229; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12.5px; color: #98a2af">Bezig met toepassen</div>
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d">
+          <span style="display: flex; justify-content: space-between; gap: 10px"><span style="font-weight: 600">Toepassen op hAP-ax2-meterkast</span><span style="color: #98a2af; font-variant-numeric: tabular-nums">stap 3 van 5</span></span>
+          <span style="height: 6px; border-radius: 3px; background: #2c343d"><span style="display: block; width: 60%; height: 6px; border-radius: 3px; background: #3d8bfd"></span></span>
+        </div>
+      </div>
+
+      <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12.5px; color: #98a2af">Klaar, verdwijnt na een paar seconden</div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 6px 12px; border-radius: 6px; background: #1c2128; border: 1px solid #3a424d">
+          <span style="display: flex; align-items: center; gap: 9px"><span style="width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span><span style="font-weight: 600">Opgeslagen en toegepast</span></span>
+          <a href="#wijzigingslog">Bekijk in wijzigingslog</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

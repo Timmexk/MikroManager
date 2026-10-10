@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>MikroManager mobiel, donker en zakelijk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 16px 14px 0; display: flex; flex-direction: column; gap: 12px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0f1215">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <button type="button" aria-label="Site kiezen, nu Thuis" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px 0 8px; border-radius: 6px; border: 1px solid #252b33; background: #161a1f; color: inherit; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">
+      <span style="width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: #0b0d10; background: #3d8bfd">T</span>
+      <span>Thuis</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+    </button>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="color: #9aa4b1; font-variant-numeric: tabular-nums">17:30:12</span>
+      <button type="button" aria-label="Zoeken" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 6px; border: 1px solid #252b33; background: #161a1f; color: #b3bcc8; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 6px; background: #161a1f; border: 1px solid #252b33">
+    <div style="padding: 10px 14px; border-right: 1px solid #252b33; border-bottom: 1px solid #252b33">
+      <div style="font-size: 12.5px; color: #9aa4b1">Apparaten online</div>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums"><span style="width: 8px; height: 8px; background: #3fb97a"></span>5 / 5</div>
+    </div>
+    <div style="padding: 10px 14px; border-bottom: 1px solid #252b33">
+      <div style="font-size: 12.5px; color: #9aa4b1">Clients</div>
+      <div style="font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums">19 <span style="font-size: 12.5px; font-weight: 400; color: #9aa4b1">13 wifi</span></div>
+    </div>
+    <div style="padding: 10px 14px; border-right: 1px solid #252b33">
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #9aa4b1"><span style="width: 12px; height: 2px; background: #3987e5"></span>Download</div>
+      <div style="font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums">38,0 <span style="font-size: 12.5px; font-weight: 400; color: #9aa4b1">Mbps</span></div>
+    </div>
+    <div style="padding: 10px 14px">
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #9aa4b1"><span style="width: 12px; height: 2px; background: #d95926"></span>Upload</div>
+      <div style="font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums">6,2 <span style="font-size: 12.5px; font-weight: 400; color: #9aa4b1">Mbps</span></div>
+    </div>
+  </section>
+
+  <section style="border-radius: 6px; background: #161a1f; border: 1px solid #252b33">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px; border-bottom: 1px solid #252b33">
+      <h2 style="margin: 0; font-size: 13.5px; font-weight: 600">Internet <span style="font-weight: 400; color: #9aa4b1">ether1, 6 uur</span></h2>
+      <span style="font-size: 12px; color: #9aa4b1">piek 50 Mbps</span>
+    </div>
+    <div style="padding: 12px 14px 10px">
+      <svg viewBox="0 0 600 200" preserveAspectRatio="none" role="img" aria-label="Download en upload over de laatste 6 uur" style="display: block; width: 100%; height: 96px">
+        <line x1="0" y1="1" x2="600" y2="1" stroke="#252b33" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+        <line x1="0" y1="100" x2="600" y2="100" stroke="#252b33" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+        <line x1="0" y1="199" x2="600" y2="199" stroke="#333b45" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+        <path d="M0.0,46.7L12.5,35.8L25.0,57.9L37.5,81.7L50.0,83.1L62.5,75.6L75.0,79.9L87.5,85.9L100.0,71.2L112.5,45.4L125.0,43.2L137.5,74.8L150.0,111.4L162.5,129.5L175.0,141.0L187.5,163.5L200.0,183.0L212.5,173.8L225.0,144.4L237.5,130.7L250.0,146.2L262.5,165.9L275.0,169.3L287.5,169.7L300.0,183.5L312.5,194.3L325.0,173.8L337.5,128.4L350.0,94.4L362.5,87.5L375.0,86.9L387.5,75.9L400.0,70.0L412.5,86.4L425.0,106.7L437.5,99.1L450.0,66.3L462.5,42.3L475.0,42.8L487.5,48.9L500.0,46.4L512.5,53.7L525.0,88.7L537.5,132.2L550.0,149.1L562.5,137.9L575.0,128.9L587.5,136.0L600.0,140.7L600,200L0,200Z" fill="#3987e5" opacity="0.10"></path>
+        <path d="M0.0,46.7L12.5,35.8L25.0,57.9L37.5,81.7L50.0,83.1L62.5,75.6L75.0,79.9L87.5,85.9L100.0,71.2L112.5,45.4L125.0,43.2L137.5,74.8L150.0,111.4L162.5,129.5L175.0,141.0L187.5,163.5L200.0,183.0L212.5,173.8L225.0,144.4L237.5,130.7L250.0,146.2L262.5,165.9L275.0,169.3L287.5,169.7L300.0,183.5L312.5,194.3L325.0,173.8L337.5,128.4L350.0,94.4L362.5,87.5L375.0,86.9L387.5,75.9L400.0,70.0L412.5,86.4L425.0,106.7L437.5,99.1L450.0,66.3L462.5,42.3L475.0,42.8L487.5,48.9L500.0,46.4L512.5,53.7L525.0,88.7L537.5,132.2L550.0,149.1L562.5,137.9L575.0,128.9L587.5,136.0L600.0,140.7" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+        <path d="M0.0,174.7L12.5,177.8L25.0,177.9L37.5,173.2L50.0,170.0L62.5,173.6L75.0,181.3L87.5,186.5L100.0,188.8L112.5,192.5L125.0,197.5L137.5,198.0L150.0,192.5L162.5,186.4L175.0,185.9L187.5,188.9L200.0,189.8L212.5,188.6L225.0,189.8L237.5,193.0L250.0,192.1L262.5,184.2L275.0,175.3L287.5,171.4L300.0,171.2L312.5,169.6L325.0,167.5L337.5,169.7L350.0,175.6L362.5,178.4L375.0,174.6L387.5,169.2L400.0,168.2L412.5,170.0L425.0,170.3L437.5,170.3L450.0,175.2L462.5,184.8L475.0,191.7L487.5,191.8L500.0,189.2L512.5,189.2L525.0,190.3L537.5,188.2L550.0,185.0L562.5,186.7L575.0,193.5L587.5,198.0L600.0,196.8" fill="none" stroke="#d95926" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+      </svg>
+      <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 11.5px; color: #9aa4b1; font-variant-numeric: tabular-nums">
+        <span>11:30</span><span>14:30</span><span>17:30</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="border-radius: 6px; background: #161a1f; border: 1px solid #252b33; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px">
+      <h2 style="margin: 0; font-size: 13.5px; font-weight: 600">Apparaten</h2>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9aa4b1"><span style="width: 8px; height: 8px; background: #e0a52e"></span>5 updates</span>
+    </div>
+    <sc-for list="{{devices}}" as="d" hint-placeholder-count="5">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; height: 50px; padding: 0 14px; border: 0; border-top: 1px solid #1f252c; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+        <span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+          <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.name}}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9aa4b1">{{d.ip}}</span>
+        </span>
+        <span style="flex: 0 0 auto; display: inline-flex; gap: 2px" aria-hidden="true">
+          <sc-for list="{{d.ports}}" as="p" hint-placeholder-count="5">
+            <span style="width: 8px; height: 8px; background: {{p.c}}"></span>
+          </sc-for>
+        </span>
+        <span style="flex: 0 0 34px; text-align: right; color: #c4cbd4; font-variant-numeric: tabular-nums">{{d.cpu}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <section style="border-radius: 6px; background: #161a1f; border: 1px solid #252b33; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px">
+      <h2 style="margin: 0; font-size: 13.5px; font-weight: 600">Wifi-netwerken</h2>
+      <span style="font-size: 12px; color: #9aa4b1">13 clients</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 14px; border-top: 1px solid #1f252c"><span style="font-weight: 500">Thuis</span><span style="color: #c4cbd4; font-variant-numeric: tabular-nums">6</span></div>
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 14px; border-top: 1px solid #1f252c"><span style="font-weight: 500">Thuis-IoT</span><span style="color: #c4cbd4; font-variant-numeric: tabular-nums">6</span></div>
+  </section>
+
+  <nav aria-label="Hoofdmenu" style="position: absolute; left: 14px; right: 14px; bottom: 16px; height: 64px; box-sizing: border-box; padding: 5px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; border-radius: 12px; background: #1a1f25; border: 1px solid #333b45; box-shadow: 0 16px 36px rgba(0,0,0,0.6)">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; padding: 0; border: 0; border-radius: 8px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; color: {{t.color}}; background: {{t.bg}}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{t.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+        <span>{{t.label}}</span>
+      </button>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const up = '#3fb97a', poe = '#e0a52e', wan = '#3d8bfd', off = '#333b45';
+    const ports = (list) => list.map((c) => ({ c }));
+    const tabs = [
+      { label: 'Overzicht', icon: 'M4 4h7v7H4zM13 4h7v4h-7zM13 12h7v8h-7zM4 15h7v5H4z', active: true },
+      { label: 'Apparaten', icon: 'M4 5h16v6H4zM4 13h16v6H4zM7.5 8h.01M7.5 16h.01' },
+      { label: 'Clients', icon: 'M3 5h13v9H3zM7 18h5M9.5 14v4M18 9h3v10h-3z' },
+      { label: 'Wifi', icon: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01' },
+      { label: 'Meer', icon: 'M5 12h.01M12 12h.01M19 12h.01M5 6h.01M12 6h.01M19 6h.01M5 18h.01M12 18h.01M19 18h.01' },
+    ];
+    return {
+      tabs: tabs.map((t) => ({
+        ...t,
+        color: t.active ? '#ffffff' : '#9aa4b1',
+        iconColor: t.active ? '#3d8bfd' : 'currentColor',
+        bg: t.active ? '#262d36' : 'transparent',
+      })),
+      devices: [
+        { name: 'hAP-ax2-meterkast', ip: '192.168.88.1', cpu: '17%', ports: ports([wan, up, off, off, off]) },
+        { name: 'CRS310-kantoor', ip: '192.168.88.2', cpu: '4%', ports: ports([up, up, up, up, up, up, off, off, off, off]) },
+        { name: 'hEX-PoE-zolder', ip: '192.168.88.3', cpu: '2%', ports: ports([up, poe, poe, up, up, off]) },
+        { name: 'cAP-ax-woonkamer', ip: '192.168.88.11', cpu: '3%', ports: ports([up, off]) },
+        { name: 'cAP-ax-overloop', ip: '192.168.88.12', cpu: '4%', ports: ports([up, off]) },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

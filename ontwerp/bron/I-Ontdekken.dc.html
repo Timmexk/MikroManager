@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Apparaten ontdekken en toevoegen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 900px; height: 620px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #07090b">
+  <section role="dialog" aria-label="Apparaten ontdekken" style="width: 836px; border-radius: 6px; background: #15191e; border: 1px solid #2c343d; box-shadow: 0 24px 60px rgba(0,0,0,0.6); overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 18px; border-bottom: 1px solid #242a32">
+      <div>
+        <h1 style="margin: 0; font-size: 16px; font-weight: 600">Apparaten ontdekken</h1>
+        <div style="color: #98a2af">Gevonden via neighbor discovery (MNDP) en een scan van 192.168.88.0/24</div>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Opnieuw scannen</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) 124px 80px 150px; gap: 12px; padding: 7px 18px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">
+      <span></span><span>Identity</span><span>Model</span><span>IP-adres</span><span>RouterOS</span><span>Status</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+      <div style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) 124px 80px 150px; gap: 12px; align-items: center; height: 44px; padding: 0 18px; border-bottom: 1px solid #1c2229; color: {{r.color}}">
+        <span>
+          <sc-if value="{{r.selectable}}" hint-placeholder-val="{{false}}">
+            <button type="button" role="checkbox" aria-checked="true" aria-label="{{r.aria}}" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; cursor: pointer">
+              <span style="width: 18px; height: 18px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 3px; background: #3d8bfd">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#06101f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+              </span>
+            </button>
+          </sc-if>
+        </span>
+        <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.model}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">{{r.ip}}</span>
+        <span style="font-variant-numeric: tabular-nums">{{r.ros}}</span>
+        <span style="display: flex; align-items: center; gap: 7px"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{r.dot}}" aria-hidden="true"></span>{{r.status}}</span>
+      </div>
+    </sc-for>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px 18px; border-bottom: 1px solid #242a32">
+      <label style="display: flex; flex-direction: column; gap: 5px">
+        <span style="font-size: 12.5px; color: #98a2af">Gebruikersnaam op de nieuwe apparaten</span>
+        <input type="text" value="beheerapp" style="height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 5px">
+        <span style="font-size: 12.5px; color: #98a2af">Wachtwoord</span>
+        <input type="password" value="geheimgeheim" style="height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit">
+      </label>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; background: #111519">
+      <span style="color: #98a2af">Access points worden daarna als CAP aan CAPsMAN gekoppeld.</span>
+      <div style="display: flex; gap: 8px">
+        <button type="button" style="height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2c343d; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Sluiten</button>
+        <button type="button" style="height: 44px; padding: 0 18px; border-radius: 6px; border: 0; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">2 apparaten toevoegen</button>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":620}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const known = (name, model, ip) => ({ name, model, ip, ros: '7.20.1', status: 'Al toegevoegd', dot: '#5d6875', color: '#98a2af', selectable: false, aria: '' });
+    const fresh = (name, model, ip, ros) => ({ name, model, ip, ros, status: 'Nieuw', dot: '#3d8bfd', color: '#e6e9ed', selectable: true, aria: name + ' toevoegen' });
+    return {
+      rows: [
+        fresh('cAP-ax-garage', 'cAP ax', '192.168.88.13', '7.20.1'),
+        fresh('MikroTik', 'hAP ax lite', '192.168.88.50', '7.18.2'),
+        { name: 'SXTsq-tuin', model: 'SXTsq 5 ax', ip: '192.168.88.14', ros: '7.19.4', status: 'Inloggen geweigerd', dot: '#f0655d', color: '#e6e9ed', selectable: false, aria: '' },
+        known('hAP-ax2-meterkast', 'hAP ax²', '192.168.88.1'),
+        known('CRS310-kantoor', 'CRS310-8G+2S+', '192.168.88.2'),
+        known('hEX-PoE-zolder', 'hEX PoE', '192.168.88.3'),
+        known('cAP-ax-woonkamer', 'cAP ax', '192.168.88.11'),
+        known('cAP-ax-overloop', 'cAP ax', '192.168.88.12'),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Rollen: wat Gebruiker, Netwerkbeheerder en Admin mogen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px">
+    <h1 style="margin: 0; font-size: 20px; font-weight: 600">Rollen</h1>
+    <span style="color: #98a2af">Drie vaste rollen, van links naar rechts steeds meer rechten</span>
+  </header>
+
+  <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+    <div style="overflow-x: auto">
+      <div style="min-width: 820px">
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 190px); gap: 12px; padding: 10px 14px; background: #111519; border-bottom: 1px solid #242a32">
+          <span style="align-self: end; font-size: 12px; font-weight: 500; color: #98a2af">Wat iemand mag</span>
+          <sc-for list="{{roles}}" as="r" hint-placeholder-count="3">
+            <span><span style="display: block; font-size: 14.5px; font-weight: 600">{{r.name}}</span><span style="display: block; font-size: 12px; color: #98a2af">{{r.scope}}</span><span style="display: block; margin-top: 2px; font-size: 12.5px; color: #c4cbd4">{{r.line}}</span></span>
+          </sc-for>
+        </div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+         <div>
+          <div style="padding: 6px 14px 5px; font-size: 12px; font-weight: 500; color: #98a2af; background: #12161a; border-bottom: 1px solid #1c2229">{{g.title}}</div>
+          <sc-for list="{{g.rows}}" as="c" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 190px); gap: 12px; align-items: center; min-height: 34px; padding: 2px 14px; border-bottom: 1px solid #1c2229">
+              <span><span style="font-weight: 500">{{c.what}}</span> <span style="color: #98a2af">{{c.note}}</span></span>
+              <sc-for list="{{c.cells}}" as="v" hint-placeholder-count="3">
+                <span style="display: flex; align-items: center; gap: 7px; color: {{v.color}}"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: {{v.dot}}; border: 1px solid {{v.ring}}; box-sizing: border-box" aria-hidden="true"></span>{{v.text}}</span>
+              </sc-for>
+            </div>
+          </sc-for>
+         </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; color: #98a2af">
+      <span>Netwerkbeheerder en Gebruiker kies je per gebruiker per site. Admin geldt altijd voor alle sites.</span>
+      <span>Tijdelijke toegang is geen aparte rol: het is een einddatum op het account en kan bij elke rol.</span>
+      <span>Wijzigingen die je kunnen buitensluiten gaan bij elke rol via de veilige modus.</span>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":840}}'>
+const row = (what, note, marks) => ({
+  what, note,
+  cells: marks.split('').map((m) => m === 'j'
+    ? { text: 'Ja', color: '#e6e9ed', dot: '#3fb97a', ring: '#3fb97a' }
+    : m === 'k'
+      ? { text: 'Alleen bekijken', color: '#c4cbd4', dot: 'transparent', ring: '#98a2af' }
+      : { text: 'Nee', color: '#5d6875', dot: 'transparent', ring: '#3a424d' }),
+});
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      roles: [
+        { name: 'Gebruiker', scope: 'per site', line: 'Wifi en clients beheren' },
+        { name: 'Netwerkbeheerder', scope: 'per site', line: 'De netwerken van de site beheren' },
+        { name: 'Admin', scope: 'alle sites', line: 'Mag alles' },
+      ],
+      groups: [
+        { title: 'Wifi en clients', rows: [
+          row('Wifi-netwerken aanmaken en wijzigen', 'ook de wachtwoorden', 'jjj'),
+          row('Clients een naam geven, blokkeren of verbreken', '', 'jjj'),
+        ] },
+        { title: 'Netwerken van de site', rows: [
+          row('Kanalen en radio’s', '', 'kjj'),
+          row('VLAN’s, DHCP en adressen', '', 'kjj'),
+          row('Poortmatrix, PoE en poorten', '', 'kjj'),
+          row('Firewall', '', 'kjj'),
+          row('Gastentoegang en vouchers', '', 'kjj'),
+          row('Updates, reboot en back-up maken', '', 'kjj'),
+        ] },
+        { title: 'Opzet van de site', rows: [
+          row('Apparaten toevoegen of verwijderen', '', 'kkj'),
+          row('Site-instellingen en de verbinding met de router', '', 'kkj'),
+          row('Templates toepassen en een back-up terugzetten', '', 'nnj'),
+        ] },
+        { title: 'Hele app', rows: [
+          row('Sites en gebruikers beheren', '', 'nnj'),
+          row('Wijzigingslog en wie er is ingelogd', 'van de eigen sites', 'kkj'),
+        ] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Pushmeldingen: instellen per apparaat en per gebeurtenis</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#instellingen" style="color: #98a2af; text-decoration: none">Instellingen</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Meldingen</h1>
+      <span style="color: #98a2af">Pushmeldingen rechtstreeks vanuit de app, zonder account bij een derde</span>
+    </div>
+    <button type="button" style="height: 36px; padding: 0 14px; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Testmelding sturen</button>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+    <div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Apparaten die meldingen krijgen</h2>
+          <span style="color: #98a2af">3</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #1c2229; background: #141c28">
+          <div style="min-width: 0">
+            <div style="display: flex; align-items: center; gap: 7px; font-weight: 600"><span style="flex: 0 0 auto; width: 8px; height: 8px; background: #3fb97a" aria-hidden="true"></span>Deze browser staat aan</div>
+            <div style="color: #98a2af">Chrome op Windows, toegevoegd op 2 oktober</div>
+          </div>
+          <button type="button" style="flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Uitzetten</button>
+        </div>
+        <sc-for list="{{devices}}" as="d" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 6px 14px; border-bottom: 1px solid #1c2229">
+            <div style="min-width: 0">
+              <div style="font-weight: 500">{{d.name}}</div>
+              <div style="color: #98a2af">{{d.detail}}</div>
+            </div>
+            <button type="button" style="flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Verwijderen</button>
+          </div>
+        </sc-for>
+        <div style="padding: 10px 14px; color: #98a2af">iPhone en iPad: zet de app eerst op het beginscherm, daarna kun je meldingen toestaan. De app moet via https bereikbaar zijn.</div>
+      </section>
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Zo ziet een melding eruit</h2>
+        </div>
+        <div style="padding: 14px">
+          <div style="display: flex; gap: 12px; padding: 12px; border-radius: 12px; background: #20262e; border: 1px solid #2c343d">
+            <div style="flex: 0 0 auto; width: 36px; height: 36px; border-radius: 8px; background: #0a0c0f; display: flex; align-items: center; justify-content: center" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 40 40"><path d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" stroke="#c4cbd4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" fill="#c4cbd4"></path><path d="M21 17h5v6h-5z" fill="#3d8bfd"></path></svg>
+            </div>
+            <div style="min-width: 0; flex: 1">
+              <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: #98a2af"><span>MikroManager</span><span>nu</span></div>
+              <div style="font-weight: 600">Thuis: failover naar 4G back-up</div>
+              <div style="color: #c4cbd4">Kabel is down sinds 03:12. De default route loopt nu via lte1.</div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; color: #98a2af">Tikken op de melding opent meteen de juiste pagina, hier Netwerken.</div>
+        </div>
+      </section>
+    </div>
+
+    <div style="flex: 1.7 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Waarvoor wil je een melding</h2>
+          <span style="color: #98a2af">7 van 9 aan</span>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 520px">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr) 90px 52px; gap: 12px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-top: 1px solid #242a32; border-bottom: 1px solid #242a32">
+              <span>Gebeurtenis</span><span>Wanneer</span><span>Stille uren</span><span>Aan</span>
+            </div>
+            <sc-for list="{{events}}" as="e" hint-placeholder-count="9">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr) 90px 52px; gap: 12px; align-items: center; min-height: 40px; padding: 0 14px; border-bottom: 1px solid #1c2229">
+                <span style="font-weight: 500; color: {{e.nameColor}}">{{e.name}}</span>
+                <span style="color: #98a2af">{{e.when}}</span>
+                <span style="color: {{e.quietColor}}">{{e.quiet}}</span>
+                <button type="button" role="switch" aria-checked="{{e.checked}}" aria-label="{{e.name}}" style="width: 44px; height: 36px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer">
+                  <span style="width: 36px; height: 20px; box-sizing: border-box; padding: 2px; border-radius: 10px; background: {{e.track}}; display: flex; justify-content: {{e.knobSide}}"><span style="width: 16px; height: 16px; border-radius: 8px; background: {{e.knob}}"></span></span>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="min-height: 40px; display: flex; align-items: center; padding: 4px 14px; color: #98a2af">Zijn alle WAN-verbindingen down, dan komt de melding binnen zodra er weer verbinding is.</div>
+      </section>
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px">
+          <div style="flex: 1 1 220px; min-width: 0">
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Stille uren</h2>
+            <div style="color: #98a2af">Alleen gebeurtenissen met Komt door geven dan een melding; de rest wacht tot de ochtend.</div>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 5px">
+            <span style="font-size: 12.5px; color: #98a2af">Van</span>
+            <input type="time" value="23:00" style="width: 110px; height: 44px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-variant-numeric: tabular-nums; color-scheme: dark">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 5px">
+            <span style="font-size: 12.5px; color: #98a2af">Tot</span>
+            <input type="time" value="07:00" style="width: 110px; height: 44px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-variant-numeric: tabular-nums; color-scheme: dark">
+          </label>
+        </div>
+      </section>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":700}}'>
+const rows = [
+  { name: 'WAN-failover', when: 'Direct, bij failover en failback', on: true, urgent: true },
+  { name: 'Alle WAN-verbindingen down', when: 'Direct', on: true, urgent: true },
+  { name: 'Apparaat offline', when: 'Na 2 minuten', on: true, urgent: true },
+  { name: 'Apparaat weer online', when: 'Direct', on: false, urgent: false },
+  { name: 'Onbekende client in het netwerk', when: 'Direct', on: true, urgent: false },
+  { name: 'Rollback door veilige modus', when: 'Direct', on: true, urgent: true },
+  { name: 'Wijziging buiten de app', when: 'Bij de volgende controle', on: true, urgent: false },
+  { name: 'Back-up mislukt', when: 'Direct', on: true, urgent: false },
+  { name: 'Update beschikbaar', when: 'Eén keer per dag, 09:00', on: false, urgent: false },
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      devices: [
+        { name: 'iPhone', detail: 'Als app op het beginscherm, laatste melding gisteren 21:14' },
+        { name: 'Firefox op laptop', detail: 'Toegevoegd op 28 september, nog geen melding ontvangen' },
+      ],
+      events: rows.map((r) => ({
+        name: r.name,
+        when: r.when,
+        checked: r.on ? 'true' : 'false',
+        nameColor: r.on ? '#e6e9ed' : '#98a2af',
+        quiet: r.on ? (r.urgent ? 'Komt door' : 'Wacht') : '',
+        quietColor: r.urgent ? '#c4cbd4' : '#98a2af',
+        track: r.on ? '#3d8bfd' : '#2c343d',
+        knob: r.on ? '#ffffff' : '#98a2af',
+        knobSide: r.on ? 'flex-end' : 'flex-start',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

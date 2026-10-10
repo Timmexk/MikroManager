@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Site-templates: een nieuwe locatie in één keer inrichten</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#6ea8fe}a:hover{color:#a9cbff}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 16px 22px 28px; display: flex; flex-direction: column; gap: 14px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <a href="#instellingen" style="color: #98a2af; text-decoration: none">Instellingen</a>
+      <span style="color: #5d6875" aria-hidden="true">/</span>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Templates</h1>
+      <span style="color: #98a2af">Een vaste set netwerken en instellingen voor een nieuwe locatie</span>
+    </div>
+    <button type="button" style="height: 36px; padding: 0 14px; border-radius: 6px; border: 1px solid #242a32; background: #15191e; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Template maken van deze site</button>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <section style="flex: 1 1 300px; min-width: 0; border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+      <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Templates</h2>
+      </div>
+      <button type="button" style="display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; min-height: 60px; padding: 10px 14px; border: 0; border-bottom: 1px solid #1c2229; background: #141c28; color: inherit; font: inherit; text-align: left; cursor: pointer">
+        <span style="font-weight: 600">Locatie met gasten</span>
+        <span style="color: #98a2af">3 wifi-netwerken, 4 VLAN's, vouchers aan</span>
+      </button>
+      <button type="button" style="display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; min-height: 60px; padding: 10px 14px; border: 0; border-bottom: 1px solid #1c2229; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+        <span style="font-weight: 600">Thuis-standaard</span>
+        <span style="color: #98a2af">3 wifi-netwerken, 3 VLAN's, gemaakt van Thuis</span>
+      </button>
+      <button type="button" style="display: flex; flex-direction: column; gap: 2px; width: 100%; box-sizing: border-box; min-height: 60px; padding: 10px 14px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer">
+        <span style="font-weight: 600">Alleen beheer</span>
+        <span style="color: #98a2af">Geen wifi, alleen back-ups en updates</span>
+      </button>
+    </section>
+
+    <div style="flex: 2.4 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #242a32">
+          <div>
+            <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Locatie met gasten</h2>
+            <div style="color: #98a2af">Wachtwoorden en subnetten vul je per site in bij het toepassen</div>
+          </div>
+          <button type="button" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-weight: 500; cursor: pointer">Bewerken</button>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 560px">
+            <div style="display: grid; grid-template-columns: 110px minmax(0, 1.2fr) 70px minmax(0, 1.6fr); gap: 12px; padding: 7px 14px; font-size: 12px; font-weight: 500; color: #98a2af; background: #111519; border-bottom: 1px solid #242a32">
+              <span>Soort</span><span>Naam</span><span>VLAN</span><span>Instellingen</span>
+            </div>
+            <sc-for list="{{items}}" as="i" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: 110px minmax(0, 1.2fr) 70px minmax(0, 1.6fr); gap: 12px; align-items: center; min-height: 38px; padding: 2px 14px; border-bottom: 1px solid #1c2229">
+                <span style="color: #98a2af">{{i.kind}}</span>
+                <span style="font-weight: 500">{{i.name}}</span>
+                <span style="font-variant-numeric: tabular-nums; color: #c4cbd4">{{i.vlan}}</span>
+                <span style="color: #c4cbd4">{{i.detail}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <section style="border-radius: 6px; background: #15191e; border: 1px solid #242a32; overflow: hidden">
+        <div style="display: flex; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid #242a32">
+          <h2 style="margin: 0; font-size: 14.5px; font-weight: 600">Toepassen</h2>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 14px">
+          <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 5px">
+            <span style="font-size: 12.5px; color: #98a2af">Op site</span>
+            <select style="height: 44px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit">
+              <option>Tweede locatie (1 router, 2 access points)</option>
+              <option>Thuis</option>
+            </select>
+          </label>
+          <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 5px">
+            <span style="font-size: 12.5px; color: #98a2af">IP-range voor deze site</span>
+            <input type="text" value="10.20.0.0/16" style="height: 44px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2c343d; background: #111519; color: #e6e9ed; font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px">
+          </label>
+          <button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #3d8bfd; color: #06101f; font: inherit; font-weight: 600; cursor: pointer">Wijzigingen bekijken</button>
+        </div>
+        <div style="min-height: 40px; display: flex; align-items: center; padding: 4px 14px; border-top: 1px solid #1c2229; color: #98a2af">Je ziet eerst alle 31 stappen; er verandert niets op de router totdat je ze toepast.</div>
+      </section>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":660}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      items: [
+        { kind: 'Netwerk', name: 'Beheer', vlan: '10', detail: 'eerste /24 uit de range, DHCP aan' },
+        { kind: 'Netwerk', name: 'Personeel', vlan: '20', detail: 'tweede /24, DHCP aan' },
+        { kind: 'Netwerk', name: 'IoT', vlan: '30', detail: 'derde /24, geïsoleerd van Beheer' },
+        { kind: 'Netwerk', name: 'Gasten', vlan: '40', detail: '/22, geïsoleerd, vouchers verplicht' },
+        { kind: 'Wifi', name: 'Personeel', vlan: '20', detail: 'WPA2 + WPA3, 2,4 en 5 GHz, snelle roaming (802.11r)' },
+        { kind: 'Wifi', name: 'IoT', vlan: '30', detail: 'WPA2, alleen 2,4 GHz' },
+        { kind: 'Wifi', name: 'Gasten', vlan: '40', detail: 'open met voucherpagina, clients geïsoleerd' },
+        { kind: 'Radio', name: 'Kanalen', vlan: '', detail: '5 GHz op 80 MHz, DFS toegestaan, land Nederland' },
+        { kind: 'Onderhoud', name: 'Back-up', vlan: '', detail: 'elke nacht om 03:00, tot 30 versies bewaren' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

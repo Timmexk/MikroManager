@@ -1,0 +1,15 @@
+services:
+  tikcontrol:
+    build: .
+    image: tikcontrol:0.1.0
+    container_name: tikcontrol
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /mnt/user/appdata/tikcontrol:/data     # database, secret.key, back-ups
+    environment:
+      TZ: Europe/Amsterdam                     # the nightly back-up uses local time
+      # TIKCONTROL_DEMO: "1"                   # simulated routers, data wiped on every start
+      # TIKCONTROL_SECURE_COOKIE: "1"          # set when served over HTTPS (reverse proxy)
+      # TIKCONTROL_POLL: "15"                  # seconds between polls

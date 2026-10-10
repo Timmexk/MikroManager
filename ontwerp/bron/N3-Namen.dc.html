@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Naamkandidaten, ronde 3: Tik en Mikro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1360px; height: 620px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 20px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+  <sc-for list="{{names}}" as="c" hint-placeholder-count="8">
+    <section style="box-sizing: border-box; padding: 20px; border-radius: 6px; background: #15191e; border: 1px solid #242a32; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="flex: 0 0 auto; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #0a0c0f; border: 1px solid #2c343d">
+          <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="{{c.n}}" fill="#c4cbd4" fill-rule="evenodd"></path><path d="{{c.a}}" fill="#3d8bfd"></path></svg>
+        </span>
+        <div style="min-width: 0">
+          <div style="font-size: 27px; line-height: 1.1; letter-spacing: -0.01em; white-space: nowrap"><span style="font-weight: {{c.w1}}; color: {{c.c1}}">{{c.p1}}</span><span style="font-weight: {{c.w2}}; color: {{c.c2}}">{{c.p2}}</span></div>
+          <div style="margin-top: 4px; color: #98a2af">Netwerkbeheer</div>
+        </div>
+      </div>
+      <div style="color: #c4cbd4">{{c.why}}</div>
+      <div style="margin-top: auto; display: flex; gap: 10px">
+        <div style="flex: 1 1 0; min-width: 0; height: 48px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border-radius: 6px; background: #0a0c0f; border: 1px solid #242a32">
+          <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="{{c.n}}" fill="#c4cbd4" fill-rule="evenodd"></path><path d="{{c.a}}" fill="#3d8bfd"></path></svg>
+          <span style="font-size: 15px; font-weight: 600; white-space: nowrap">{{c.p1}}{{c.p2}}</span>
+        </div>
+        <div style="flex: 0 0 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8">
+          <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><path d="{{c.n}}" fill="#333b45" fill-rule="evenodd"></path><path d="{{c.a}}" fill="#1a66d9"></path></svg>
+        </div>
+      </div>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":620}}'>
+// The MikroTik stem is set bold, the rest light, so the link stays visible in the wordmark.
+const strong = { w: 600, c: '#e6e9ed' };
+const light = { w: 400, c: '#98a2af' };
+const mk = (p1, p2, stemFirst, why, n, a) => ({
+  p1, p2, why, n, a,
+  w1: (stemFirst ? strong : light).w, c1: (stemFirst ? strong : light).c,
+  w2: (stemFirst ? light : strong).w, c2: (stemFirst ? light : strong).c,
+});
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      names: [
+        mk('Tik', 'ro', true, 'De merknaam omgedraaid: Tik en de ro van Mikro. Kort, zoals Omada.',
+          'M6 6h16v16H6z', 'M18 18h16v16H18z'),
+        mk('Tik', 'ora', true, 'Tik met een open, zachte klank. Leest als een merk, niet als een functie.',
+          'M20 5a15 15 0 1 0 0 30a15 15 0 1 0 0-30zM20 10a10 10 0 1 1 0 20a10 10 0 1 1 0-20z', 'M20 15a5 5 0 1 0 0 10a5 5 0 1 0 0-10z'),
+        mk('Uni', 'Tik', false, 'Knipoog naar UniFi: alles op één plek, maar dan voor MikroTik.',
+          'M7 6h6v18a7 7 0 0 0 14 0V6h6v18a13 13 0 0 1-26 0z', 'M17 6h6v13h-6z'),
+        mk('Tik', 'Bridge', true, 'Tik plus de bridge uit RouterOS, en de brug van waaruit je stuurt.',
+          'M4 12h32v4H4zM8 16h4v18H8zM28 16h4v18h-4z', 'M12 34a8 8 0 0 1 16 0h-3a5 5 0 0 0-10 0z'),
+        mk('Mik', 'ora', true, 'Mikro ingekort tot een merknaam. Het rustigst van de acht.',
+          'M6 8h5v24H6zM29 8h5v24h-5z', 'M11 8l9 12 9-12v8l-9 12-9-12z'),
+        mk('Mikro', 'via', true, 'Mikro plus via: de weg door je netwerk, van poort tot client.',
+          'M5 27h9v8H5zM26 5h9v8h-9z', 'M15.5 16h9v8h-9z'),
+        mk('Mikro', 'Helm', true, 'Mikro plus helm, het Engelse woord voor roer: jij stuurt.',
+          'M20 6a14 14 0 1 0 0 28a14 14 0 1 0 0-28zM20 10.5a9.5 9.5 0 1 1 0 19a9.5 9.5 0 1 1 0-19zM18.5 1h3v6h-3zM18.5 33h3v6h-3zM1 18.5h6v3H1zM33 18.5h6v3h-6z', 'M20 15.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0-9z'),
+        mk('Mikro', 'scope', true, 'Mikro plus scope: alles scherp in beeld, tot op de poort.',
+          'M17 5a12 12 0 1 0 0 24a12 12 0 1 0 0-24zM17 9.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 1 1 0-15z', 'M25 27.5l2.5-2.5 8 8-2.5 2.5z'),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

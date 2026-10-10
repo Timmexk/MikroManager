@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>MikroManager: woordmerk met drie symbolen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1000px; height: 620px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 20px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; line-height: 1.4; color: #e6e9ed; background: #0e1114">
+
+  <div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+    <sc-for list="{{marks}}" as="c" hint-placeholder-count="3">
+      <section style="box-sizing: border-box; padding: 20px; border-radius: 6px; background: #15191e; border: 1px solid #242a32; display: flex; flex-direction: column; gap: 14px">
+        <div style="font-size: 12.5px; color: #98a2af">{{c.label}}</div>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <span style="flex: 0 0 auto; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #0a0c0f; border: 1px solid #2c343d">
+            <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="{{c.n}}" fill="#c4cbd4"></path><path d="{{c.a}}" fill="#3d8bfd"></path></svg>
+          </span>
+          <div style="min-width: 0">
+            <div style="font-size: 24px; line-height: 1.1; letter-spacing: -0.01em; white-space: nowrap"><span style="font-weight: 600">Mikro</span><span style="font-weight: 400; color: #98a2af">Manager</span></div>
+            <div style="margin-top: 4px; color: #98a2af">Netwerkbeheer</div>
+          </div>
+        </div>
+        <div style="color: #c4cbd4">{{c.why}}</div>
+        <div style="margin-top: auto; display: flex; gap: 10px">
+          <div style="flex: 1 1 0; min-width: 0; height: 48px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border-radius: 6px; background: #0a0c0f; border: 1px solid #242a32">
+            <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true" style="flex: 0 0 auto"><path d="{{c.n}}" fill="#c4cbd4"></path><path d="{{c.a}}" fill="#3d8bfd"></path></svg>
+            <span style="font-size: 15px; font-weight: 600; white-space: nowrap">MikroManager</span>
+          </div>
+          <div style="flex: 0 0 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #ffffff; border: 1px solid #dfe3e8">
+            <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><path d="{{c.n}}" fill="#333b45"></path><path d="{{c.a}}" fill="#1a66d9"></path></svg>
+          </div>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+
+  <section style="box-sizing: border-box; padding: 16px 20px; border-radius: 6px; background: #15191e; border: 1px solid #242a32; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: center">
+    <div>
+      <div style="font-size: 12.5px; color: #98a2af">Aan elkaar, twee gewichten</div>
+      <div style="font-size: 24px; line-height: 1.3; letter-spacing: -0.01em"><span style="font-weight: 600">Mikro</span><span style="color: #98a2af">Manager</span></div>
+    </div>
+    <div>
+      <div style="font-size: 12.5px; color: #98a2af">Kleine letters</div>
+      <div style="font-size: 24px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em">mikromanager</div>
+    </div>
+    <div>
+      <div style="font-size: 12.5px; color: #98a2af">Kort, voor icoon en tabblad</div>
+      <div style="font-size: 24px; line-height: 1.3; font-weight: 600; letter-spacing: 0.02em">MM</div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":620}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      marks: [
+        { label: 'Symbool 1: schuifregelaars', why: 'Een regietafel: jij stelt elk detail in. Past bij de naam.',
+          n: 'M9 5h2v30H9zM29 5h2v30h-2zM5 24h10v5H5zM25 19h10v5H25zM19 5h2v5h-2zM19 15h2v20h-2z', a: 'M15 10h10v5H15z' },
+        { label: 'Symbool 2: de letter M', why: 'Twee pijlers met een blauwe V ertussen. Herkenbaar als beginletter.',
+          n: 'M6 8h5v24H6zM29 8h5v24h-5z', a: 'M11 8l9 12 9-12v8l-9 12-9-12z' },
+        { label: 'Symbool 3: drie poorten', why: 'Het merkje dat nu al in de voorbeelden staat: twee poorten actief, één vrij.',
+          n: 'M27 8h6v24h-6z', a: 'M7 8h6v24H7zM17 8h6v24h-6z' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
