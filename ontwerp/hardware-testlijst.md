@@ -16,7 +16,7 @@ begint, omdat een aantal antwoorden het ontwerp kan veranderen.
 | | | | | |
 
 De punten zijn gemerkt met wat het antwoord raakt: **[blokkerend]** betekent dat het ontwerp zonder dit
-antwoord niet gebouwd kan worden, **[gedrag]** dat alleen de uitwerking verandert.
+antwoord niet gebouwd kan worden, **[gedrag]** dat alleen de uitwerking verandert. Deel H gaat over een functie voor later en telt niet mee voor de start van de bouw.
 
 ---
 
@@ -141,23 +141,26 @@ De app past WAN niet aan, maar moet het wel goed lezen.
 - [ ] **[gedrag] Terugzetten.** Een export importeren is niet hetzelfde als een back-up laden. Welke van de
   twee gebruikt Terugzetten, en wat gebeurt er met objecten die sindsdien zijn toegevoegd?
 
-## H. Externe sites en de management-tunnel
+## H. Externe sites en de management-tunnel (later)
 
-- [ ] **[blokkerend] Script op de externe router.** Plak het script uit het scherm
+Externe sites zijn een functie voor later. Dit deel hoeft voor de eerste versie niet te worden afgewerkt en
+houdt de bouw niet tegen. De punten die hier blokkerend zijn, zijn dat alleen voor deze functie.
+
+- [ ] **[later, blokkerend] Script op de externe router.** Plak het script uit het scherm
   [Externe site toevoegen](schermen.md#sites) op een router met de standaard-firewall en op een router zonder
   firewallregels. Werkt `place-before=0` in een geplakt script in beide gevallen?
-- [ ] **[blokkerend] Alleen management.** Controleer vanaf beide kanten: geen ping naar elkaars LAN, geen
+- [ ] **[later, blokkerend] Alleen management.** Controleer vanaf beide kanten: geen ping naar elkaars LAN, geen
   route naar elkaars subnet, op de tunnel alleen tcp 443 naar de router open.
-- [ ] **[blokkerend] Achter CGNAT.** Komt de handshake tot stand als de externe site achter CGNAT zit, en
+- [ ] **[later, blokkerend] Achter CGNAT.** Komt de handshake tot stand als de externe site achter CGNAT zit, en
   blijft de tunnel staan met `persistent-keepalive=25s`?
-- [ ] **[blokkerend] Endpoint op hostnaam.** Het endpoint is de IP Cloud-naam van de thuislocatie. Als het
+- [ ] **[later, blokkerend] Endpoint op hostnaam.** Het endpoint is de IP Cloud-naam van de thuislocatie. Als het
   publieke IP daar verandert, komt de tunnel dan vanzelf terug, of moet een script de peer opnieuw laten resolven?
-- [ ] **[gedrag] Failover thuis.** Trek de hoofdverbinding eruit. Wat doet IP Cloud als de thuislocatie op
+- [ ] **[later] Failover thuis.** Trek de hoofdverbinding eruit. Wat doet IP Cloud als de thuislocatie op
   4G achter CGNAT zit, en hoe lang duurt het na failback voordat de tunnel terug is?
-- [ ] **[gedrag] Switches en access points op de externe site** via een port forward op het tunneladres.
+- [ ] **[later] Switches en access points op de externe site** via een port forward op het tunneladres.
   Werkt dat als `www-ssl` op die apparaten met `address=` is beperkt? Welk bronadres zien ze?
-- [ ] **[gedrag] Dezelfde subnetten op twee sites.** Beide 192.168.88.0/24. Blijft alles werken?
-- [ ] **[gedrag] Meerdere externe sites.** Verkeer van de ene tunnel naar de andere moet op de thuislocatie
+- [ ] **[later] Dezelfde subnetten op twee sites.** Beide 192.168.88.0/24. Blijft alles werken?
+- [ ] **[later] Meerdere externe sites.** Verkeer van de ene tunnel naar de andere moet op de thuislocatie
   worden gedropt.
 
 ## I. Inloggen en meldingen

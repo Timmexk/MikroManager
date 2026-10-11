@@ -8,6 +8,8 @@ Zelf gehoste beheeromgeving voor MikroTik-netwerken. Eén webapp voor routers, s
 opgezet zoals UniFi Network en Omada, met de vaktermen die je uit RouterOS kent.
 
 > **Stand van zaken: het ontwerp is klaar, de bouw is nog niet gestart.**
+> De eerste versie richt zich op het beheren van je eigen MikroTik-netwerk op locatie. Externe sites
+> koppelen is uitgewerkt in het ontwerp, maar blijft een functie voor later.
 > Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en een eerste proefversie (v0.1).
 > Die proefversie draait alleen tegen een simulator en is nog nooit op echte hardware getest.
 
@@ -28,7 +30,8 @@ apparaten, clients en adressen bestaan niet.
 | **Netwerken** | VLAN's met DHCP, WAN-overzicht, poortmatrix die je per cel bewerkt |
 | **Onderhoud** | RouterOS en RouterBOOT updaten op volgorde, nachtelijke back-up met diff, wijzigingslog |
 | **Gebruikers** | Per gebruiker een rol per site, tijdelijke toegang met einddatum, passkeys |
-| **Sites** | Meerdere locaties, externe sites via een management-tunnel, templates voor een nieuwe site |
+| **Sites** | Meerdere sites die de app zelf kan bereiken, apparaten ontdekken, templates voor een nieuwe site |
+| **Externe sites** (later) | Een locatie elders koppelen via een management-tunnel |
 | **Meldingen** | Pushmeldingen rechtstreeks vanuit de app, per gebeurtenis in te stellen |
 
 De interface is er in het Nederlands en Engels, in een donker en een licht thema, en werkt op een telefoon
@@ -52,8 +55,8 @@ Deze regels gelden voor elk scherm en elke functie. Ze staan uitgebreider in
    herkent die poort, waarschuwt, en de veilige modus vangt een vergissing op.
 6. **WAN is alleen kijken.** De app toont failover en verbruik, maar past de WAN-configuratie niet aan.
 7. **`vlan-filtering` blijft zoals het staat.** De app zet het op geen enkele bridge aan of uit.
-8. **De management-tunnel is alleen voor management.** Een externe site krijgt geen route naar je LAN en
-   er loopt geen internetverkeer door de tunnel.
+8. **Externe sites komen later, en dan alleen voor management.** Een tunnel naar een andere locatie geeft
+   geen route naar je LAN en er loopt geen internetverkeer doorheen.
 
 ## Rollen
 
@@ -78,8 +81,9 @@ MikroManager gebruikt de REST API van RouterOS 7 over https (service `www-ssl`) 
 elke 15 seconden. Er draait niets op de router zelf en er is geen cloud of extern account nodig. De app krijgt
 een eigen gebruiker op elk apparaat, zodat je in de log van de router ziet wat de app deed en wat je zelf deed.
 
-Een externe site bereikt de app via een WireGuard-tunnel die de externe router zelf opzet naar je thuislocatie.
-Dat werkt ook als de externe site achter CGNAT zit. De tunnel laat alleen de REST API door.
+De eerste versie beheert de apparaten die de app rechtstreeks kan bereiken: het netwerk waar hij zelf in staat.
+Een site op een andere locatie koppelen is een functie voor later. Het ontwerp daarvoor is een WireGuard-tunnel
+die de externe router zelf opzet en die alleen de REST API doorlaat.
 
 ## Wat het niet is
 

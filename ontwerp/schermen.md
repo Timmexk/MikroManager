@@ -176,7 +176,7 @@ Vijf stappen. Er verandert niets op de router tot je daarvoor kiest.
 
 ### Externe site toevoegen
 
-Een WireGuard-tunnel die alleen management doorlaat.
+Functie voor later, niet in de eerste versie. Een WireGuard-tunnel die alleen management doorlaat.
 
 ![Externe site toevoegen](../docs/schermen/externe-site.webp)
 

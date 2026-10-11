@@ -50,6 +50,9 @@ de hardwareproef.
    reverse proxy zoals Pangolin, of anders? Daarbij hoort een veld "externe URL" in Instellingen.
 6. **Licentie**, als de code later openbaar wordt.
 
+Niet nu aan de orde: waar het endpoint van de management-tunnel komt te liggen (thuis of een hub op een VPS).
+Dat hoort bij externe sites en staat onder [Later](#later).
+
 ## Volgorde
 
 Eerst alles wat alleen leest, dan schrijven waar weinig mis kan gaan, dan schrijven waar je buitengesloten
@@ -126,12 +129,13 @@ Weinig risico op buitensluiten, en het is wat de rol Gebruiker mag.
 
 ### Fase 7. Meerdere sites
 
-- Externe site toevoegen met de management-tunnel, inclusief port forwards naar switches en access points.
+Alleen sites die de app zelf kan bereiken, rechtstreeks of via een verbinding die er al is.
+
+- Een tweede site toevoegen met eigen apparaten, instellingen en rollen.
 - Apparaten ontdekken.
 - Templates maken en toepassen.
 
-**Klaar als** een externe site achter CGNAT volledig te beheren is en aantoonbaar niets anders dan
-management door de tunnel gaat.
+**Klaar als** twee sites naast elkaar te beheren zijn en een gebruiker alleen de sites ziet waar hij een rol heeft.
 
 ### Fase 8. Afronden
 
@@ -139,6 +143,16 @@ management door de tunnel gaat.
 - Engelse vertaling compleet.
 - Installatie-instructie voor Unraid en Docker.
 - Besluit over openbaar maken en de licentie.
+
+## Later
+
+Uitgewerkt in het ontwerp, maar bewust niet in de eerste versie. De prioriteit is het eigen netwerk op
+locatie beheren.
+
+- **Externe sites via een management-tunnel.** Het scherm en de regels staan in
+  [ontwerpbesluiten.md](ontwerpbesluiten.md#13-meerdere-sites-en-later-externe-sites). Vooraf te kiezen: het
+  endpoint thuis, of een WireGuard-hub op een VPS zodat op geen enkele locatie een poort open hoeft.
+- Deel H van de testlijst hoort hierbij en hoeft voor de eerste versie niet te worden afgewerkt.
 
 ## Buiten het plan
 

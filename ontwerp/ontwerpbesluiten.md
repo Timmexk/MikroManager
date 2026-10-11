@@ -156,7 +156,7 @@ bevestigen haalt hij die weer weg. Dit mechanisme is het grootste open punt en s
 - De bel in de zijbalk opent het meldingencentrum met dezelfde gebeurtenissen, per site of voor alle sites.
 - Push vraagt een geldige hostnaam met https. Op iPhone en iPad moet de app eerst op het beginscherm staan.
 
-## 13. Meerdere sites en externe sites
+## 13. Meerdere sites, en later externe sites
 
 - Elke site heeft eigen apparaten, netwerken, instellingen en rollen.
 - **Eerste keer instellen** in vijf stappen. Er verandert niets op de router tot je daar zelf voor kiest.
@@ -164,7 +164,10 @@ bevestigen haalt hij die weer weg. Dit mechanisme is het grootste open punt en s
 - **Templates**: een vaste set netwerken en instellingen voor een nieuwe locatie. Wachtwoorden en subnetten
   vul je per site in bij het toepassen, en je ziet eerst alle stappen.
 
-### De management-tunnel
+### De management-tunnel (functie voor later)
+
+> **Niet in de eerste versie.** De prioriteit is het eigen netwerk op locatie beheren. Dit deel is uitgewerkt
+> zodat de rest van het ontwerp er rekening mee houdt, maar wordt pas gebouwd na de fasen in het bouwplan.
 
 Voor een site op een andere locatie zet de app een WireGuard-tunnel op. De externe router belt naar de
 thuislocatie, dus het werkt met een publiek IP en achter CGNAT.
@@ -185,6 +188,12 @@ tijdelijk geen controle over de externe sites. De tunnel komt terug bij failback
 melding is genoeg.
 
 Wie al een eigen VPN naar een site heeft, kiest "Bestaande verbinding" en vult alleen het adres in.
+
+**Nog te kiezen als dit aan de beurt is: waar ligt het endpoint?** In het scherm belt de externe router naar
+de thuislocatie. Het alternatief is een WireGuard-hub op een VPS, waar elke router naartoe belt, ook die van
+thuis. Dan hoeft er op geen enkele locatie een poort open en blijven de externe sites bereikbaar bij een
+failover thuis. De app draait dan op de VPS zelf, of thuis met de VPS alleen als doorgeefluik. In het tweede
+geval staan de routerwachtwoorden niet op de VPS.
 
 ### De app zelf van buiten bereiken
 
