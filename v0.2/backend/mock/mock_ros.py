@@ -173,8 +173,8 @@ class Dev:
             if not up:
                 continue
             base = linked[i["name"]]
-            wave = 0.55 + 0.45 * math.sin(now / 240 + hash(i["name"]) % 7) + random.uniform(-0.15, 0.15)
-            rate = max(0.02, wave) * base
+            wave = 0.6 + 0.3 * math.sin(now / 240 + hash(i["name"]) % 7) + 0.08 * math.sin(now / 9) + random.uniform(-0.06, 0.06)
+            rate = max(0.15, wave) * base
             i["rx-byte"] = str(int(i["rx-byte"]) + int(rate * dt / 8))
             i["tx-byte"] = str(int(i["tx-byte"]) + int(rate * 0.18 * dt / 8))
 
