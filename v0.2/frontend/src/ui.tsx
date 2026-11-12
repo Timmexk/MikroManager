@@ -13,6 +13,15 @@ export function fmtBps(v?: number | null): [string, string] {
 }
 export const bps = (v?: number | null) => fmtBps(v).join(" ").trim();
 
+const RATE_UNIT: Record<string, number> = { "": 1, k: 1e3, K: 1e3, M: 1e6, G: 1e9 };
+/** Wifi link rate from RouterOS: either bits per second ("866700000") or text ("866.7Mbps-80MHz/2S/SGI"). */
+export function linkRate(v?: string | number | null): number | null {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return v;
+  const m = /^\s*([\d.]+)\s*([kKMG]?)(?:bps|b\/s)?/.exec(v.split("-")[0]);
+  return m ? Number(m[1]) * RATE_UNIT[m[2]] : null;
+}
+
 export function fmtBytes(v?: number | null): string {
   if (!v) return "–";
   const units = ["B", "kB", "MB", "GB", "TB"];
