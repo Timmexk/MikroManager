@@ -37,7 +37,7 @@ ALLOWED = {
     "/interface/wifi/datapath": {"name", "bridge", "vlan-id", "client-isolation", "comment", "disabled", "interface-list"},
     "/interface/wifi/channel": {"name", "width", "frequency", "band", "skip-dfs-channels", "comment", "disabled"},
     "/interface/wifi/configuration": {"name", "ssid", "country", "security", "datapath", "channel", "hide-ssid", "comment",
-                                      "disabled", "mode"},
+                                      "disabled", "mode", "tx-power"},
     "/interface/wifi/provisioning": {"action", "supported-bands", "master-configuration", "slave-configurations", "comment",
                                      "disabled", "radio-mac", "identity-regexp", "name-format"},
     "/interface/wifi/access-list": {"mac-address", "action", "comment", "disabled", "interface", "ssid-regexp"},
@@ -197,10 +197,16 @@ class Dev:
                     out += [(ap, n, b, mac(ap.mac_prefix, 0x80 + i), False) for i, (n, b) in enumerate(ap.radios)]
         return out
 
-    def _rule_for(self, band: str):
+    def _rule_for(self, band: str, rmac: str = ""):
         for r in self.t["/interface/wifi/provisioning"]:
             sb = r.get("supported-bands", "")
-            if r.get("disabled") != "true" and (not sb or sb.startswith("2ghz" if band == "2g" else "5ghz")):
+            if r.get("disabled") == "true":
+                continue
+            if r.get("radio-mac"):
+                if r["radio-mac"].upper() == rmac.upper():
+                    return r
+                continue
+            if not sb or sb.startswith("2ghz" if band == "2g" else "5ghz"):
                 return r
         return None
 
@@ -209,7 +215,7 @@ class Dev:
         for owner, _, band, rmac, local in self.all_radios():
             if local and not self.local_provisioned:
                 continue
-            rule = self._rule_for(band)
+            rule = self._rule_for(band, rmac)
             if not rule or rule.get("action") == "none":
                 continue
             n += 1
@@ -771,7 +777,8 @@ def make_app(dev: Dev) -> FastAPI:
                     return err(400, f"input does not match any value of numbers")
                 band = owner_band.get(ifs[n].get("radio-mac"), "5g")
                 ch = ["5180/ax/Ceee", "5500/ax/Ceee", "5260/ax/eCee"][i % 3] if band == "5g" else ["2412/ax", "2437/ax", "2462/ax"][i % 3]
-                out.append({"state": "running", "channel": ch, "tx-power": "17" if band == "5g" else "15",
+                cfg = next((c for c in dev.t["/interface/wifi/configuration"] if c.get("name") == ifs[n].get("configuration")), {})
+                out.append({"state": "running", "channel": ch, "tx-power": cfg.get("tx-power") or ("23" if band == "5g" else "20"),
                             "registered-peers": str(sum(1 for r in reg if r["interface"].startswith(n))),
                             "authorized-peers": "0"})
             return out
