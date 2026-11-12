@@ -1,10 +1,52 @@
-"""Client list: DHCP leases + ARP + WiFi registration table + bridge host tables, merged by MAC."""
+"""Client list: DHCP leases + ARP + WiFi registration table + bridge host tables, merged by MAC.
+
+Every client appears exactly once, keyed by MAC, at the place it is physically connected:
+  wifi   -> the access point it is registered on (never also as wired on the router or a switch)
+  wired  -> the edge port where it was learned (the deepest switch port, not the router's uplink port)
+"""
+import ipaddress
+import re
+import time
+
 from . import db, wifi
 from .config import TAG
 from .poller import STATE, uptime_seconds
 from .ros import truthy
 
 BLOCK_COMMENT = f"{TAG}blocked"
+PAUSE_KID = "mm-pauze"            # kid-control "kid" without allowed time: internet paused
+SCHED_KID = "mm-tijd-"            # mm-tijd-0700-2200: internet only between these times
+WIFI_GRACE = 90                   # seconds a client stays on its AP when that AP's poll fails
+
+# MAC -> (timestamp, wifi info) of the last successful registration, so a client
+# does not flip to "wired on the router" while its access point is briefly unreachable.
+_last_wifi: dict[str, tuple[float, dict]] = {}
+
+_RATE = re.compile(r"^\s*([\d.]+)\s*([kKMG]?)(?:bps|b/s)?\s*$")
+_RATE_MUL = {"": 1, "k": 1e3, "K": 1e3, "M": 1e6, "G": 1e9}
+
+
+def rate_bps(v) -> float | None:
+    """'1.2Mbps' / '350kbps' / '0bps' / '12345' -> bits per second."""
+    m = _RATE.match(str(v or ""))
+    return float(m.group(1)) * _RATE_MUL[m.group(2)] if m else None
+
+
+def global_ipv6(addr: str | None) -> bool:
+    try:
+        ip = ipaddress.ip_address((addr or "").split("%")[0])
+    except ValueError:
+        return False
+    return ip.version == 6 and ip.is_global and not ip.is_multicast
+
+
+def schedule_kid(start: str, end: str) -> str:
+    return f"{SCHED_KID}{start.replace(':', '')}-{end.replace(':', '')}"
+
+
+def parse_schedule_kid(name: str) -> dict | None:
+    m = re.fullmatch(rf"{SCHED_KID}(\d{{2}})(\d{{2}})-(\d{{2}})(\d{{2}})", name or "")
+    return {"from": f"{m[1]}:{m[2]}", "to": f"{m[3]}:{m[4]}"} if m else None
 
 
 def _split_pair(v: str | None) -> tuple[int, int]:
@@ -38,7 +80,8 @@ def site_clients(site_id: int) -> list[dict]:
         return clients.setdefault(mac, {"mac": mac, "name": names.get(mac), "hostname": None, "ip": None,
                                         "online": False, "type": "unknown", "static": False, "lease_id": None,
                                         "lease_device": None, "wifi": None, "wired": None, "blocked": False,
-                                        "last_seen": None, "rx": 0, "tx": 0})
+                                        "last_seen": None, "rx": 0, "tx": 0, "ipv6": [], "rate_down": None,
+                                        "rate_up": None, "paused": False, "schedule": None})
 
     for d in devs:
         for lease in snaps[d["id"]].get("leases") or []:
@@ -77,6 +120,23 @@ def site_clients(site_id: int) -> list[dict]:
                 # the device the client is physically on (a CAP registers on the controller)
                 "ap_device_id": by_identity.get(info.get("ap") or "", d["id"])})
 
+    # A client whose access point did not answer this round keeps its wifi place for a
+    # short while instead of showing up as wired on the router's uplink port.
+    now = time.time()
+    for mac, c in clients.items():
+        if c["wifi"]:
+            _last_wifi[mac] = (now, c["wifi"])
+    for mac, (ts, info) in list(_last_wifi.items()):
+        if now - ts > WIFI_GRACE:
+            _last_wifi.pop(mac, None)
+            continue
+        c = clients.get(mac)
+        ap_snap = snaps.get(info.get("device_id")) or {}
+        if (c is None or not c["wifi"]) and ap_snap.get("online") is not True:
+            c = c or get(mac)
+            if c:
+                c.update(online=True, type="wifi", wifi={**info, "stale": True})
+
     # Wired port: the port that has learned the fewest MACs is the edge port.
     # Ports that lead to another managed device (a MAC of our own gear was
     # learned there) and wifi interfaces are never edge ports; a MAC that is
@@ -106,6 +166,34 @@ def site_clients(site_id: int) -> list[dict]:
         if not c or c["wifi"]:
             continue
         c.update(online=True, type="wired", wired=where)
+
+    # IPv6 (global only) from the router's neighbor table; live rate, pause and
+    # schedule from kid-control. Only adds data to clients that already exist.
+    for d in devs:
+        s = snaps[d["id"]]
+        for n in s.get("ipv6_nb") or []:
+            c = clients.get((n.get("mac-address") or "").upper())
+            if c and global_ipv6(n.get("address")) and n.get("status") not in ("failed", "noarp"):
+                addr = n["address"].split("%")[0]
+                if addr not in c["ipv6"]:
+                    c["ipv6"].append(addr)
+        for k in s.get("kid_dev") or []:
+            c = clients.get((k.get("mac-address") or "").upper())
+            if not c:
+                continue
+            down, up = rate_bps(k.get("rate-down")), rate_bps(k.get("rate-up"))
+            if down is not None:
+                c["rate_down"] = max(c["rate_down"] or 0, down)
+            if up is not None:
+                c["rate_up"] = max(c["rate_up"] or 0, up)
+            user = k.get("user") or ""
+            if not truthy(k.get("dynamic", "false")) and user:
+                if user == PAUSE_KID:
+                    c.update(paused=True, kid_device_id=k.get(".id"))
+                elif parse_schedule_kid(user):
+                    c.update(schedule=parse_schedule_kid(user), kid_device_id=k.get(".id"))
+    for c in clients.values():
+        c["ipv6"].sort()
 
     if ctrl:
         for a in (STATE.get(ctrl["id"]) or {}).get("wifi_acl") or []:

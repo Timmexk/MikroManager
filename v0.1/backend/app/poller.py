@@ -18,6 +18,8 @@ FAST = {
 FAST_ROUTER = {
     "leases": "/ip/dhcp-server/lease",
     "arp": "/ip/arp",
+    "ipv6_nb": "/ipv6/neighbor",
+    "kid_dev": "/ip/kid-control/device",   # live rate per client
 }
 # Fetched every SLOW_EVERY polls, or right after an action.
 SLOW = {
@@ -34,7 +36,8 @@ SLOW = {
     "wifi_acl": "/interface/wifi/access-list",
     "poe": "/interface/ethernet/poe",
 }
-SLOW_ROUTER = {"routes": "/ip/route"}
+SLOW_ROUTER = {"routes": "/ip/route", "kids": "/ip/kid-control"}
+WAN_PING_TARGET = "1.1.1.1"
 SLOW_EVERY = 4
 RECHECK_UNSUPPORTED_EVERY = 40
 
@@ -93,6 +96,71 @@ def _wan_interface(s: dict) -> str | None:
     return None
 
 
+def wan_routes(s: dict) -> list[dict]:
+    """Every IPv4 default route, one per WAN interface: [{interface, gateway, active, distance}]."""
+    out: dict[str, dict] = {}
+    for r in s.get("routes") or []:
+        if r.get("dst-address") != "0.0.0.0/0" or truthy(r.get("disabled", "false")):
+            continue
+        gw = r.get("immediate-gw") or r.get("gateway") or ""
+        iface = gw.split("%", 1)[1] if "%" in gw else (gw if gw and not re.match(r"^[\d.]+$", gw) else None)
+        ip = gw.split("%", 1)[0] if re.match(r"^[\d.]+", gw) else None
+        if not iface:
+            continue
+        cur = {"interface": iface, "gateway": ip, "active": truthy(r.get("active", "false")),
+               "distance": int(r.get("distance") or 1)}
+        if iface not in out or (cur["active"] and not out[iface]["active"]):
+            out[iface] = cur
+    return sorted(out.values(), key=lambda w: (not w["active"], w["distance"]))
+
+
+_DUR = re.compile(r"([\d.]+)(ms|us|s|m|h)")
+_DUR_MS = {"h": 3600000, "m": 60000, "s": 1000, "ms": 1, "us": 0.001}
+
+
+def duration_ms(v) -> float | None:
+    """RouterOS durations like "12ms342us" or "1s4ms" -> milliseconds."""
+    if v is None or v == "":
+        return None
+    parts = _DUR.findall(str(v))
+    return round(sum(float(n) * _DUR_MS[u] for n, u in parts), 2) if parts else None
+
+
+async def _ping(ros: Ros, address: str, interface: str | None = None, count: int = 4) -> dict | None:
+    body = {"address": address, "count": str(count), "interval": "200ms"}
+    if interface:
+        body["interface"] = interface
+    try:
+        rows = await ros.cmd("/ping", body, timeout=10)
+    except RosError:
+        return None
+    rows = rows if isinstance(rows, list) else [rows]
+    summary = next((r for r in reversed(rows) if isinstance(r, dict) and "packet-loss" in r), None)
+    if not summary:
+        return None
+    return {"loss": float(summary.get("packet-loss") or 0), "avg": duration_ms(summary.get("avg-rtt")),
+            "min": duration_ms(summary.get("min-rtt")), "max": duration_ms(summary.get("max-rtt"))}
+
+
+async def _wan_quality(dev: dict, ros: Ros, s: dict, now: float) -> None:
+    """Internet latency over the active WAN, and gateway latency for every WAN (also standby ones)."""
+    if "/ping" in s["unsupported"]:
+        return
+    wans = wan_routes(s)
+    jobs = [("internet", (s.get("wan") or (wans[0]["interface"] if wans else "")), _ping(ros, WAN_PING_TARGET))]
+    jobs += [("gateway", w["interface"], _ping(ros, w["gateway"], w["interface"])) for w in wans if w["gateway"]]
+    results = await asyncio.gather(*(j[2] for j in jobs))
+    q = {}
+    for (kind, wan, _), r in zip(jobs, results):
+        if not wan:
+            continue
+        q.setdefault(wan, {})[kind] = r
+        if r:
+            db.x("INSERT INTO wan_quality (device_id, ts, wan, kind, rtt, loss) VALUES (?,?,?,?,?,?)",
+                 dev["id"], now, wan, kind, r["avg"], r["loss"])
+    s["wan_quality"] = q
+
+
 async def poll_device(dev: dict, slow: bool = False) -> None:
     s = snap(dev["id"])
     ros = Ros.for_device(dev)
@@ -142,7 +210,14 @@ async def poll_device(dev: dict, slow: bool = False) -> None:
         paths.update(SLOW)
         if is_router:
             paths.update(SLOW_ROUTER)
+    if is_router and "/ip/kid-control/device" not in s["unsupported"]:
+        try:   # refresh the live rate columns before reading them
+            await ros.cmd("/ip/kid-control/device/update-stats", {}, timeout=5)
+        except RosError:
+            pass
     await _gather(ros, s, paths)
+    if is_router:
+        await _wan_quality(dev, ros, s, now)
 
     if slow:
         eth = [e["name"] for e in s.get("ethernet") or [] if not truthy(e.get("disabled", "false"))]
@@ -189,6 +264,7 @@ async def run() -> None:
         await asyncio.gather(*(_safe_poll(d, n % SLOW_EVERY == 0) for d in devs))
         if n % 40 == 0:
             db.x("DELETE FROM metrics WHERE ts < ?", time.time() - 86400)
+            db.x("DELETE FROM wan_quality WHERE ts < ?", time.time() - 86400)
         try:
             await maint.scheduled_backups()
         except Exception as e:
@@ -204,4 +280,14 @@ def history(device_id: int, hours: float = 6, points: int = 120) -> list[dict]:
     return db.q(
         "SELECT CAST(ts / ? AS INTEGER) * ? AS ts, AVG(cpu) cpu, AVG(mem) mem, MAX(clients) clients, "
         "AVG(rx_bps) rx, AVG(tx_bps) tx FROM metrics WHERE device_id=? AND ts>=? GROUP BY 1 ORDER BY 1",
+        bucket, bucket, device_id, since)
+
+
+def wan_history(device_id: int, hours: float = 6, points: int = 120) -> list[dict]:
+    """Per WAN and kind (internet/gateway): bucketed average latency and packet loss."""
+    since = time.time() - hours * 3600
+    bucket = max(POLL_INTERVAL, hours * 3600 / points)
+    return db.q(
+        "SELECT wan, kind, CAST(ts / ? AS INTEGER) * ? AS ts, AVG(rtt) rtt, AVG(loss) loss, MAX(rtt) rtt_max "
+        "FROM wan_quality WHERE device_id=? AND ts>=? GROUP BY wan, kind, 3 ORDER BY 3",
         bucket, bucket, device_id, since)

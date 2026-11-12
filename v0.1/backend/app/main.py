@@ -1,6 +1,7 @@
 """MikroManager API + static frontend."""
 import asyncio
 import json
+import re
 import time
 from contextlib import asynccontextmanager
 
@@ -359,6 +360,9 @@ def overview(site_id: int, hours: float = 6, _: dict = Depends(user)):
         "updates": sum(1 for v in views if v["update_available"]),
         "wan": {"interface": cs.get("wan"), "rx_bps": wan_rate[0], "tx_bps": wan_rate[1],
                 "history": poller.history(ctrl["id"], hours) if ctrl else []},
+        "wan_quality": {"target": poller.WAN_PING_TARGET,
+                        "wans": [{**w, "ping": (cs.get("wan_quality") or {}).get(w["interface"]) or {}} for w in poller.wan_routes(cs)],
+                        "history": poller.wan_history(ctrl["id"], hours) if ctrl else []},
         "ssids": sorted(ssids.items(), key=lambda kv: -kv[1]),
         "top_clients": [{"mac": c["mac"], "display": c["display"], "rx": c["rx"], "tx": c["tx"], "ssid": c["wifi"]["ssid"]}
                         for c in sorted((c for c in cl if c["wifi"]), key=lambda c: -(c["rx"] + c["tx"]))[:5]],
@@ -450,6 +454,81 @@ async def client_block(site_id: int, mac: str, body: dict = Body(default={}), _:
         db.log(site_id, f"Blokkade van {c['display']} opgeheven")
     await poller.refresh_device(ctrl)
     return {"ok": True}
+
+
+_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def _router(site_id: int) -> dict:
+    """The router that runs DHCP/kid-control for this site (the controller, else the first router)."""
+    dev = db.controller(site_id)
+    if not dev:
+        raise ValueError("Deze site heeft nog geen router. Voeg eerst je router toe.")
+    return dev
+
+
+async def _kid_assign(site_id: int, c: dict, kid: str | None) -> None:
+    """Put the client under one MikroManager kid-control profile (or none)."""
+    dev = _router(site_id)
+    ros = Ros.for_device(dev)
+    if kid and not await ros.get("/ip/kid-control", name=kid):
+        sched = clients_mod.parse_schedule_kid(kid)
+        days = {d: f"{sched['from']}-{sched['to']}" for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")} if sched else {}
+        await ros.add("/ip/kid-control", {"name": kid, **days,
+                                          "comment": "MikroManager: pauze" if not sched else "MikroManager: tijdschema"})
+        if kid == clients_mod.PAUSE_KID:
+            await ros.cmd("/ip/kid-control/pause", {"numbers": kid})
+    if c.get("kid_device_id"):
+        await ros.remove("/ip/kid-control/device", c["kid_device_id"])
+    if kid:
+        await ros.add("/ip/kid-control/device", {"name": f"mm-{c['mac'].replace(':', '').lower()}",
+                                                 "mac-address": c["mac"], "user": kid})
+    await poller.refresh_device(dev)
+
+
+@app.post("/api/sites/{site_id}/clients/{mac}/pause")
+async def client_pause(site_id: int, mac: str, body: dict = Body(default={}), _: dict = Depends(user)):
+    c = _client(site_id, mac)
+    if body.get("paused", True):
+        await _kid_assign(site_id, c, clients_mod.PAUSE_KID)
+        db.log(site_id, f"Internet gepauzeerd voor {c['display']}", "warn")
+    else:
+        sched = db.q1("SELECT start, stop FROM client_schedules WHERE site_id=? AND mac=?", site_id, c["mac"])
+        await _kid_assign(site_id, c, clients_mod.schedule_kid(sched["start"], sched["stop"]) if sched else None)
+        db.log(site_id, f"Internet hervat voor {c['display']}")
+    return {"ok": True}
+
+
+@app.post("/api/sites/{site_id}/clients/{mac}/schedule")
+async def client_schedule(site_id: int, mac: str, body: dict = Body(default={}), _: dict = Depends(user)):
+    c = _client(site_id, mac)
+    start, stop = body.get("from"), body.get("to")
+    if start or stop:
+        if not (_HHMM.match(start or "") and _HHMM.match(stop or "")) or start >= stop:
+            raise ValueError("Kies een begin- en eindtijd (uu:mm) op dezelfde dag, begin vóór eind")
+        db.x("INSERT INTO client_schedules (site_id, mac, start, stop) VALUES (?,?,?,?) "
+             "ON CONFLICT(site_id, mac) DO UPDATE SET start=excluded.start, stop=excluded.stop", site_id, c["mac"], start, stop)
+        if not c["paused"]:
+            await _kid_assign(site_id, c, clients_mod.schedule_kid(start, stop))
+        db.log(site_id, f"Tijdschema voor {c['display']}: internet van {start} tot {stop}")
+    else:
+        db.x("DELETE FROM client_schedules WHERE site_id=? AND mac=?", site_id, c["mac"])
+        if not c["paused"]:
+            await _kid_assign(site_id, c, None)
+        db.log(site_id, f"Tijdschema voor {c['display']} verwijderd")
+    return {"ok": True}
+
+
+@app.post("/api/sites/{site_id}/clients/{mac}/wol")
+async def client_wol(site_id: int, mac: str, _: dict = Depends(user)):
+    c = _client(site_id, mac)
+    dev = _device(c["lease_device"]) if c["lease_device"] else _router(site_id)
+    s = STATE.get(dev["id"]) or {}
+    iface = next((a.get("interface") for a in s.get("arp") or [] if (a.get("mac-address") or "").upper() == c["mac"]), None)
+    iface = iface or _site(site_id)["settings"].get("bridge") or "bridge"
+    await Ros.for_device(dev).cmd("/tool/wol", {"mac": c["mac"], "interface": iface})
+    db.log(site_id, f"Wake-on-LAN verstuurd naar {c['display']} via {iface}")
+    return {"ok": True, "interface": iface}
 
 
 # ---- wifi ------------------------------------------------------------------

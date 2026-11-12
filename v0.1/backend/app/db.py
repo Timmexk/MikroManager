@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS client_names (
 CREATE TABLE IF NOT EXISTS metrics (
   device_id INTEGER NOT NULL, ts REAL NOT NULL, cpu REAL, mem REAL, clients INTEGER, rx_bps REAL, tx_bps REAL);
 CREATE INDEX IF NOT EXISTS metrics_idx ON metrics (device_id, ts);
+CREATE TABLE IF NOT EXISTS client_schedules (
+  site_id INTEGER NOT NULL, mac TEXT NOT NULL, start TEXT NOT NULL, stop TEXT NOT NULL, PRIMARY KEY (site_id, mac));
+CREATE TABLE IF NOT EXISTS wan_quality (
+  device_id INTEGER NOT NULL, ts REAL NOT NULL, wan TEXT NOT NULL, kind TEXT NOT NULL, rtt REAL, loss REAL);
+CREATE INDEX IF NOT EXISTS wan_quality_idx ON wan_quality (device_id, ts);
 CREATE TABLE IF NOT EXISTS backups (
   id INTEGER PRIMARY KEY, device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
   ts REAL NOT NULL, filename TEXT NOT NULL, size INTEGER NOT NULL, sha TEXT NOT NULL,
