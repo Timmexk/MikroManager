@@ -11,7 +11,7 @@ if DEMO:
     DATA_DIR = DATA_DIR / "demo"   # wiped on every start, never touches real data
 SECURE_COOKIE = os.environ.get("TIKCONTROL_SECURE_COOKIE", "").lower() in ("1", "true", "yes")
 
-# Everything TikControl creates on a router carries this prefix (names) or
+# Everything MikroManager creates on a router carries this prefix (names) or
 # "tc:" (comments). The sync code never touches objects without it.
 PREFIX = "tc-"
 TAG = "tc:"

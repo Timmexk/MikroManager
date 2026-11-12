@@ -1,4 +1,4 @@
-"""TikControl API + static frontend."""
+"""MikroManager API + static frontend."""
 import asyncio
 import json
 import time
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     await close_all()
 
 
-app = FastAPI(title="TikControl", version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="MikroManager", version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None)
 
 
 @app.exception_handler(RosError)
@@ -309,7 +309,7 @@ def device_delete(dev_id: int, _: dict = Depends(user)):
     db.x("DELETE FROM devices WHERE id=?", dev_id)
     db.x("DELETE FROM metrics WHERE device_id=?", dev_id)
     STATE.pop(dev_id, None)
-    db.log(dev["site_id"], f"{dev['name']} verwijderd uit TikControl (configuratie op het apparaat is niet aangepast)")
+    db.log(dev["site_id"], f"{dev['name']} verwijderd uit MikroManager (configuratie op het apparaat is niet aangepast)")
     return {"ok": True}
 
 
@@ -643,7 +643,7 @@ async def network_delete(site_id: int, slug: str, _: dict = Depends(user)):
     ctrl = _controller(site_id)
     removed = await networks.delete_network(Ros.for_device(ctrl), slug)
     if not removed:
-        raise HTTPException(404, "Geen door TikControl beheerd netwerk met deze naam")
+        raise HTTPException(404, "Geen door MikroManager beheerd netwerk met deze naam")
     db.log(site_id, f"Netwerk '{slug}' verwijderd van {ctrl['name']}", "warn")
     await poller.refresh_device(ctrl)
     return {"ok": True, "removed": removed}
@@ -654,7 +654,7 @@ async def dns_add(site_id: int, body: dict = Body(...), _: dict = Depends(user))
     if not body.get("name") or not body.get("address"):
         raise ValueError("Naam en adres zijn verplicht")
     await Ros.for_device(_controller(site_id)).add("/ip/dns/static", {
-        "name": body["name"].strip(), "address": body["address"].strip(), "comment": body.get("comment") or "TikControl"})
+        "name": body["name"].strip(), "address": body["address"].strip(), "comment": body.get("comment") or "MikroManager"})
     return {"ok": True}
 
 

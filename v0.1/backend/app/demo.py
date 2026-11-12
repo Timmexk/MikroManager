@@ -1,6 +1,6 @@
 """Demo mode (TIKCONTROL_DEMO=1): simulated routers in-process plus a seeded site.
 
-Lets you click through the whole UI before pointing TikControl at real hardware.
+Lets you click through the whole UI before pointing MikroManager at real hardware.
 """
 import asyncio
 import math

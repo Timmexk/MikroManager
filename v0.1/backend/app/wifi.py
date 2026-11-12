@@ -49,8 +49,8 @@ def desired_state(settings: dict, wlans: list[dict]) -> dict:
     active = [w for w in wlans if w["enabled"]]
 
     if active:
-        ch2 = {"width": settings["ch2_width"], "comment": "TikControl 2.4 GHz"}
-        ch5 = {"width": settings["ch5_width"], "skip-dfs-channels": settings["skip_dfs"], "comment": "TikControl 5 GHz"}
+        ch2 = {"width": settings["ch2_width"], "comment": "MikroManager 2.4 GHz"}
+        ch5 = {"width": settings["ch5_width"], "skip-dfs-channels": settings["skip_dfs"], "comment": "MikroManager 5 GHz"}
         if settings.get("ch2_freq"):
             ch2["frequency"] = settings["ch2_freq"].replace(" ", "")
         if settings.get("ch5_freq"):
@@ -59,7 +59,7 @@ def desired_state(settings: dict, wlans: list[dict]) -> dict:
         if ac:
             # wifi-qcom-ac cannot take a VLAN from the datapath (MikroTik docs);
             # those CAPs tag per interface with a bridge PVID instead.
-            out[DP][f"{PREFIX}dp-ac"] = {"bridge": bridge, "comment": "TikControl ac-CAPs (geen VLAN)"}
+            out[DP][f"{PREFIX}dp-ac"] = {"bridge": bridge, "comment": "MikroManager ac-CAPs (geen VLAN)"}
 
     for w in active:
         name = PREFIX + w["slug"]
@@ -266,7 +266,7 @@ async def adopt_ap(ap: Ros, controller_host: str | None, bridge: str | None = No
     else:
         dp_name = f"{PREFIX}cap"
         if not any(d.get("name") == dp_name for d in await ap.get(DP)):
-            await ap.add(DP, {"name": dp_name, "bridge": bridge, "comment": "TikControl CAP"})
+            await ap.add(DP, {"name": dp_name, "bridge": bridge, "comment": "MikroManager CAP"})
         cap["slaves-datapath"] = dp_name
         for r in radios:
             await ap.set(WIFI, r[".id"], {"configuration.manager": "capsman", "datapath": dp_name, "disabled": "no"})
