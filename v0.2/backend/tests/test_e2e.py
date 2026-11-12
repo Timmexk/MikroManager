@@ -39,7 +39,8 @@ def wait(fn, label, timeout=40):
 def main():
     data = tempfile.mkdtemp()
     env = {**os.environ, "TIKCONTROL_DEMO": "1", "TIKCONTROL_DEMO_SEED": "0", "TIKCONTROL_DATA": data,
-           "TIKCONTROL_POLL": "2", "MOCK_REBOOT_SECS": "4", "TIKCONTROL_SAFE_SECS": "8", "TIKCONTROL_SAFE_CHECK_SECS": "4", "MOCK_BASE_PORT": str(MOCK), "TIKCONTROL_STATIC": "/nonexistent"}
+           "TIKCONTROL_POLL": "2", "MOCK_REBOOT_SECS": "4", "TIKCONTROL_SAFE_SECS": "8", "TIKCONTROL_SAFE_CHECK_SECS": "4",
+           "TIKCONTROL_LIVE_INTERVAL": "1", "TIKCONTROL_LIVE_PING_EVERY": "2", "MOCK_BASE_PORT": str(MOCK), "TIKCONTROL_STATIC": "/nonexistent"}
     proc = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(PORT), "--log-level", "warning"], env=env)
     c = httpx.Client(base_url=BASE, timeout=60)
     try:
@@ -314,6 +315,7 @@ def run(c):
     e1 = next(i for i in crs.get("/interface").json() if i["name"] == "ether1")
     check(e1["disabled"] == "false" and time.time() - t0 >= 6, "the switch undid it on its own after the safe-mode time")
     check(not crs.get("/system/scheduler").json(), "undo scheduler removed itself")
+    wait(lambda: all(d["online"] for d in c.get(f"/api/sites/{sid}/devices").json()), "devices behind the switch back online")
     r = c.post(f"/api/devices/{ids['hexpoe']}/interfaces/ether2", json={"poe_out": "off"})
     check(r.status_code == 202 and r.json()["lost"] == ["cAP-ax-woonkamer"] and r.json()["reverting_in"] == 0,
           "PoE off that cuts an access point is undone straight away")
@@ -325,6 +327,22 @@ def run(c):
     check(r.json()["applied"], "PVID on an edge port is fine")
     c.post(f"{base}/interfaces/ether3", json={"pvid": 1})
     wait(lambda: all(d["online"] for d in c.get(f"/api/sites/{sid}/devices").json()), "all devices online again")
+
+    print("live view")
+    first = c.get(f"/api/sites/{sid}/live").json()       # starts watching; returns stored history as fill
+    t0 = first["now"]
+    lv = wait(lambda: (x := c.get(f"/api/sites/{sid}/live", params={"since": t0}).json())
+              and len(x["traffic"]) >= 4 and x["latency"] and x, "live samples", timeout=20)
+    gaps = [b["ts"] - a["ts"] for a, b in zip(lv["traffic"], lv["traffic"][1:])]
+    check(max(gaps) < 2.5 and all(p["rx"] is not None for p in lv["traffic"]), "WAN traffic sampled every second while watched")
+    check(lv["latency"][-1]["rtt"] > 0 and lv["wan"] == "ether1", "live internet latency")
+    check(all(v is not None for v in lv["cpu"].values()), "live CPU for every device")
+    check(first["traffic"] and first["traffic"][0]["ts"] < t0 - 60, "first request fills the window with stored history")
+    newer = c.get(f"/api/sites/{sid}/live", params={"since": lv["traffic"][-1]["ts"]}).json()["traffic"]
+    check(all(p["ts"] > lv["traffic"][-1]["ts"] for p in newer), "only new samples after 'since'")
+    dl = wait(lambda: (x := c.get(f"/api/devices/{ids['crs']}/live", params={"since": t0}).json()) and len(x["load"]) >= 2 and x,
+              "device live")
+    check("ether3" in dl["rates"] and dl["rates"]["ether3"]["rx"] > 0, "live rate per interface on the device page")
 
     print("overview and cleanup")
     o = c.get(f"/api/sites/{sid}/overview").json()
