@@ -105,6 +105,12 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
 - [ ] **[REST] Zendvermogen per radio (v0.2).** Wint een provisioning-regel met `radio-mac` van de regels op
   `supported-bands` als hij erboven staat? Neemt een CAP `tx-power` uit de master-configuratie over, en houden de
   virtuele SSID's op die radio hetzelfde vermogen?
+- [ ] **[REST] Maximum zendvermogen.** Geeft `/interface/wifi/radio` `current-max-reg-power`, en is dat EIRP of
+  conducted? Wat meldt `/interface/wifi/monitor` als `tx-power` bij "Hoog" (een gebruiker zag 9 dBm op 5 GHz)?
+- [ ] **[gedrag] Eigen radio's van de router (v0.2).** Profiel rechtstreeks op wifi1/wifi2 en een statische
+  virtuele interface per extra SSID: zenden alle SSID's uit, en komen ze in de bridge via het datapath? Werkt het
+  herstel van een eerder geprovisioned radio (regels uit, `radio provision`, regels aan) zonder dat de CAP's
+  opnieuw provisionen?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
