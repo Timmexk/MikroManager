@@ -11,6 +11,7 @@ export default function Wifi() {
   const w = useLoad(() => api.get(`/api/sites/${site.id}/wifi`), [site.id], 10000);
   const [edit, setEdit] = useState<any | "new" | null>(null);
   const [plan, setPlan] = useState(false);
+  const [txRadio, setTxRadio] = useState<{ ap: string; r: any } | null>(null);
   const { busy, run } = useAction();
   const { confirm } = useUi();
   if (!w.data) return <Loading error={w.error} />;
@@ -30,9 +31,9 @@ export default function Wifi() {
       run("local", async () => { await api.post(`/api/sites/${site.id}/wifi/local-radios`); w.reload(); }, "Radio's overgenomen");
   };
   const adopt = async (ap: any) => {
-    if (await confirm({ title: `${ap.name} koppelen?`, action: "Koppelen",
+    if (await confirm({ title: `${ap.name} adopteren?`, action: "Adopteren",
       text: "De radio's worden voortaan door de controller ingesteld. De huidige wifi-instellingen op het apparaat zelf vervallen." }))
-      run(`adopt${ap.device_id}`, async () => { await api.post(`/api/devices/${ap.device_id}/adopt`); w.reload(); }, "Access point gekoppeld");
+      run(`adopt${ap.device_id}`, async () => { await api.post(`/api/devices/${ap.device_id}/adopt`); w.reload(); }, "Access point geadopteerd");
   };
 
   return (
@@ -68,7 +69,7 @@ export default function Wifi() {
                 <td>{SECURITY[n.security]}</td>
                 <td className="num">{n.vlan_id ?? <span className="muted">geen</span>}</td>
                 <td>{n.bands.map(bandLabel).join(" en ")}</td>
-                <td className="small muted">{[n.hidden && "verborgen", n.isolation && "clients geïsoleerd", n.ft && n.security !== "open" && "snel roamen"].filter(Boolean).join(", ") || "–"}</td>
+                <td className="small muted">{[n.hidden && "verborgen SSID", n.isolation && "client-isolatie", n.ft && n.security !== "open" && "snelle roaming"].filter(Boolean).join(", ") || "–"}</td>
                 <td className="right"><button className="btn sm" onClick={() => setEdit(n)}><Pencil size={14} />Bewerken</button></td>
               </tr>
             ))}</tbody>
@@ -83,7 +84,7 @@ export default function Wifi() {
             <a className="btn" href="#/devices">Naar apparaten</a></div>
         ) : (
           <div className="table-wrap"><table className="t">
-            <thead><tr><th>Access point</th><th>Radio</th><th>Kanaal</th><th>Netwerken</th><th className="right">Clients</th><th>Status</th></tr></thead>
+            <thead><tr><th>Access point</th><th>Radio</th><th>Kanaal</th><th>Zendvermogen</th><th>SSID's</th><th className="right">Clients</th><th>Status</th></tr></thead>
             <tbody>{d.aps.flatMap((ap: any) => {
               const unmanagedLocal = ap.local && ap.radios.some((r: any) => !r.managed);
               const head = (
@@ -94,16 +95,19 @@ export default function Wifi() {
                 </td>);
               const status = (
                 <td rowSpan={Math.max(1, ap.radios.length)} style={{ verticalAlign: "top" }}>
-                  {ap.adoptable ? <button className="btn sm primary" disabled={!!busy} onClick={() => adopt(ap)}><Busy on={busy === `adopt${ap.device_id}`}>Koppelen</Busy></button>
+                  {ap.adoptable ? <button className="btn sm primary" disabled={!!busy} onClick={() => adopt(ap)}><Busy on={busy === `adopt${ap.device_id}`}>Adopteren</Busy></button>
                     : unmanagedLocal ? <button className="btn sm" disabled={!!busy || d.wlans.length === 0} onClick={takeLocal} title="Laat ook de radio's van de router deze netwerken uitzenden">Radio's overnemen</button>
                       : <span className={`tag ${ap.state === "Ok" || ap.local ? "ok" : "warn"}`}>{ap.local ? "Beheerd" : ap.state === "Ok" ? "Verbonden" : ap.state}</span>}
                 </td>);
-              if (!ap.radios.length) return [<tr key={ap.name}>{head}<td colSpan={4} className="muted">{ap.adoptable ? "Nog niet gekoppeld aan de controller" : "Wacht tot de controller het apparaat ziet"}</td>{status}</tr>];
+              if (!ap.radios.length) return [<tr key={ap.name}>{head}<td colSpan={5} className="muted">{ap.adoptable ? "Nog niet geadopteerd door de controller" : "Wacht tot de controller het apparaat ziet"}</td>{status}</tr>];
               return ap.radios.map((r: any, i: number) => (
                 <tr key={ap.name + r.mac}>
                   {i === 0 && head}
                   <td>{bandLabel(r.band)}<div className="mono muted">{r.mac}</div></td>
-                  <td className="num">{r.channel ? <>{r.channel.split("/")[0]} MHz{r.tx_power && <div className="muted small">{r.tx_power} dBm</div>}</> : <span className="muted">–</span>}</td>
+                  <td className="num">{r.channel ? <>{r.channel.split("/")[0]} MHz</> : <span className="muted">–</span>}</td>
+                  <td>{r.managed ? <button className="btn sm" onClick={() => setTxRadio({ ap: ap.name, r })} title="Zendvermogen instellen">
+                      {TX_LABEL[r.tx?.mode ?? "high"]}{r.tx_power ? <span className="muted num" style={{ marginLeft: 6 }}>{r.tx_power} dBm</span> : null}</button>
+                    : r.tx_power ? <span className="num">{r.tx_power} dBm</span> : <span className="muted">–</span>}</td>
                   <td>{r.ssids.length ? r.ssids.join(", ") : <span className="muted">{r.managed ? "geen" : "eigen instelling"}</span>}</td>
                   <td className="num right">{r.clients}</td>
                   {i === 0 && status}
@@ -118,6 +122,7 @@ export default function Wifi() {
 
       {edit && <WlanForm siteId={site.id} wlan={edit === "new" ? null : edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); w.reload(); }} />}
       {plan && <PlanModal siteId={site.id} onClose={() => { setPlan(false); w.reload(); }} />}
+      {txRadio && <TxModal siteId={site.id} ap={txRadio.ap} r={txRadio.r} onClose={() => setTxRadio(null)} onSaved={() => { setTxRadio(null); w.reload(); }} />}
     </div>
   );
 }
@@ -166,15 +171,15 @@ function WlanForm({ siteId, wlan, onClose, onSaved }: { siteId: number; wlan: an
               <button type="button" className="btn icon" onClick={() => setShow(!show)} aria-label={show ? "Verberg wachtwoord" : "Toon wachtwoord"}>{show ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
           </Field>
         ) : <div className="banner warn small">Een open netwerk is voor iedereen binnen bereik toegankelijk en niet versleuteld.</div>}
-        <div className="field"><span>Banden</span>
+        <div className="field"><span>Frequentiebanden</span>
           <div className="row" style={{ gap: 22 }}>
             <Check checked={f.bands.includes("2g")} onChange={(v) => band("2g", v)} label="2,4 GHz" />
             <Check checked={f.bands.includes("5g")} onChange={(v) => band("5g", v)} label="5 GHz" />
           </div></div>
-        <Check checked={f.isolation} onChange={(v) => set("isolation", v)} label="Clients van elkaar isoleren" hint="Apparaten op dit netwerk kunnen elkaar niet bereiken. Gebruikelijk voor gasten." />
-        {f.security !== "open" && <Check checked={f.ft} onChange={(v) => set("ft", v)} label="Snel roamen (802.11r)" hint="Vlottere overdracht tussen access points. Zet uit als een oud apparaat niet wil verbinden." />}
-        <Check checked={f.hidden} onChange={(v) => set("hidden", v)} label="Naam verbergen" />
-        <Check checked={f.enabled} onChange={(v) => set("enabled", v)} label="Netwerk uitzenden" />
+        <Check checked={f.isolation} onChange={(v) => set("isolation", v)} label="Client-isolatie" hint="Apparaten op dit netwerk kunnen elkaar niet bereiken. Gebruikelijk voor gasten." />
+        {f.security !== "open" && <Check checked={f.ft} onChange={(v) => set("ft", v)} label="Snelle roaming (802.11r)" hint="Clients roamen sneller tussen access points. Zet uit als een oud apparaat niet wil verbinden." />}
+        <Check checked={f.hidden} onChange={(v) => set("hidden", v)} label="SSID verbergen" />
+        <Check checked={f.enabled} onChange={(v) => set("enabled", v)} label="SSID actief" />
       </form>
     </Modal>
   );
@@ -251,9 +256,9 @@ function RadioSettings({ site, bridges, onSaved }: { site: any; bridges: string[
             <input className="input mono" value={s.ch5_freq} onChange={(e) => set("ch5_freq", e.target.value)} placeholder="automatisch" pattern="[0-9,:\- ]*" /></Field>
         </div>
         <div className="two">
-          <Field label="DFS-kanalen (5 GHz)" hint="Op DFS-kanalen luistert een AP eerst 1 tot 10 minuten naar radar voordat hij uitzendt.">
+          <Field label="DFS-kanalen (5 GHz)" hint="Op DFS-kanalen doet een AP eerst een CAC (1 tot 10 minuten radardetectie) voordat hij uitzendt.">
             <select className="input" value={s.skip_dfs} onChange={(e) => set("skip_dfs", e.target.value)}>
-              <option value="disabled">Alle kanalen gebruiken</option><option value="10min-cac">Kanalen met 10 minuten wachttijd overslaan</option><option value="all">Alle DFS-kanalen overslaan</option></select></Field>
+              <option value="disabled">Alle kanalen gebruiken</option><option value="10min-cac">Kanalen met 10 minuten CAC overslaan</option><option value="all">Alle DFS-kanalen overslaan</option></select></Field>
           <div className="field" style={{ alignContent: "end" }}>
             <Check checked={!!s.ac_caps} onChange={(v) => set("ac_caps", v)} label="Ook wifi 5 access points (wifi-qcom-ac)"
               hint="Maakt extra regels zonder VLAN in het datapath; het VLAN stel je op die AP's per interface in met een bridge-PVID." />
@@ -262,5 +267,39 @@ function RadioSettings({ site, bridges, onSaved }: { site: any; bridges: string[
         <div><button className="btn primary" disabled={!dirty || !!busy}>Instellingen opslaan</button></div>
       </form>
     </section>
+  );
+}
+
+const TX_LABEL: Record<string, string> = { manual: "Handmatig", low: "Laag", medium: "Midden", high: "Hoog" };
+
+function TxModal({ siteId, ap, r, onClose, onSaved }: { siteId: number; ap: string; r: any; onClose: () => void; onSaved: () => void }) {
+  const [mode, setMode] = useState<string>(r.tx?.mode ?? "high");
+  const [power, setPower] = useState(String(r.tx?.power ?? r.tx_power ?? ""));
+  const { busy, run } = useAction();
+  const hint: Record<string, string> = {
+    high: "Maximaal wat het land toestaat (standaard van RouterOS).",
+    medium: `${r.tx?.presets?.medium} dBm. Goed voor meerdere AP's dicht bij elkaar.`,
+    low: `${r.tx?.presets?.low} dBm. Kleine cel, bijvoorbeeld een AP per kamer.`,
+    manual: "Vaste waarde in dBm (1 tot 30). Het land kan het nog verder begrenzen.",
+  };
+  const save = () => run("tx", async () => {
+    await api.post(`/api/sites/${siteId}/wifi/radios/${encodeURIComponent(r.mac)}`, { mode, power: mode === "manual" ? Number(power) : null });
+    onSaved();
+  }, "Opgeslagen. Pas de wijzigingen toe om ze op de AP's te zetten.");
+  return (
+    <Modal title={`Zendvermogen ${ap}, ${bandLabel(r.band)}`} onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>Annuleren</button>
+        <button className="btn primary" disabled={!!busy || (mode === "manual" && !power)} onClick={save}>Opslaan</button></>}>
+      <div className="form">
+        <div className="seg" role="tablist" style={{ width: "fit-content" }}>
+          {["manual", "low", "medium", "high"].map((m) => (
+            <button key={m} type="button" role="tab" aria-selected={m === mode} className={m === mode ? "on" : ""} onClick={() => setMode(m)}>{TX_LABEL[m]}</button>
+          ))}
+        </div>
+        {mode === "manual" && <Field label="Zendvermogen (dBm)"><input className="input mono" inputMode="numeric" value={power} onChange={(e) => setPower(e.target.value)} style={{ width: 110 }} autoFocus /></Field>}
+        <p className="muted small">{hint[mode]} Nu: {r.tx_power ? `${r.tx_power} dBm` : "onbekend"}.</p>
+        <p className="muted small">Wordt per radio via CAPsMAN ingesteld. Clients op deze radio verbinden bij het toepassen kort opnieuw.</p>
+      </div>
+    </Modal>
   );
 }

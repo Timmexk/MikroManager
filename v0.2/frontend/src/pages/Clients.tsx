@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Cable, Clock, Pause, Search, Wifi } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../App";
-import { bandLabel, bps, Drawer, fmtBytes, fmtUptime, Loading, Seg, Signal, useAction, useLoad, useUi } from "../ui";
+import { bandLabel, bps, Drawer, fmtBytes, fmtUptime, linkRate, Loading, Seg, Signal, useAction, useLoad, useUi } from "../ui";
 
 type Filter = "online" | "wifi" | "wired" | "offline";
 
@@ -49,7 +49,7 @@ export default function Clients() {
                   {c.paused && <span className="tag warn"><Pause size={12} />Gepauzeerd</span>}
                   {!c.paused && c.schedule && <span className="tag"><Clock size={12} />{c.schedule.from}–{c.schedule.to}</span>}
                 </div></td>
-                <td className="mono hide-sm">{c.ip ?? "–"}{c.static && <span className="tag" style={{ marginLeft: 8, fontFamily: "var(--sans)" }}>Vast</span>}
+                <td className="mono hide-sm">{c.ip ?? "–"}{c.static && <span className="tag" style={{ marginLeft: 8, fontFamily: "var(--sans)" }}>Statisch</span>}
                   {c.ipv6?.length > 0 && <div className="muted small ellipsis" title={c.ipv6.join("\n")}>{c.ipv6[0]}{c.ipv6.length > 1 ? ` +${c.ipv6.length - 1}` : ""}</div>}</td>
                 <td>{c.wifi ? <>{c.wifi.ssid}<div className="muted small">{c.wifi.ap}, {bandLabel(c.wifi.band)}</div></>
                   : c.wired ? <>{c.wired.device}<div className="muted small">poort {c.wired.port}{c.wired.shared ? `, gedeeld met ${c.wired.shared}` : ""}</div></>
@@ -88,16 +88,16 @@ function ClientDrawer({ siteId, c, onClose, reload }: { siteId: number; c: any; 
         <dt>Status</dt><dd>{c.blocked ? <span className="tag bad">Geblokkeerd</span> : c.online ? <span className="tag ok">Verbonden</span> : <span className="tag">Offline</span>}</dd>
         <dt>IP-adres</dt><dd className="mono">{c.ip ?? "–"}</dd>
         {c.ipv6?.length > 0 && <><dt>IPv6</dt><dd className="mono small">{c.ipv6.map((a: string) => <div key={a}>{a}</div>)}</dd></>}
-        {c.online && c.rate_down != null && <><dt>Nu</dt><dd>{bps(c.rate_down)} omlaag, {bps(c.rate_up)} omhoog</dd></>}
+        {c.online && c.rate_down != null && <><dt>Actueel</dt><dd><DownUp down={bps(c.rate_down)} up={bps(c.rate_up)} /></dd></>}
         {c.hostname && <><dt>Hostnaam</dt><dd>{c.hostname}</dd></>}
-        {c.dhcp_server && <><dt>DHCP-server</dt><dd>{c.dhcp_server}{c.static ? " (vast adres)" : ""}</dd></>}
+        {c.dhcp_server && <><dt>DHCP-server</dt><dd>{c.dhcp_server}{c.static ? " (statische lease)" : ""}</dd></>}
         {c.wifi && <>
           <dt>Netwerk</dt><dd>{c.wifi.ssid}</dd>
           <dt>Access point</dt><dd>{c.wifi.ap}, {bandLabel(c.wifi.band)}</dd>
           <dt>Signaal</dt><dd><Signal dbm={c.wifi.signal} /></dd>
-          <dt>Snelheid</dt><dd className="small">{(c.wifi.rx_rate ?? "–").split("-")[0]} omhoog, {(c.wifi.tx_rate ?? "–").split("-")[0]} omlaag</dd>
+          <dt>Linksnelheid</dt><dd><DownUp down={bps(linkRate(c.wifi.tx_rate))} up={bps(linkRate(c.wifi.rx_rate))} /></dd>
           <dt>Verbonden sinds</dt><dd>{fmtUptime(c.wifi.uptime)}</dd>
-          <dt>Verbruik</dt><dd>{fmtBytes(c.rx)} ontvangen, {fmtBytes(c.tx)} verzonden</dd>
+          <dt>Data</dt><dd><DownUp down={fmtBytes(c.rx)} up={fmtBytes(c.tx)} /> <span className="muted small">sinds verbinden</span></dd>
         </>}
         {c.wifi?.stale && <><dt>Let op</dt><dd className="small">Het access point reageerde net niet; dit is de laatst bekende plek.</dd></>}
         {c.wired && <><dt>Switch</dt><dd>{c.wired.device}</dd><dt>Poort</dt><dd>{c.wired.port}{c.wired.shared ? ` (met ${c.wired.shared} andere apparaten, dus achter een eigen switch of access point)` : ""}</dd></>}
@@ -111,11 +111,11 @@ function ClientDrawer({ siteId, c, onClose, reload }: { siteId: number; c: any; 
       </form>
 
       {c.lease_id && (
-        <form className="form" onSubmit={(e) => { e.preventDefault(); act("static", "/static", { address: ip }, "Vast IP-adres ingesteld"); }}>
-          <label className="field"><span>Vast IP-adres</span>
+        <form className="form" onSubmit={(e) => { e.preventDefault(); act("static", "/static", { address: ip }, "Statische lease ingesteld"); }}>
+          <label className="field"><span>Statische lease</span>
             <div className="row"><input className="input mono" value={ip} onChange={(e) => setIp(e.target.value)} />
-              <button className="btn" disabled={!!busy || (c.static && ip === c.ip)}>{c.static ? "Wijzigen" : "Vastzetten"}</button></div>
-            <small>{c.static ? "Deze client heeft een vaste lease op de router." : "Maakt van de huidige DHCP-lease een vaste lease."}</small></label>
+              <button className="btn" disabled={!!busy || (c.static && ip === c.ip)}>{c.static ? "Wijzigen" : "Statisch maken"}</button></div>
+            <small>{c.static ? "Deze client heeft een statische lease op de router." : "Zet de huidige dynamische lease om naar een statische lease."}</small></label>
         </form>
       )}
 
@@ -139,9 +139,19 @@ function ClientDrawer({ siteId, c, onClose, reload }: { siteId: number; c: any; 
 
       <div className="row wrap">
         {!c.wifi && <button className="btn" disabled={!!busy} onClick={() => act("wol", "/wol", {}, "Wake-on-LAN verstuurd")}>Wake-on-LAN</button>}
-        {c.wifi && <button className="btn" disabled={!!busy} onClick={() => act("kick", "/kick", {}, "Client verbindt opnieuw")}>Opnieuw laten verbinden</button>}
+        {c.wifi && <button className="btn" disabled={!!busy} onClick={() => act("kick", "/kick", {}, "Client gedisconnect; hij verbindt zelf opnieuw")}>Disconnecten</button>}
         <button className={`btn ${c.blocked ? "" : "danger"}`} disabled={!!busy} onClick={block}>{c.blocked ? "Blokkade opheffen" : "Blokkeren op wifi"}</button>
       </div>
     </Drawer>
+  );
+}
+
+/** "↓ download  ↑ upload", the same way the client list shows it. */
+function DownUp({ down, up }: { down: string; up: string }) {
+  return (
+    <span className="row nowrap" style={{ gap: 12, display: "inline-flex" }}>
+      <span title="Download"><ArrowDown size={13} className="muted" /> {down}</span>
+      <span title="Upload"><ArrowUp size={13} className="muted" /> {up}</span>
+    </span>
   );
 }

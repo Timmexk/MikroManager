@@ -109,7 +109,7 @@ export default function Dashboard() {
           </section>
           {d.top_clients.length > 0 && (
             <section className="panel">
-              <header><h2>Meeste verkeer via wifi</h2><a className="btn sm" href="#/clients">Alle clients</a></header>
+              <header><h2>Top wifi-clients (data)</h2><a className="btn sm" href="#/clients">Alle clients</a></header>
               <table className="t"><tbody>
                 {d.top_clients.map((c: any) => (
                   <tr key={c.mac}><td className="strong">{c.display}<div className="muted small" style={{ fontWeight: 400 }}>{c.ssid}</div></td>

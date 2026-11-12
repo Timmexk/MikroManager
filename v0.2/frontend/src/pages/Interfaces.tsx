@@ -12,7 +12,7 @@ const FRAME: Record<string, string> = {
   "admit-only-untagged-and-priority-tagged": "Alleen untagged (access-poort)",
   "admit-only-vlan-tagged": "Alleen tagged (trunk)",
 };
-const POE: Record<string, string> = { "auto-on": "Automatisch", "forced-on": "Altijd aan", off: "Uit" };
+const POE: Record<string, string> = { "auto-on": "Auto-on", "forced-on": "Forced-on", off: "Uit (off)" };
 
 type Result = { applied: boolean; reverting_in: number | null; lost?: string[]; steps: number; view: any };
 
@@ -159,8 +159,8 @@ function InterfaceDrawer({ deviceId, i, data, onClose, reload }: { deviceId: num
       <form className="form" onSubmit={(e) => { e.preventDefault(); save(); }}>
         <dl className="kv">
           <dt>Status</dt><dd>{i.disabled ? "Uitgeschakeld" : i.running ? `Actief${i.ether?.rate ? `, ${i.ether.rate}` : ""}` : "Geen link"}</dd>
-          {i.running && i.rx_bps != null && <><dt>Verkeer</dt><dd>{bps(i.rx_bps)} in, {bps(i.tx_bps)} uit</dd></>}
-          {i.poe?.status && <><dt>PoE</dt><dd>{i.poe.status === "powered-on" ? `Levert ${i.poe.power ?? "?"} W` : i.poe.status === "waiting-for-load" ? "Geen afnemer" : i.poe.status}</dd></>}
+          {i.running && i.rx_bps != null && <><dt>Verkeer</dt><dd>RX {bps(i.rx_bps)}, TX {bps(i.tx_bps)}</dd></>}
+          {i.poe?.status && <><dt>PoE</dt><dd>{i.poe.status === "powered-on" ? `Actief, ${i.poe.power ?? "?"} W` : i.poe.status === "waiting-for-load" ? "Geen PoE-apparaat aangesloten" : i.poe.status}</dd></>}
         </dl>
 
         <Check checked={f.enabled} onChange={(v) => set("enabled", v)} label="Ingeschakeld" />
@@ -170,7 +170,7 @@ function InterfaceDrawer({ deviceId, i, data, onClose, reload }: { deviceId: num
 
         {i.ether && <>
           <h3 className="small-h">Snelheid</h3>
-          <Check checked={f.an} onChange={(v) => set("an", v)} label="Automatisch onderhandelen" hint="Uit = vaste snelheid en duplex" />
+          <Check checked={f.an} onChange={(v) => set("an", v)} label="Auto-negotiation" hint="Uit: vaste snelheid en duplex" />
           {!f.an && <Field label="Vaste snelheid">
             <select className="input" value={f.speed} onChange={(e) => set("speed", e.target.value)}>
               {i.ether.speeds.map((s: string) => <option key={s} value={s}>{s}</option>)}
@@ -178,9 +178,9 @@ function InterfaceDrawer({ deviceId, i, data, onClose, reload }: { deviceId: num
         </>}
 
         {i.poe && <>
-          <h3 className="small-h">PoE-uitgang</h3>
+          <h3 className="small-h">PoE-out</h3>
           <div className="row">
-            <Field label="Stand"><select className="input" value={f.poe_out} onChange={(e) => set("poe_out", e.target.value)}>
+            <Field label="Modus"><select className="input" value={f.poe_out} onChange={(e) => set("poe_out", e.target.value)}>
               {data.poe_out.map((p: string) => <option key={p} value={p}>{POE[p] ?? p}</option>)}</select></Field>
             <Field label="Prioriteit" hint="0 = hoogst"><input className="input mono" inputMode="numeric" value={f.poe_priority} onChange={(e) => set("poe_priority", e.target.value)} style={{ width: 90 }} /></Field>
           </div>
@@ -195,7 +195,7 @@ function InterfaceDrawer({ deviceId, i, data, onClose, reload }: { deviceId: num
             {bp && !bp.vlan_filtering && <p className="muted small">VLAN-filtering staat uit op {bp.bridge}. PVID en tagged VLAN's worden opgeslagen, maar werken pas als je het aanzet; dat doet MikroManager bewust niet.</p>}
             <div className="row">
               <Field label="PVID" hint="Untagged VLAN"><input className="input mono" inputMode="numeric" value={f.pvid} onChange={(e) => set("pvid", e.target.value)} style={{ width: 90 }} /></Field>
-              <Field label="Frames toelaten"><select className="input" value={f.frame_types} onChange={(e) => set("frame_types", e.target.value)}>
+              <Field label="Frame-types"><select className="input" value={f.frame_types} onChange={(e) => set("frame_types", e.target.value)}>
                 {data.frame_types.map((t: string) => <option key={t} value={t}>{FRAME[t] ?? t}</option>)}</select></Field>
             </div>
             <Field label="Tagged VLAN's" hint="Komma-gescheiden, bijvoorbeeld 10, 20, 30"><input className="input mono" value={f.tagged} onChange={(e) => set("tagged", e.target.value)} placeholder="geen" /></Field>

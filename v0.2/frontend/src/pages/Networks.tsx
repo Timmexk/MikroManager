@@ -27,7 +27,7 @@ export default function Networks() {
   return (
     <div className="stack">
       <div className="page-head" style={{ marginBottom: 0 }}>
-        <div><h1>Netwerken</h1><p>Elk netwerk is een VLAN met een eigen adresreeks en DHCP-server op de router.</p></div>
+        <div><h1>Netwerken</h1><p>Elk netwerk is een VLAN met een eigen subnet en DHCP-server op de router.</p></div>
         <button className="btn primary" onClick={() => setAdding(true)} disabled={!d.bridge.exists}><Plus size={16} />Netwerk toevoegen</button>
       </div>
 
@@ -41,7 +41,7 @@ export default function Networks() {
 
       <section className="panel">
         <div className="table-wrap"><table className="t">
-          <thead><tr><th>Netwerk</th><th>VLAN</th><th>Subnet</th><th>Adres router</th><th>DHCP-bereik</th><th className="right">In gebruik</th><th /></tr></thead>
+          <thead><tr><th>Netwerk</th><th>VLAN</th><th>Subnet</th><th>Adres router</th><th>DHCP-pool</th><th className="right">In gebruik</th><th /></tr></thead>
           <tbody>{d.networks.map((net: any) => (
             <tr key={net.name + net.subnet} className={net.disabled ? "off" : ""}>
               <td><span className="strong">{net.label ?? net.name}</span>
@@ -120,7 +120,7 @@ function NetworkForm({ siteId, info, onClose, onSaved }: { siteId: number; info:
             <input className="input mono" value={f.dns} onChange={(e) => set("dns", e.target.value)} placeholder="router" /></Field>
         </div>
         {ports.length > 0 && (
-          <div className="field"><span>Doorgeven op poorten (tagged)</span>
+          <div className="field"><span>Tagged op poorten</span>
             <div className="row wrap" style={{ gap: "8px 18px" }}>
               {ports.map((p) => <Check key={p} checked={f.tagged_ports.includes(p)} label={p}
                 onChange={(v) => set("tagged_ports", v ? [...f.tagged_ports, p] : f.tagged_ports.filter((x) => x !== p))} />)}
@@ -132,7 +132,7 @@ function NetworkForm({ siteId, info, onClose, onSaved }: { siteId: number; info:
             <select className="input" value={f.interface_list} onChange={(e) => set("interface_list", e.target.value)}>
               <option value="">Geen</option>{info.interface_lists.map((l: string) => <option key={l}>{l}</option>)}</select></Field>
         )}
-        <Check checked={f.isolate} onChange={(v) => set("isolate", v)} label="Afschermen van andere lokale netwerken"
+        <Check checked={f.isolate} onChange={(v) => set("isolate", v)} label="Inter-VLAN-verkeer blokkeren"
           hint="Voegt een firewallregel toe die verkeer van dit netwerk naar 10.0.0.0/8, 172.16.0.0/12 en 192.168.0.0/16 weigert. Internet blijft werken." />
       </form>
     </Modal>

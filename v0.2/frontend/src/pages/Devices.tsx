@@ -127,9 +127,9 @@ function Detail({ id }: { id: number }) {
       run("del", async () => { await api.del(`/api/devices/${id}`); location.hash = "#/devices"; }, "Apparaat verwijderd");
   };
   const adopt = async () => {
-    if (await confirm({ title: `${v.name} koppelen aan de controller?`, action: "Koppelen",
+    if (await confirm({ title: `${v.name} adopteren?`, action: "Adopteren",
       text: "De radio's van dit apparaat worden voortaan door de controller ingesteld (CAPsMAN). De huidige wifi-instellingen op het apparaat zelf vervallen; clients verbinden opnieuw." }))
-      run("adopt", async () => { await api.post(`/api/devices/${id}/adopt`); d.reload(); }, "Gekoppeld. De radio's verschijnen zo onder Wifi.");
+      run("adopt", async () => { await api.post(`/api/devices/${id}/adopt`); d.reload(); }, "Geadopteerd. De radio's verschijnen zo onder Wifi.");
   };
   const release = async () => {
     if (await confirm({ title: `${v.name} loskoppelen?`, action: "Loskoppelen", danger: true,
@@ -167,7 +167,7 @@ function Detail({ id }: { id: number }) {
 
       <div className="cols">
         <section className="panel">
-          <header><h2>Belasting{range === "live" && <span className="live-dot">Live</span>}</h2>
+          <header><h2>CPU en geheugen{range === "live" && <span className="live-dot">Live</span>}</h2>
             <Seg value={range} onChange={setRange} options={[["live", "Live"], ["6", "6 uur"]]} /></header>
           <div className="body">
             <LineChart title="CPU en geheugen" data={range === "live" ? (lv?.load ?? []) : v.history} max={100} height={190} fmt={(n) => `${Math.round(n)}%`}
@@ -195,16 +195,16 @@ function Detail({ id }: { id: number }) {
 
       {v.has_wifi && !v.is_controller && (
         <section className="panel">
-          <header><h2>Wifi-beheer</h2>{v.cap_enabled ? <span className="tag ok">Gekoppeld aan controller</span> : <span className="tag">Zelfstandig</span>}</header>
+          <header><h2>Wifi-beheer</h2>{v.cap_enabled ? <span className="tag ok">Geadopteerd door de controller</span> : <span className="tag">Standalone</span>}</header>
           <div className="body spread" style={{ flexWrap: "wrap" }}>
             <p className="muted" style={{ maxWidth: "62ch" }}>
               {v.cap_enabled
                 ? "De radio's krijgen hun wifi-netwerken, kanalen en wachtwoorden van de controller. Je beheert ze onder Wifi."
-                : "Koppel dit apparaat aan de controller om de wifi-netwerken van deze site erop uit te zenden. MikroManager zet CAP-modus aan en draagt de radio's over."}
+                : "Adopteer dit apparaat om de wifi-netwerken van deze site erop uit te zenden. MikroManager zet CAP-modus aan en draagt de radio's over."}
             </p>
             {v.cap_enabled
               ? <button className="btn" onClick={release} disabled={!!busy || !v.online}>Loskoppelen</button>
-              : <button className="btn primary" onClick={adopt} disabled={!!busy || !v.online}><Busy on={busy === "adopt"}>Koppelen aan controller</Busy></button>}
+              : <button className="btn primary" onClick={adopt} disabled={!!busy || !v.online}><Busy on={busy === "adopt"}>Adopteren</Busy></button>}
           </div>
         </section>
       )}
