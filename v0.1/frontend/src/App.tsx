@@ -77,7 +77,7 @@ function Auth({ mode, done, demo }: { mode: "setup" | "login"; done: () => void;
     <div className="auth">
       <form className="card" onSubmit={submit}>
         <div>
-          <h1>{mode === "setup" ? "Welkom bij TikControl" : "Inloggen"}</h1>
+          <h1>{mode === "setup" ? "Welkom bij MikroManager" : "Inloggen"}</h1>
           <p className="muted" style={{ marginTop: 6 }}>
             {mode === "setup" ? "Maak het beheerdersaccount aan. Dit is het enige account; het staat alleen op deze server." : "Beheer voor je MikroTik-netwerk."}
           </p>
@@ -114,7 +114,7 @@ function Shell({ state, onLogout }: { state: any; onLogout: () => void }) {
     <Ctx.Provider value={{ sites: sites.data, site, reloadSites, setSiteId, state }}>
       <div className="shell">
         <aside className="side">
-          <div className="brand"><i><b /><b /><b /></i>TikControl</div>
+          <div className="brand"><i><b /><b /><b /></i>MikroManager</div>
           <select className="site-pick" value={site.id} onChange={(e) => setSiteId(Number(e.target.value))} aria-label="Site">
             {sites.data.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>

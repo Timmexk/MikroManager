@@ -14,7 +14,7 @@ async function req<T = any>(method: string, url: string, body?: unknown): Promis
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError("TikControl is niet bereikbaar", 0);
+    throw new ApiError("MikroManager is niet bereikbaar", 0);
   }
   if (res.status === 401 && !url.endsWith("/login")) {
     window.dispatchEvent(new Event("tc-unauthorized"));
