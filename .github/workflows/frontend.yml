@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "v0.1/frontend/**"
+      - "v0.2/frontend/**"
       - ".github/workflows/frontend.yml"
     tags: ["v*"]
   workflow_dispatch:
@@ -17,11 +18,19 @@ permissions:
 
 concurrency:
   group: frontend-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1          # both versions upload to the same release
+      matrix:
+        include:
+          - dir: v0.1
+            asset: mikromanager-frontend      # name kept for existing v0.1 installs
+          - dir: v0.2
+            asset: mikromanager-frontend-v0.2
     steps:
       - uses: actions/checkout@v4
 
@@ -29,10 +38,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: v0.1/frontend/package-lock.json
+          cache-dependency-path: ${{ matrix.dir }}/frontend/package-lock.json
 
       - name: Bouwen
-        working-directory: v0.1/frontend
+        working-directory: ${{ matrix.dir }}/frontend
         run: |
           npm ci --no-audit --no-fund
           npm run build
@@ -40,8 +49,8 @@ jobs:
       - name: Inpakken
         run: |
           tar --owner=0 --group=0 --mode='u+rwX,go+rX,go-w' \
-              -czf mikromanager-frontend.tar.gz -C v0.1/backend/static .
-          sha256sum mikromanager-frontend.tar.gz > mikromanager-frontend.tar.gz.sha256
+              -czf ${{ matrix.asset }}.tar.gz -C ${{ matrix.dir }}/backend/static .
+          sha256sum ${{ matrix.asset }}.tar.gz > ${{ matrix.asset }}.tar.gz.sha256
 
       - name: Publiceren als frontend-latest
         if: github.ref == 'refs/heads/main'
@@ -52,7 +61,7 @@ jobs:
             gh release create frontend-latest --title "Frontend (laatste build van main)" \
               --notes "Automatisch gebouwd. Wordt gebruikt door v0.1/linux/install.sh." --prerelease --target main
           git tag -f frontend-latest && git push -f origin frontend-latest
-          gh release upload frontend-latest mikromanager-frontend.tar.gz mikromanager-frontend.tar.gz.sha256 --clobber
+          gh release upload frontend-latest ${{ matrix.asset }}.tar.gz ${{ matrix.asset }}.tar.gz.sha256 --clobber
 
       - name: Toevoegen aan versie-release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -60,4 +69,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" mikromanager-frontend.tar.gz mikromanager-frontend.tar.gz.sha256 --clobber
+          gh release upload "$GITHUB_REF_NAME" ${{ matrix.asset }}.tar.gz ${{ matrix.asset }}.tar.gz.sha256 --clobber
