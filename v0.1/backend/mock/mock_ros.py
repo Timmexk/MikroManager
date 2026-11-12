@@ -42,7 +42,10 @@ ALLOWED = {
     "/interface/wifi/access-list": {"mac-address", "action", "comment", "disabled", "interface", "ssid-regexp"},
     "/interface/vlan": {"name", "vlan-id", "interface", "comment", "disabled"},
     "/ip/dhcp-server": {"name", "interface", "address-pool", "disabled", "comment", "lease-time"},
+    "/ip/kid-control": {"name", "mon", "tue", "wed", "thu", "fri", "sat", "sun", "comment", "disabled", "rate-limit"},
+    "/ip/kid-control/device": {"name", "mac-address", "user", "comment", "disabled"},
 }
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 EXPORT_ORDER = ["/interface/bridge", "/interface/vlan", "/interface/list", "/interface/wifi/channel",
                 "/interface/wifi/datapath", "/interface/wifi/security", "/interface/wifi/configuration",
                 "/interface/wifi", "/ip/pool", "/ip/dhcp-server", "/interface/bridge/port", "/interface/bridge/vlan",
@@ -87,6 +90,7 @@ class Dev:
         self.kicked: dict[str, float] = {}
         self.static_leases: dict[str, dict] = {}
         self.files: list[dict] = []
+        self.wol_sent: list[tuple[str, str]] = []
         self.last_tick = time.time()
         self.t: dict[str, list[dict]] = {}
         self.single = {"/system/identity": {"name": identity},
@@ -294,6 +298,39 @@ class Dev:
                         "last-seen": "12s" if up else "3h14m", **({"active-address": c["ip"]} if up else {})})
         return out
 
+    def ipv6_neighbors(self) -> list[dict]:
+        online = {l["mac-address"] for l in self.leases() if l.get("status") == "bound"}
+        out = []
+        for c in self.world.clients:
+            for a in c.get("ipv6", []):
+                out.append({".id": f"*N{len(out)}", "address": a, "interface": "bridge", "mac-address": c["mac"],
+                            "status": "reachable" if c["mac"] in online else "failed", "router": "false"})
+        return out
+
+    def kid_devices(self) -> list[dict]:
+        """Static devices (added by MikroManager) plus dynamic ones for every active lease, with live rates."""
+        paused = {k["name"] for k in self.t["/ip/kid-control"] if k.get("paused") == "true"}
+        static = {d["mac-address"]: d for d in self.t["/ip/kid-control/device"]}
+        now = time.time()
+        out = []
+        for l in self.leases():
+            if l.get("status") != "bound":
+                continue
+            c = next((c for c in self.world.clients if c["mac"] == l["mac-address"]), None)
+            bps = (c or {}).get("bps", 6e5)
+            wave = 0.55 + 0.45 * math.sin(now / 20 + (c or {}).get("n", 0))
+            rec = static.get(l["mac-address"])
+            blocked = bool(rec and rec.get("user") in paused)
+            down, up = (0, 0) if blocked else (int(bps * 8 * wave), int(bps * wave))
+            base = rec or {".id": f"*K{len(out)}", "name": l.get("host-name", ""), "mac-address": l["mac-address"],
+                           "user": "", "dynamic": "true"}
+            out.append({**base, "ip-address": l.get("active-address", l["address"]), "rate-down": f"{down}bps",
+                        "rate-up": f"{up}bps", "blocked": "true" if blocked else "false"})
+        for m, rec in static.items():
+            if not any(o["mac-address"] == m for o in out):
+                out.append({**rec, "rate-down": "0bps", "rate-up": "0bps"})
+        return out
+
     def hosts(self) -> list[dict]:
         out = [{".id": "*H0", "mac-address": self.base_mac, "on-interface": "bridge", "bridge": "bridge", "local": "true",
                 "dynamic": "true"}]
@@ -309,6 +346,8 @@ class Dev:
         dyn = {"/interface/wifi": self.wifi_ifaces, "/interface/wifi/radio": self.radio_table,
                "/interface/wifi/capsman/remote-cap": self.remote_caps, "/interface/wifi/registration-table": self.reg_table,
                "/ip/dhcp-server/lease": self.leases, "/interface/bridge/host": self.hosts,
+               **({"/ipv6/neighbor": self.ipv6_neighbors, "/ip/kid-control/device": self.kid_devices}
+                  if "/ip/kid-control" in self.t else {}),
                "/system/health": lambda: [{".id": "*1", "name": "temperature", "value": str(44 + self.port % 9), "type": "C"}]
                + ([{".id": "*2", "name": "voltage", "value": "24.1", "type": "V"}] if self.poe else []),
                "/file": lambda: self.files,
@@ -395,6 +434,12 @@ class World:
                                            "dns-server": "192.168.88.1", "comment": "defconf"}]
         r.t["/ip/route"] = [{".id": "*8000", "dst-address": "0.0.0.0/0", "gateway": "203.0.113.1",
                              "immediate-gw": "203.0.113.1%ether1", "active": "true", "dynamic": "true", "distance": "1"}]
+        r.t["/ip/route"].append({".id": "*8001", "dst-address": "0.0.0.0/0", "gateway": "10.64.0.1",
+                                 "immediate-gw": "10.64.0.1%lte1", "active": "false", "dynamic": "true", "distance": "2"})
+        r.t["/interface"].append({".id": r.nid(), "name": "lte1", "type": "lte", "mtu": "1500", "mac-address": "",
+                                  "running": "true", "disabled": "false", "rx-byte": "123456789", "tx-byte": "23456789"})
+        r.t["/ip/kid-control"] = []
+        r.t["/ip/kid-control/device"] = []
         r.t["/ip/firewall/address-list"] = []
         r.t["/ip/firewall/filter"] = [
             {".id": r.nid(), "chain": "input", "action": "accept", "connection-state": "established,related,untracked", "comment": "defconf: accept established,related,untracked"},
@@ -436,6 +481,10 @@ class World:
         wired("adguard", "crs", "ether6", "192.168.88.23")
         wired("tv-woonkamer", "hexpoe", "ether4", "192.168.88.24")
         wired("printer", "hexpoe", "ether5", "192.168.88.25")
+        for c in self.clients:   # main LAN gets IPv6 (SLAAC: a global address plus link-local)
+            if c["ip"].startswith("192.168.88."):
+                tail = c["mac"].replace(":", "").lower()
+                c["ipv6"] = [f"2a02:a46b:1c2f:10:{tail[0:4]}:{tail[4:8]}:{tail[8:12]}:1", f"fe80::{tail[6:10]}:{tail[10:12]}ff:fe01"]
 
     # -- topology helpers --------------------------------------------------
     def subtree(self, key: str) -> set[str]:
@@ -634,6 +683,46 @@ def make_app(dev: Dev) -> FastAPI:
             if not lease:
                 return err(400, "no such item")
             dev.static_leases[lease["mac-address"]] = {**lease, ".id": dev.nid(), "dynamic": "false"}
+            return []
+        if path == "/ip/kid-control/device/update-stats" and "/ip/kid-control" in dev.t:
+            return []
+        if path in ("/ip/kid-control/pause", "/ip/kid-control/resume") and "/ip/kid-control" in dev.t:
+            kid = find(dev.t["/ip/kid-control"], body.get("numbers"))
+            if not kid:
+                return err(400, "no such item")
+            kid["paused"] = "true" if path.endswith("pause") else "false"
+            return []
+        if path == "/ping":
+            iface = body.get("interface")
+            if iface and not find(dev.table("/interface"), iface):
+                return err(400, "input does not match any value of interface")
+            count = int(body.get("count", "4"))
+            base = 2.1 if body.get("address", "").startswith(("203.", "10.")) else (38.0 if iface == "lte1" else 11.4)
+            if iface == "lte1":
+                base = 9.0
+            rows, rtts, now = [], [], time.time()
+            for i in range(count):
+                lost = random.random() < (0.03 if iface == "lte1" else 0.005)
+                rtt = base * (1 + 0.25 * math.sin(now / 45 + i) + random.random() * 0.3)
+                if not lost:
+                    rtts.append(rtt)
+                row = {"seq": str(i), "host": body.get("address", ""), "sent": str(i + 1), "received": str(len(rtts)),
+                       "packet-loss": str(round(100 * (i + 1 - len(rtts)) / (i + 1)))}
+                if lost:
+                    row["status"] = "timeout"
+                else:
+                    us = int(rtt * 1000)
+                    row.update(size="56", ttl="57", time=f"{us // 1000}ms{us % 1000}us")
+                if rtts:
+                    fmt = lambda v: f"{int(v * 1000) // 1000}ms{int(v * 1000) % 1000}us"
+                    row.update({"min-rtt": fmt(min(rtts)), "avg-rtt": fmt(sum(rtts) / len(rtts)), "max-rtt": fmt(max(rtts))})
+                rows.append(row)
+            await asyncio.sleep(0.05)
+            return rows
+        if path == "/tool/wol":
+            if not body.get("mac") or not find(dev.table("/interface"), body.get("interface", "")):
+                return err(400, "input does not match any value of interface")
+            dev.wol_sent.append((body["mac"], body["interface"]))
             return []
         if path == "/ip/firewall/filter/move":
             rows = dev.t["/ip/firewall/filter"]
