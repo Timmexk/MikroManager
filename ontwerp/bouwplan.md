@@ -16,7 +16,7 @@ hieronder zijn genomen.
 
 ## Wat uit v0.1 bruikbaar blijft
 
-De proefversie in [`../v0.1/`](../v0.1/) is één container met FastAPI, SQLite en een React-frontend. Die opzet blijft.
+De proefversie in [`../v0.1/`](../v0.1/) is FastAPI met SQLite en een React-frontend. Die opzet blijft. Hoofdroute is een native installatie met systemd ([`../v0.1/linux/`](../v0.1/linux/)); Docker blijft een optie, bijvoorbeeld voor Unraid.
 
 | Onderdeel | Bestand | Oordeel |
 |---|---|---|
@@ -141,7 +141,7 @@ Alleen sites die de app zelf kan bereiken, rechtstreeks of via een verbinding di
 
 - Mobiele schermen nalopen op een echte telefoon.
 - Engelse vertaling compleet.
-- Installatie-instructie voor Unraid en Docker.
+- Installatie-instructie voor Linux (systemd) en Docker/Unraid.
 - Besluit over openbaar maken en de licentie.
 
 ## Later
