@@ -239,7 +239,7 @@ class Dev:
             g = "2ghz" if band == "2g" else "5ghz"
             rec = {".id": f"*R{n}", "radio-mac": rmac, "local": norm(local), "tx-chains": "0,1", "rx-chains": "0,1",
                    "bands": f"{g}-n:20mhz,20/40mhz,{g}-ax:20mhz,20/40mhz" + (",20/40/80mhz" if band == "5g" else ""),
-                   "hw-type": "QCA6018", "countries": "all"}
+                   "hw-type": "QCA6018", "countries": "all", "current-max-reg-power": "23" if band == "5g" else "20"}
             if not local:
                 rec["cap"] = f"{owner.single['/system/identity']['name']}@{owner.ip}"
             if rmac in ifs:
@@ -787,7 +787,15 @@ def make_app(dev: Dev) -> FastAPI:
         if path == "/interface/wifi/radio/provision":
             radio = find(dev.radio_table(), body.get("numbers"))
             if radio and radio.get("local") == "true":
-                dev.local_provisioned = bool(dev.t["/interface/wifi/provisioning"])
+                enabled = [r for r in dev.t["/interface/wifi/provisioning"] if r.get("disabled") != "true"]
+                dev.local_provisioned = bool(enabled)
+                if not enabled:
+                    # manual: provisioning with the rules disabled "returns local interfaces to an unconfigured state"
+                    for w in dev.t["/interface/wifi"]:
+                        if not w.get("master-interface"):
+                            for k in [k for k in w if k == "configuration" or (k.startswith(("configuration.", "security."))
+                                                                            and k != "configuration.manager")]:
+                                w.pop(k)
             return []
         if path == "/ip/dhcp-server/lease/make-static":
             lease = find(dev.leases(), body.get(".id") or body.get("numbers"))
@@ -916,6 +924,12 @@ def make_app(dev: Dev) -> FastAPI:
             if problem:
                 return err(400, problem)
             rec = {".id": dev.nid(), "dynamic": "false"}
+            if path == "/interface/wifi" and "name" not in data:
+                base = data.get("master-interface", "wifi")
+                n = 1
+                while any(r.get("name") == f"{base}-v{n}" for r in rows):
+                    n += 1
+                data["name"] = f"{base}-v{n}"
             if path not in ("/interface/wifi/security", "/interface/wifi/datapath", "/interface/wifi/channel",
                             "/interface/wifi/configuration", "/ip/pool"):
                 rec["disabled"] = "false"
