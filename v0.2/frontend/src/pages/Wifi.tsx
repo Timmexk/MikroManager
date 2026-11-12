@@ -28,8 +28,16 @@ export default function Wifi() {
     if (await confirm({ title: "Radio's van de router overnemen?", action: "Overnemen", danger: true,
       text: <>De eigen radio's van {d.controller.name} gaan de wifi-netwerken van deze site uitzenden. De huidige wifi-instellingen op die radio's
         (SSID, wachtwoord) vervallen en clients moeten opnieuw verbinden. <strong>Ben je nu zelf via die wifi verbonden, doe dit dan bekabeld.</strong></> }))
-      run("local", async () => { await api.post(`/api/sites/${site.id}/wifi/local-radios`); w.reload(); }, "Radio's overgenomen");
+      run("local", async () => { await api.post(`/api/sites/${site.id}/wifi/local-radios`, { action: "take" }); w.reload(); }, "Radio's overgenomen");
   };
+  const giveBack = async () => {
+    if (await confirm({ title: "Radio's van de router teruggeven?", action: "Teruggeven", danger: true,
+      text: <>MikroManager haalt zijn profielen en virtuele interfaces van de eigen radio's van {d.controller.name}. De radio's staan daarna
+        onbeheerd en zenden niets uit, tot je ze zelf instelt (bijvoorbeeld met je oude instellingen uit Onderhoud, Back-ups).
+        Radio's die nog op de oude manier geprovisioned zijn, worden eerst hersteld. De access points merken hier niets van.</> }))
+      run("local", async () => { await api.post(`/api/sites/${site.id}/wifi/local-radios`, { action: "release" }); w.reload(); }, "Radio's teruggegeven");
+  };
+  const stuckLocal = d.aps.some((ap: any) => ap.local && ap.radios.some((r: any) => r.provisioned_local));
   const adopt = async (ap: any) => {
     if (await confirm({ title: `${ap.name} adopteren?`, action: "Adopteren",
       text: "De radio's worden voortaan door de controller ingesteld. De huidige wifi-instellingen op het apparaat zelf vervallen." }))
@@ -78,6 +86,14 @@ export default function Wifi() {
       </section>
 
       <section className="panel">
+        {stuckLocal && (
+          <div className="banner bad" style={{ margin: 12 }}>
+            <span className="grow"><strong>De eigen radio's van {d.controller.name} zijn geprovisioned door een eerdere versie van MikroManager.</strong> MikroTik
+              raadt dat af: de interfaces worden verwijderd en opnieuw aangemaakt, waardoor ze slecht of niet werken. Herstel ze hier.</span>
+            <button className="btn sm primary" disabled={!!busy} onClick={takeLocal}>Herstellen en netwerken uitzenden</button>
+            <button className="btn sm" disabled={!!busy} onClick={giveBack}>Herstellen en teruggeven</button>
+          </div>
+        )}
         <header><h2>Access points</h2><button className="btn sm" onClick={() => w.reload()}><RefreshCw size={14} />Vernieuwen</button></header>
         {d.aps.length === 0 ? (
           <div className="empty"><p>Geen radio's gevonden. Voeg een access point toe onder Apparaten en koppel het aan de controller.</p>
@@ -96,8 +112,10 @@ export default function Wifi() {
               const status = (
                 <td rowSpan={Math.max(1, ap.radios.length)} style={{ verticalAlign: "top" }}>
                   {ap.adoptable ? <button className="btn sm primary" disabled={!!busy} onClick={() => adopt(ap)}><Busy on={busy === `adopt${ap.device_id}`}>Adopteren</Busy></button>
-                    : unmanagedLocal ? <button className="btn sm" disabled={!!busy || d.wlans.length === 0} onClick={takeLocal} title="Laat ook de radio's van de router deze netwerken uitzenden">Radio's overnemen</button>
-                      : <span className={`tag ${ap.state === "Ok" || ap.local ? "ok" : "warn"}`}>{ap.local ? "Beheerd" : ap.state === "Ok" ? "Verbonden" : ap.state}</span>}
+                    : ap.local && unmanagedLocal ? <button className="btn sm" disabled={!!busy || d.wlans.length === 0} onClick={takeLocal} title="Laat ook de radio's van de router deze netwerken uitzenden">Radio's overnemen</button>
+                      : ap.local ? <div style={{ display: "grid", gap: 6, justifyItems: "start" }}><span className="tag ok">Beheerd</span>
+                          <button className="btn sm" disabled={!!busy} onClick={giveBack}>Teruggeven</button></div>
+                        : <span className={`tag ${ap.state === "Ok" ? "ok" : "warn"}`}>{ap.state === "Ok" ? "Verbonden" : ap.state}</span>}
                 </td>);
               if (!ap.radios.length) return [<tr key={ap.name}>{head}<td colSpan={5} className="muted">{ap.adoptable ? "Nog niet geadopteerd door de controller" : "Wacht tot de controller het apparaat ziet"}</td>{status}</tr>];
               return ap.radios.map((r: any, i: number) => (
@@ -275,11 +293,12 @@ function TxModal({ siteId, ap, r, onClose, onSaved }: { siteId: number; ap: stri
   const [mode, setMode] = useState<string>(r.tx?.mode ?? "high");
   const [power, setPower] = useState(String(r.tx?.power ?? r.tx_power ?? ""));
   const { busy, run } = useAction();
+  const max = r.tx?.max;
   const hint: Record<string, string> = {
-    high: "Maximaal wat het land toestaat (standaard van RouterOS).",
-    medium: `${r.tx?.presets?.medium} dBm. Goed voor meerdere AP's dicht bij elkaar.`,
-    low: `${r.tx?.presets?.low} dBm. Kleine cel, bijvoorbeeld een AP per kamer.`,
-    manual: "Vaste waarde in dBm (1 tot 30). Het land kan het nog verder begrenzen.",
+    high: `Geen limiet: RouterOS gebruikt het maximum dat in het land op dit kanaal mag (${max} dBm). Standaard.`,
+    medium: `${r.tx?.presets?.medium} dBm: 6 dB onder het maximum (een kwart van het vermogen). Goed voor meerdere AP's dicht bij elkaar.`,
+    low: `${r.tx?.presets?.low} dBm: 12 dB onder het maximum. Kleine cel, bijvoorbeeld een AP per kamer.`,
+    manual: `Vaste waarde in dBm, 1 tot ${max}. Hoger dan het maximum kan niet; RouterOS begrenst het dan zelf.`,
   };
   const save = () => run("tx", async () => {
     await api.post(`/api/sites/${siteId}/wifi/radios/${encodeURIComponent(r.mac)}`, { mode, power: mode === "manual" ? Number(power) : null });
@@ -296,7 +315,13 @@ function TxModal({ siteId, ap, r, onClose, onSaved }: { siteId: number; ap: stri
           ))}
         </div>
         {mode === "manual" && <Field label="Zendvermogen (dBm)"><input className="input mono" inputMode="numeric" value={power} onChange={(e) => setPower(e.target.value)} style={{ width: 110 }} autoFocus /></Field>}
-        <p className="muted small">{hint[mode]} Nu: {r.tx_power ? `${r.tx_power} dBm` : "onbekend"}.</p>
+        <p className="muted small">{hint[mode]}</p>
+        <dl className="kv small">
+          <dt>Maximum op dit kanaal</dt><dd>{max} dBm{r.tx?.max_reported ? " (current-max-reg-power van de radio)" : " (EU-grens, de radio gaf geen waarde)"}</dd>
+          <dt>Nu volgens de radio</dt><dd>{r.tx_power ? `${r.tx_power} dBm` : "onbekend"}</dd>
+        </dl>
+        <p className="muted small">Het maximum is EIRP, dus inclusief de antenne. RouterOS trekt de antenneversterking er zelf af, dus de waarde die de
+          radio meldt, kan lager liggen. Grenzen in Nederland: 2,4 GHz 20 dBm, 5 GHz kanaal 36–64 23 dBm, kanaal 100–140 30 dBm.</p>
         {r.managed
           ? <p className="muted small">Wordt per radio via CAPsMAN ingesteld. Clients op deze radio verbinden bij het toepassen kort opnieuw.</p>
           : <div className="banner info small">Deze radio zendt nog niet de wifi-netwerken van MikroManager uit. De instelling wordt bewaard en
