@@ -23,7 +23,7 @@ function List() {
       <div className="panel">
         {list.data.length === 0 ? (
           <div className="empty"><h3>Voeg eerst je router toe</h3>
-            <p>TikControl praat met RouterOS 7 via de REST API. Zet op de router de service <span className="mono">www-ssl</span> aan en maak een gebruiker voor TikControl.</p>
+            <p>MikroManager praat met RouterOS 7 via de REST API. Zet op de router de service <span className="mono">www-ssl</span> aan en maak een gebruiker voor MikroManager.</p>
             <button className="btn primary" onClick={() => setAdding(true)}>Router toevoegen</button></div>
         ) : (
           <div className="table-wrap"><table className="t">
@@ -92,7 +92,7 @@ export function DeviceForm({ siteId, device, hasRouter, onClose, onSaved }: { si
           <Field label="Wachtwoord" hint={device ? "Leeg laten om het huidige te houden." : "Wordt versleuteld opgeslagen."}>
             <input className="input" type="password" value={f.password} onChange={(e) => set("password", e.target.value)} autoComplete="new-password" /></Field>
         </div>
-        <Field label="Naam in TikControl" hint="Leeg laten om de identity van het apparaat over te nemen.">
+        <Field label="Naam in MikroManager" hint="Leeg laten om de identity van het apparaat over te nemen.">
           <input className="input" value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
         {f.scheme === "https" && <Check checked={f.verify_tls} onChange={(v) => set("verify_tls", v)} label="Certificaat controleren"
           hint="Laat uit bij het zelfondertekende certificaat van de router." />}
@@ -119,7 +119,7 @@ function Detail({ id }: { id: number }) {
   };
   const remove = async () => {
     if (await confirm({ title: `${v.name} verwijderen?`, action: "Verwijderen", danger: true,
-      text: "Het apparaat verdwijnt uit TikControl, samen met de bewaarde back-ups. Aan de configuratie op het apparaat zelf verandert niets." }))
+      text: "Het apparaat verdwijnt uit MikroManager, samen met de bewaarde back-ups. Aan de configuratie op het apparaat zelf verandert niets." }))
       run("del", async () => { await api.del(`/api/devices/${id}`); location.hash = "#/devices"; }, "Apparaat verwijderd");
   };
   const adopt = async () => {
@@ -193,7 +193,7 @@ function Detail({ id }: { id: number }) {
             <p className="muted" style={{ maxWidth: "62ch" }}>
               {v.cap_enabled
                 ? "De radio's krijgen hun wifi-netwerken, kanalen en wachtwoorden van de controller. Je beheert ze onder Wifi."
-                : "Koppel dit apparaat aan de controller om de wifi-netwerken van deze site erop uit te zenden. TikControl zet CAP-modus aan en draagt de radio's over."}
+                : "Koppel dit apparaat aan de controller om de wifi-netwerken van deze site erop uit te zenden. MikroManager zet CAP-modus aan en draagt de radio's over."}
             </p>
             {v.cap_enabled
               ? <button className="btn" onClick={release} disabled={!!busy || !v.online}>Loskoppelen</button>
@@ -214,7 +214,7 @@ function PortPanel({ deviceId, port, onChange }: { deviceId: number; port: Port;
   if (forPort !== port.name) { setForPort(port.name); setComment(port.comment ?? ""); }
   const toggle = async () => {
     if (!port.disabled && !(await confirm({ title: `${port.name} uitschakelen?`, action: "Uitschakelen", danger: true,
-      text: port.wan ? "Dit is de internetpoort. Het hele netwerk verliest de verbinding met internet." : "Alles achter deze poort verliest de verbinding. Zit TikControl zelf achter deze poort, dan kun je hem alleen via de router weer aanzetten." }))) return;
+      text: port.wan ? "Dit is de internetpoort. Het hele netwerk verliest de verbinding met internet." : "Alles achter deze poort verliest de verbinding. Zit MikroManager zelf achter deze poort, dan kun je hem alleen via de router weer aanzetten." }))) return;
     run("toggle", async () => { await api.post(`/api/devices/${deviceId}/ports/${encodeURIComponent(port.name)}`, { disabled: !port.disabled }); onChange(); });
   };
   return (

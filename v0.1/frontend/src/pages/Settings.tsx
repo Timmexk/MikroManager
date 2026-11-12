@@ -17,7 +17,7 @@ export default function Settings({ onLogout, themeLabel, nextTheme }: { onLogout
 
   const removeSite = async () => {
     if (await confirm({ title: `Site ${site.name} verwijderen?`, action: "Site verwijderen", danger: true,
-      text: `De site verdwijnt uit TikControl met ${site.devices} apparaten, de wifi-netwerken en alle back-ups. Op de apparaten zelf verandert niets.` }))
+      text: `De site verdwijnt uit MikroManager met ${site.devices} apparaten, de wifi-netwerken en alle back-ups. Op de apparaten zelf verandert niets.` }))
       run("delsite", async () => { await api.del(`/api/sites/${site.id}`); await reloadSites(); }, "Site verwijderd");
   };
 
@@ -69,7 +69,7 @@ export default function Settings({ onLogout, themeLabel, nextTheme }: { onLogout
           </div>
         </form>
       </section>
-      <p className="muted small">TikControl {state.version}{state.demo ? ", demomodus" : ""}. Wachtwoorden van apparaten staan versleuteld in de database; de sleutel staat in <span className="mono">secret.key</span> in de data-map.</p>
+      <p className="muted small">MikroManager {state.version}{state.demo ? ", demomodus" : ""}. Wachtwoorden van apparaten staan versleuteld in de database; de sleutel staat in <span className="mono">secret.key</span> in de data-map.</p>
     </div>
   );
 }

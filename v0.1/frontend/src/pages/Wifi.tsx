@@ -203,7 +203,7 @@ function PlanModal({ siteId, onClose }: { siteId: number; onClose: () => void })
       ) : plan.data.ops.length === 0 ? <p className="muted">De router is al gelijk aan wat hier is ingesteld.</p> : (
         <>
           <p className="muted" style={{ marginBottom: 10 }}>
-            TikControl raakt alleen objecten aan waarvan de naam met <span className="mono">tc-</span> begint. Wat je zelf in WinBox hebt gemaakt blijft staan.
+            MikroManager raakt alleen objecten aan waarvan de naam met <span className="mono">tc-</span> begint. Wat je zelf in WinBox hebt gemaakt blijft staan.
           </p>
           <ul className="steps">{plan.data.ops.map((o: any, i: number) => (
             <li key={i}>{icon(o.op)}<div>{o.text}{o.show && <code>{Object.entries(o.show).map(([k, v]) => `${k}=${v === "" ? '""' : v}`).join("  ")}</code>}</div></li>

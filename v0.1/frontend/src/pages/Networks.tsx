@@ -35,7 +35,7 @@ export default function Networks() {
       {d.bridge.exists && !d.bridge.vlan_filtering && (
         <div className="banner warn">
           <span className="grow"><strong>VLAN-filtering staat uit op {d.bridge.name}.</strong> Nieuwe VLAN's werken pas op de switchpoorten als je dat aanzet.
-            TikControl doet dat niet zelf: een verkeerde volgorde sluit je buiten. Zet het aan in WinBox nadat je de bridge-VLAN-tabel hebt gecontroleerd.</span>
+            MikroManager doet dat niet zelf: een verkeerde volgorde sluit je buiten. Zet het aan in WinBox nadat je de bridge-VLAN-tabel hebt gecontroleerd.</span>
         </div>
       )}
 
@@ -58,7 +58,7 @@ export default function Networks() {
           ))}</tbody>
         </table></div>
       </section>
-      <p className="muted small">Netwerken die je zelf op de router hebt gemaakt staan er ter informatie tussen; TikControl wijzigt of verwijdert ze niet.</p>
+      <p className="muted small">Netwerken die je zelf op de router hebt gemaakt staan er ter informatie tussen; MikroManager wijzigt of verwijdert ze niet.</p>
 
       <section className="panel">
         <header><h2>Lokale DNS-namen</h2></header>

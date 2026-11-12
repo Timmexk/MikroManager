@@ -98,7 +98,7 @@ function ClientDrawer({ siteId, c, onClose, reload }: { siteId: number; c: any; 
         <label className="field"><span>Naam</span>
           <div className="row"><input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={c.hostname ?? "Eigen naam"} />
             <button className="btn" disabled={!!busy || name === (c.name ?? "")}>Opslaan</button></div>
-          <small>Alleen in TikControl; op de router verandert niets.</small></label>
+          <small>Alleen in MikroManager; op de router verandert niets.</small></label>
       </form>
 
       {c.lease_id && (

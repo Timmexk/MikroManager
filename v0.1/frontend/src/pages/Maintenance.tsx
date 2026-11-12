@@ -136,7 +136,7 @@ function Backups() {
             <Field label="Versies bewaren per apparaat"><input className="input" type="number" min={1} max={365} value={s.backup_keep} onChange={(e) => set("backup_keep", Number(e.target.value))} /></Field>
           </div>
           <Check checked={s.backup_sensitive} onChange={(v) => set("backup_sensitive", v)} label="Wachtwoorden en sleutels meenemen (show-sensitive)"
-            hint="Nodig om een router volledig te herstellen. De bestanden staan dan onversleuteld in de data-map van TikControl." />
+            hint="Nodig om een router volledig te herstellen. De bestanden staan dan onversleuteld in de data-map van MikroManager." />
           <div><button className="btn primary" disabled={!!busy}>Schema opslaan</button></div>
         </form>
       </section>
