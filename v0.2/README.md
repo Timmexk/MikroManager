@@ -19,6 +19,12 @@ PPPoE, LTE en WireGuard, met status, MTU en verkeer. Klik op een interface (of o
 | VLAN | toevoegen, VLAN-ID, op welke interface, verwijderen |
 | Wifi | aan/uit en label; SSID's en kanalen blijven onder Wifi |
 
+**Zendvermogen per radio.** Onder **Wifi → Access points** stel je per radio het zendvermogen in: Handmatig
+(dBm), Laag, Midden of Hoog. Hoog is het maximum dat het land toestaat (RouterOS-standaard). Laag en midden zijn
+8 en 14 dBm op 2,4 GHz, 11 en 17 dBm op 5 GHz. MikroManager zet daarvoor per radio een provisioning-regel op
+`radio-mac` met een eigen kopie van de master-configuratie met `tx-power`; je past het toe via
+**Bekijken en toepassen**, net als andere wifi-wijzigingen.
+
 **Live grafieken.** Het overzicht en de apparaatpagina openen op **Live**: zolang je kijkt, leest MikroManager
 elke 2 seconden de interfacetellers en de CPU van de apparaten op die pagina, en pingt elke 6 seconden naar
 1.1.1.1. De laatste 10 minuten schuiven mee; bij openen worden ze aangevuld met de opgeslagen metingen. Kijkt
@@ -49,7 +55,7 @@ apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Draait direct o
 - **Meerdere sites**, donker/licht thema, werkt op telefoon.
 
 > **Status: v0.2, getest tegen een simulator, nog niet tegen echte hardware.**
-> Alle 125 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
+> Alle 133 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
 > op de MikroTik-documentatie, niet op een echte router. Lees [Eerst op echte hardware](#eerst-op-echte-hardware)
 > voordat je dit op je productienetwerk loslaat.
 
