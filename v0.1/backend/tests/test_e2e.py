@@ -1,4 +1,4 @@
-"""End-to-end test: real TikControl server against the simulated routers.
+"""End-to-end test: real MikroManager server against the simulated routers.
 
 Run:  python tests/test_e2e.py      (from the backend/ folder)
 Covers the full flow a new install goes through, without seeded data.
