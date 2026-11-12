@@ -18,7 +18,7 @@ apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Draait direct o
 - **Meerdere sites**, donker/licht thema, werkt op telefoon.
 
 > **Status: v0.1, getest tegen een simulator, nog niet tegen echte hardware.**
-> Alle 77 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
+> Alle 95 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
 > op de MikroTik-documentatie, niet op een echte router. Lees [Eerst op echte hardware](#eerst-op-echte-hardware)
 > voordat je dit op je productienetwerk loslaat.
 
@@ -121,6 +121,12 @@ Alles wat MikroManager aanmaakt is herkenbaar en verder blijft het van je config
 | `/interface/vlan`, `/ip/address`, `/ip/pool`, `/ip/dhcp-server`, `/ip/dhcp-server/network`, `/interface/bridge/vlan`, `/interface/list/member` | naam `tc-<naam>` of comment `tc:net:<naam>` | netwerk toevoegen |
 | `/ip/firewall/filter` + address-list `tc-private` | comment `tc:net:<naam> isolatie` | netwerk met "afschermen" |
 | Op een AP: `/interface/wifi/cap`, datapath `tc-cap`, `configuration.manager=capsman` op de radio's | | AP koppelen |
+| `/ip/kid-control` profielen `mm-pauze` en `mm-tijd-<van>-<tot>`, `/ip/kid-control/device` naam `mm-<mac>` | naam begint met `mm-` | client pauzeren of een tijdschema geven |
+
+Verder leest MikroManager op de router: IPv6-adressen per client uit `/ipv6/neighbor` (alleen globale adressen
+worden getoond), live verbruik per client uit `/ip/kid-control/device`, en elke poll een korte ping
+(4 pakketten) naar 1.1.1.1 via de actieve WAN en naar de gateway van elke WAN voor de WAN-kwaliteit.
+Wake-on-LAN gaat via `/tool/wol`.
 
 Wifi-wijzigingen worden nooit direct doorgevoerd: je ziet eerst de lijst met stappen (met de exacte
 eigenschappen) en past ze dan toe. Dezelfde stappen twee keer toepassen verandert niets.
