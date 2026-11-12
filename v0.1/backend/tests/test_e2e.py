@@ -174,6 +174,40 @@ def run(c):
     c.post(f"/api/sites/{sid}/clients/{tab['mac']}/block", json={"blocked": False})
     check(not rt.get("/interface/wifi/access-list").json(), "unblock removes the access-list entry")
 
+    print("clients: no doubles, IPv6, live rate, pause, schedule, wake-on-lan")
+    cl = wait(lambda: (x := c.get(f"/api/sites/{sid}/clients").json()) and all(i["online"] for i in x) and x, "all online again")
+    macs = [x["mac"] for x in cl]
+    check(len(macs) == len(set(macs)), "every client appears once")
+    check(all(bool(x["wifi"]) != bool(x["wired"]) for x in cl), "every client has exactly one place: an AP or a port")
+    check(all(not x["wired"] or x["wired"]["device"] != "hAP-ax2-meterkast" for x in cl),
+          "clients behind a switch or AP are not also listed on the router")
+    iph = next(x for x in cl if x["mac"] == iph["mac"])
+    check(len(iph["ipv6"]) == 1 and iph["ipv6"][0].startswith("2a02:"), "global IPv6 address shown, link-local left out")
+    check(not next(x for x in cl if x["hostname"] == "shelly-plug-keuken")["ipv6"], "no IPv6 where the router has none")
+    cl = wait(lambda: (x := c.get(f"/api/sites/{sid}/clients").json()) and all(i["rate_down"] is not None for i in x) and x,
+              "live rates")
+    check(next(x for x in cl if x["mac"] == iph["mac"])["rate_down"] > 0, "live download rate per client")
+    check(c.post(f"/api/sites/{sid}/clients/{nas['mac']}/pause", json={"paused": True}).status_code == 200, "pause internet")
+    kid = rt.get("/ip/kid-control", params={"name": "mm-pauze"}).json()
+    check(kid and kid[0].get("paused") == "true", "pause profile exists on the router and is paused")
+    n = wait(lambda: (x := next(i for i in c.get(f"/api/sites/{sid}/clients").json() if i["mac"] == nas["mac"]))["paused"]
+             and x["rate_down"] == 0 and x, "paused client")
+    check(n["paused"], "client shows as paused")
+    r = c.post(f"/api/sites/{sid}/clients/{nas['mac']}/schedule", json={"from": "22:00", "to": "07:00"})
+    check(r.status_code == 400, "schedule across midnight refused with a clear error")
+    check(c.post(f"/api/sites/{sid}/clients/{nas['mac']}/schedule", json={"from": "07:00", "to": "22:30"}).status_code == 200,
+          "schedule stored while paused")
+    c.post(f"/api/sites/{sid}/clients/{nas['mac']}/pause", json={"paused": False})
+    n = next(i for i in c.get(f"/api/sites/{sid}/clients").json() if i["mac"] == nas["mac"])
+    check(not n["paused"] and n["schedule"] == {"from": "07:00", "to": "22:30"}, "resume falls back to the schedule")
+    k = rt.get("/ip/kid-control", params={"name": "mm-tijd-0700-2230"}).json()
+    check(k and k[0].get("mon") == "07:00-22:30" and k[0].get("sun") == "07:00-22:30", "schedule profile on the router")
+    c.post(f"/api/sites/{sid}/clients/{nas['mac']}/schedule", json={})
+    check(not [d for d in rt.get("/ip/kid-control/device").json() if d.get("dynamic") != "true"],
+          "clearing the schedule removes the device entry")
+    r = c.post(f"/api/sites/{sid}/clients/{nas['mac']}/wol")
+    check(r.status_code == 200 and r.json()["interface"] == "bridge", "wake-on-lan sent on the client's interface")
+
     print("wifi changes")
     c.patch(f"/api/wlans/{thuis['id']}", json={"passphrase": "nieuw-wachtwoord-2026"})
     plan = c.get(f"/api/sites/{sid}/wifi/plan").json()["ops"]
@@ -229,6 +263,13 @@ def run(c):
     print("overview and cleanup")
     o = c.get(f"/api/sites/{sid}/overview").json()
     check(o["devices"]["online"] == 5 and o["clients"]["wifi"] >= 12 and o["wan"]["interface"] == "ether1" and o["wan"]["history"], "overview")
+    wq = o["wan_quality"]
+    check([w["interface"] for w in wq["wans"]] == ["ether1", "lte1"] and wq["wans"][0]["active"] and not wq["wans"][1]["active"],
+          "both WANs listed, active one first")
+    check(wq["wans"][0]["ping"].get("internet") and wq["wans"][0]["ping"]["internet"]["avg"] > 0
+          and wq["wans"][1]["ping"].get("gateway") and wq["wans"][1]["gateway"] == "10.64.0.1",
+          "internet latency on the active WAN, gateway latency on the standby WAN")
+    check(any(h["kind"] == "internet" and h["rtt"] for h in wq["history"]), "WAN latency history")
     check(c.delete(f"/api/sites/{sid}/networks/gasten").json()["removed"] >= 7, "managed network removed with all its parts")
     check(not [f for f in rt.get("/ip/firewall/filter").json() if "tc:" in f.get("comment", "")], "isolation rule gone")
     check(c.delete(f"/api/sites/{sid}/networks/bridge").status_code == 404, "hand-made network cannot be deleted")
