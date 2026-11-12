@@ -19,6 +19,12 @@ PPPoE, LTE en WireGuard, met status, MTU en verkeer. Klik op een interface (of o
 | VLAN | toevoegen, VLAN-ID, op welke interface, verwijderen |
 | Wifi | aan/uit en label; SSID's en kanalen blijven onder Wifi |
 
+**Live grafieken.** Het overzicht en de apparaatpagina openen op **Live**: zolang je kijkt, leest MikroManager
+elke 2 seconden de interfacetellers en de CPU van de apparaten op die pagina, en pingt elke 6 seconden naar
+1.1.1.1. De laatste 10 minuten schuiven mee; bij openen worden ze aangevuld met de opgeslagen metingen. Kijkt
+er een minuut niemand, dan stopt het snelle meten vanzelf. Instelbaar met `TIKCONTROL_LIVE_INTERVAL` (seconden)
+en `TIKCONTROL_LIVE_WINDOW` (seconden). Voor langere periodes kies je 1, 6 of 24 uur.
+
 **Veilige modus.** De REST API van RouterOS heeft geen safe mode, dus MikroManager bouwt die zelf: voor een
 wijziging die iets kan afsluiten (uitzetten, snelheid, MTU, PoE, bridge, PVID, VLAN's) zet de app eerst een
 scheduler `mm-terugdraai-…` op het apparaat. Die draait na 90 seconden de omgekeerde commando's en verwijdert
@@ -43,7 +49,7 @@ apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Draait direct o
 - **Meerdere sites**, donker/licht thema, werkt op telefoon.
 
 > **Status: v0.2, getest tegen een simulator, nog niet tegen echte hardware.**
-> Alle 119 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
+> Alle 125 end-to-end-controles slagen tegen de meegeleverde RouterOS-simulator. Die simulator is gebouwd
 > op de MikroTik-documentatie, niet op een echte router. Lees [Eerst op echte hardware](#eerst-op-echte-hardware)
 > voordat je dit op je productienetwerk loslaat.
 
