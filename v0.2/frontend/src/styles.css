@@ -277,3 +277,9 @@ table.t tr.off td { color: var(--muted); }
 .input.sm { padding: 4px 8px; font-size: 13px; height: auto; width: auto; }
 .small-h { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 10px 0 -2px; }
 .banner.small { font-size: 13px; }
+
+.live-dot { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font: 500 12px var(--sans); color: var(--ok);
+  vertical-align: middle; }
+.live-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); animation: live-pulse 2s ease-in-out infinite; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .live-dot::before { animation: none; } }

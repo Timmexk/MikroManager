@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fmtTime } from "./ui";
+import { fmtClock, fmtTime } from "./ui";
 
 /* ---------- faceplate ---------- */
 
@@ -51,28 +51,37 @@ function niceMax(v: number): number {
 }
 
 /** Time series on one shared axis. Crosshair tooltip lists every series; a table view is one click away. */
-export function LineChart({ data, series, height = 220, fmt, max, title }: {
+export function LineChart({ data, series, height = 220, fmt, max, title, xRange }: {
   data: Record<string, number>[]; series: Series[]; height?: number; fmt: (v: number) => string; max?: number; title: string;
+  /** Fixed time axis [from, to]; makes a live chart scroll instead of stretch. */
+  xRange?: [number, number];
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
+  const pts = useMemo(() => data.filter((d) => series.some((s) => d[s.key] != null)), [data, series]);
+  const shown = pts.length >= 2 && !table;
   useEffect(() => {
+    // the chart box only exists once there are two points; measure it as soon as it appears
     if (!box.current) return;
     const ro = new ResizeObserver((e) => setW(Math.max(260, e[0].contentRect.width)));
     ro.observe(box.current);
     return () => ro.disconnect();
-  }, []);
-
-  const pts = useMemo(() => data.filter((d) => series.some((s) => d[s.key] != null)), [data, series]);
+  }, [shown]);
   const m = { l: 52, r: 10, t: 8, b: 22 };
   const iw = w - m.l - m.r, ih = height - m.t - m.b;
-  const t0 = pts[0]?.ts ?? 0, t1 = pts[pts.length - 1]?.ts ?? 1;
+  const t0 = xRange?.[0] ?? pts[0]?.ts ?? 0, t1 = xRange?.[1] ?? pts[pts.length - 1]?.ts ?? 1;
+  const tf = t1 - t0 < 1800 ? fmtClock : fmtTime;
   const top = max ?? niceMax(Math.max(1, ...pts.flatMap((d) => series.map((s) => d[s.key] ?? 0))));
   const x = (ts: number) => m.l + (t1 === t0 ? iw : ((ts - t0) / (t1 - t0)) * iw);
   const y = (v: number) => m.t + ih - (Math.min(v, top) / top) * ih;
   const path = (key: string) => pts.filter((d) => d[key] != null).map((d, i) => `${i ? "L" : "M"}${x(d.ts).toFixed(1)},${y(d[key]).toFixed(1)}`).join("");
+  const area = (key: string) => {
+    const own = pts.filter((d) => d[key] != null);
+    if (own.length < 2) return "";
+    return `${path(key)}L${x(own[own.length - 1].ts).toFixed(1)},${y(0)}L${x(own[0].ts).toFixed(1)},${y(0)}Z`;
+  };
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * top);
   const nx = Math.max(1, Math.min(6, Math.floor(iw / 90)));
   const xt: number[] = pts.length > 1 ? Array.from({ length: nx + 1 }, (_, i) => t0 + ((t1 - t0) * i) / nx) : [];
@@ -94,7 +103,7 @@ export function LineChart({ data, series, height = 220, fmt, max, title }: {
         <div className="table-wrap" style={{ maxHeight: height, overflowY: "auto" }}>
           <table className="t"><thead><tr><th>Tijd</th>{series.map((s) => <th key={s.key} className="right">{s.label}</th>)}</tr></thead>
             <tbody>{pts.slice().reverse().map((d) => (
-              <tr key={d.ts}><td className="num">{fmtTime(d.ts)}</td>{series.map((s) => <td key={s.key} className="num right">{d[s.key] != null ? fmt(d[s.key]) : "–"}</td>)}</tr>
+              <tr key={d.ts}><td className="num">{tf(d.ts)}</td>{series.map((s) => <td key={s.key} className="num right">{d[s.key] != null ? fmt(d[s.key]) : "–"}</td>)}</tr>
             ))}</tbody></table>
         </div>
       ) : (
@@ -103,10 +112,10 @@ export function LineChart({ data, series, height = 220, fmt, max, title }: {
             <g className="grid">{ticks.map((t: number) => <line key={t} x1={m.l} x2={w - m.r} y1={y(t)} y2={y(t)} />)}</g>
             <g className="axis">
               {ticks.map((t) => <text key={t} x={m.l - 8} y={y(t) + 4} textAnchor="end">{fmt(t)}</text>)}
-              {xt.map((t, i) => <text key={i} x={x(t)} y={height - 5} textAnchor={i === 0 ? "start" : i === xt.length - 1 ? "end" : "middle"}>{fmtTime(t)}</text>)}
+              {xt.map((t, i) => <text key={i} x={x(t)} y={height - 5} textAnchor={i === 0 ? "start" : i === xt.length - 1 ? "end" : "middle"}>{tf(t)}</text>)}
             </g>
             {series.map((s) => s.area && (
-              <path key={s.key + "a"} d={`${path(s.key)}L${x(t1)},${y(0)}L${x(t0)},${y(0)}Z`} fill={s.color} opacity={0.1} />
+              <path key={s.key + "a"} d={area(s.key)} fill={s.color} opacity={0.1} />
             ))}
             {series.map((s) => <path key={s.key} d={path(s.key)} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />)}
             {h && <line className="cross" x1={x(h.ts)} x2={x(h.ts)} y1={m.t} y2={m.t + ih} />}
@@ -114,7 +123,7 @@ export function LineChart({ data, series, height = 220, fmt, max, title }: {
           </svg>
           {h && (
             <div className="tip" style={{ left: Math.min(w - 80, Math.max(80, x(h.ts))), top: m.t + 2 }}>
-              <div style={{ opacity: 0.75, marginBottom: 2 }}>{fmtTime(h.ts)}</div>
+              <div style={{ opacity: 0.75, marginBottom: 2 }}>{tf(h.ts)}</div>
               {series.map((s) => <div key={s.key}><span className="k" style={{ background: s.color }} /><b>{h[s.key] != null ? fmt(h[s.key]) : "–"}</b> {s.label}</div>)}
             </div>
           )}

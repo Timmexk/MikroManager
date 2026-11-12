@@ -1,3 +1,4 @@
+import { api } from "./api";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
 
@@ -43,6 +44,7 @@ export function fmtAgo(ts?: number | null): string {
 export const fmtDateTime = (ts: number) =>
   new Date(ts * 1000).toLocaleString("nl-NL", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 export const fmtTime = (ts: number) => new Date(ts * 1000).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+export const fmtClock = (ts: number) => new Date(ts * 1000).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 export const ROLE: Record<string, string> = { router: "Router", switch: "Switch", ap: "Access point" };
 export const bandLabel = (b?: string | null) => (!b ? "" : b.startsWith("2") ? "2,4 GHz" : b.startsWith("6") ? "6 GHz" : "5 GHz");
@@ -233,4 +235,44 @@ export function Meter({ value }: { value?: number | null }) {
 export function Loading({ error }: { error?: string | null }) {
   if (error) return <div className="banner bad">{error}</div>;
   return <div className="empty"><Loader2 className="spin" /></div>;
+}
+
+/** Live data: polls `url?since=` every `interval` seconds (as told by the server) and keeps a sliding
+ *  window of the series in `keys`. Other fields are replaced by the newest response. Pauses while the
+ *  tab is hidden. */
+export function useLive<T extends Record<string, any>>(url: string | null, keys: string[]) {
+  const [state, setState] = useState<T | null>(null);
+  const last = useRef<Record<string, number>>({});
+  useEffect(() => {
+    setState(null);
+    last.current = {};
+    if (!url) return;
+    let stop = false, timer: any;
+    const tick = async () => {
+      if (document.visibilityState === "visible") {
+        const since = Math.min(...keys.map((k) => last.current[k] ?? 0));
+        try {
+          const d: any = await api.get(`${url}${url.includes("?") ? "&" : "?"}since=${since}`);
+          if (stop) return;
+          setState((old: any) => {
+            const out: any = { ...d };
+            for (const k of keys) {
+              const seen = new Set((old?.[k] ?? []).map((p: any) => p.ts));
+              const merged = [...(old?.[k] ?? []), ...(d[k] ?? []).filter((p: any) => !seen.has(p.ts))];
+              out[k] = merged.filter((p: any) => p.ts >= d.now - d.window);
+              last.current[k] = out[k].length ? out[k][out[k].length - 1].ts : (last.current[k] ?? d.now);
+            }
+            return out;
+          });
+          timer = setTimeout(tick, (d.interval ?? 2) * 1000);
+          return;
+        } catch { /* try again shortly */ }
+      }
+      if (!stop) timer = setTimeout(tick, 2000);
+    };
+    tick();
+    return () => { stop = true; clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
+  return state;
 }
