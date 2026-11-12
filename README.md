@@ -88,7 +88,7 @@ die de externe router zelf opzet en die alleen de REST API doorlaat.
 ## Wat het niet is
 
 - Geen vervanging van WinBox. Wat de app niet beheert, laat hij met rust en blijf je in WinBox doen.
-- Geen cloudcontroller. De app draait in één container op je eigen server.
+- Geen cloudcontroller. De app draait op je eigen server, direct op Linux (systemd) of in Docker.
 - Geen product van MikroTik en er niet aan verbonden.
 
 ## In deze repository
