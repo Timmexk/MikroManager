@@ -34,8 +34,9 @@ Open http://localhost:8080, maak een account en klik rond. Demomodus start vijf 
 ## Installeren op Linux (aanbevolen)
 
 Werkt op elke distro met systemd en Python 3.10 of nieuwer: Debian 12+, Ubuntu 22.04+, Fedora, Arch/CachyOS,
-openSUSE. Vooraf nodig: Python met venv (Debian/Ubuntu: `sudo apt install python3-venv`) en, alleen om de
-frontend te bouwen, `npm`.
+openSUSE. Vooraf nodig: Python met venv (Debian/Ubuntu: `sudo apt install python3-venv`) en `curl` of `wget`.
+De frontend wordt kant-en-klaar gedownload (gebouwd door GitHub Actions), dus `npm` is op de server niet nodig.
+Zelf bouwen kan met `sudo MM_FRONTEND=build bash linux/install.sh` (vraagt `nodejs` en `npm`).
 
 ```bash
 git clone https://github.com/Timmexk/MikroManager.git
