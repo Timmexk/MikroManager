@@ -116,6 +116,8 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {d.wan_quality?.wans?.length > 0 && <WanQuality q={d.wan_quality} />}
+
       <section className="panel">
         <header><h2>Logboek</h2></header>
         <div className="log">
@@ -127,5 +129,43 @@ export default function Dashboard() {
         </div>
       </section>
     </div>
+  );
+}
+
+const ms = (v?: number | null) => (v == null ? "–" : v < 10 ? `${v.toFixed(1)} ms` : `${Math.round(v)} ms`);
+const pct = (v?: number | null) => (v == null ? "–" : `${v < 1 && v > 0 ? v.toFixed(1) : Math.round(v)}%`);
+
+function WanQuality({ q }: { q: any }) {
+  const active = q.wans.find((w: any) => w.active) ?? q.wans[0];
+  const inet = (q.history as any[]).filter((h) => h.kind === "internet" && h.wan === active.interface);
+  const series = inet.map((h) => ({ ts: h.ts, rtt: h.rtt, peak: h.rtt_max }));
+  const lossAvg = inet.length ? inet.reduce((a, h) => a + (h.loss ?? 0), 0) / inet.length : null;
+  const tone = (p?: any) => !p || p.avg == null ? "" : p.loss >= 5 || p.avg > 100 ? "bad" : p.loss > 0 || p.avg > 40 ? "warn" : "ok";
+  const Ping = ({ p }: { p?: any }) => p ? <span className={`tag ${tone(p)}`}>{ms(p.avg)}</span> : <span className="muted">–</span>;
+  return (
+    <section className="panel">
+      <header>
+        <h2>WAN-kwaliteit<span className="muted small" style={{ fontFamily: "var(--sans)", fontWeight: 400 }}> ping naar {q.target} en naar de gateway</span></h2>
+        <span className="muted small">gem. pakketverlies {pct(lossAvg)}</span>
+      </header>
+      <div className="table-wrap fit"><table className="t">
+        <thead><tr><th>WAN</th><th>Status</th><th className="right">Internet</th><th className="right">Gateway</th><th className="right">Verlies</th></tr></thead>
+        <tbody>{q.wans.map((w: any) => (
+          <tr key={w.interface}>
+            <td><span className="strong mono">{w.interface}</span>{w.gateway && <div className="muted small mono">{w.gateway}</div>}</td>
+            <td>{w.active ? <span className="tag ok">Actief</span> : <span className="tag">Standby</span>}</td>
+            <td className="num right"><Ping p={w.ping?.internet} /></td>
+            <td className="num right"><Ping p={w.ping?.gateway} /></td>
+            <td className="num right">{pct((w.ping?.internet ?? w.ping?.gateway)?.loss)}</td>
+          </tr>
+        ))}</tbody>
+      </table></div>
+      <div className="body">
+        {series.length > 0
+          ? <LineChart title={`Latency naar internet via ${active.interface}`} data={series} fmt={(v) => ms(v)}
+            series={[{ key: "rtt", label: "Gemiddeld", color: "var(--s1)", area: true }, { key: "peak", label: "Piek", color: "var(--s2)" }]} />
+          : <div className="empty">Nog geen metingen. De eerste verschijnen na een halve minuut.</div>}
+      </div>
+    </section>
   );
 }
