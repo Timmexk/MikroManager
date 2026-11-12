@@ -31,9 +31,14 @@ AUTH = {"open": "", "wpa2": "wpa2-psk", "wpa2wpa3": "wpa2-psk,wpa3-psk", "wpa3":
 BANDS = {("2g", "ax"): "2ghz-ax", ("5g", "ax"): "5ghz-ax", ("2g", "ac"): "2ghz-n", ("5g", "ac"): "5ghz-ac"}
 RULE_ORDER = [("2g", "ax"), ("5g", "ax"), ("2g", "ac"), ("5g", "ac")]
 
-# Transmit power per radio. "high" = no limit: RouterOS uses the maximum the country allows.
+# Transmit power per radio. "high" = no limit: RouterOS uses the maximum the country allows for that channel
+# (current-max-reg-power on the radio). Medium and low are relative to that maximum, like most controllers do:
+# -6 dB is a quarter of the power, -12 dB a sixteenth.
 TX_MODES = ("manual", "low", "medium", "high")
-TX_PRESET = {("2g", "low"): 8, ("2g", "medium"): 14, ("5g", "low"): 11, ("5g", "medium"): 17}
+TX_STEP = {"medium": 6, "low": 12}
+# Used only when the radio does not report current-max-reg-power: EU/ETSI EIRP limits for the
+# lowest channels of the band (2.4 GHz 20 dBm, 5 GHz ch 36-64 23 dBm; ch 100-140 allows 30 dBm).
+TX_FALLBACK_MAX = {"2g": 20, "5g": 23, "6g": 23}
 
 
 def radio_tx(site_id: int) -> dict[str, dict]:
@@ -41,10 +46,19 @@ def radio_tx(site_id: int) -> dict[str, dict]:
             for r in db.q("SELECT * FROM radio_settings WHERE site_id=?", site_id)}
 
 
-def tx_dbm(band: str, mode: str, power: int | None) -> int | None:
+def radio_max(radio: dict) -> int:
+    try:
+        return int(float(radio.get("current-max-reg-power")))
+    except (TypeError, ValueError):
+        return TX_FALLBACK_MAX[_band(radio)]
+
+
+def tx_dbm(mode: str, power: int | None, max_dbm: int) -> int | None:
     if mode == "manual":
-        return power
-    return TX_PRESET.get((band, mode))
+        return min(power, max_dbm) if power else None
+    if mode in TX_STEP:
+        return max(1, max_dbm - TX_STEP[mode])
+    return None
 
 
 def slugify(text: str) -> str:
@@ -100,12 +114,16 @@ def desired_state(settings: dict, wlans: list[dict], radios: list[dict] | None =
     # band rules, with its own copy of the master configuration carrying tx-power. Virtual SSIDs share the radio.
     for r in radios or []:
         drv = "ax" if r["ax"] or not ac else "ac"
+        if r.get("local") and not settings.get("local_radios"):
+            continue
         cfgs = [f"{PREFIX}{w['slug']}-{r['band']}" + ("-ac" if drv == "ac" else "") for w in active
                 if r["band"] in w["bands"].split(",")]
         if not cfgs or r["dbm"] is None:
             continue
         own = f"{cfgs[0]}-r{r['mac'].replace(':', '')[-6:].lower()}"
         out[CFG][own] = {**out[CFG][cfgs[0]], "tx-power": str(r["dbm"]), "comment": f"{out[CFG][cfgs[0]]['comment']} ({r['mac']})"}
+        if r.get("local"):
+            continue        # the controller's own radios are never provisioned; they use the profile directly
         out[PROV].append({"action": "create-dynamic-enabled", "radio-mac": r["mac"], "master-configuration": own,
                           "slave-configurations": ",".join(cfgs[1:]), "comment": f"{TAG}radio:{r['mac']}"})
 
@@ -161,9 +179,67 @@ def tx_radios(site_id: int) -> list[dict]:
         p = prefs.get(mac)
         if not p or p["mode"] == "high":
             continue
-        band = _band(r)
-        out.append({"mac": mac, "band": band, "ax": "ax" in (r.get("bands") or ""), "dbm": tx_dbm(band, p["mode"], p["power"])})
+        out.append({"mac": mac, "band": _band(r), "ax": "ax" in (r.get("bands") or ""), "local": not r.get("cap"),
+                    "dbm": tx_dbm(p["mode"], p["power"], radio_max(r))})
     return out
+
+
+LOCAL_TAG = f"{TAG}local:"     # comment on the virtual interfaces we add to the controller's own radios
+INLINE = ("configuration.", "security.", "datapath.", "channel.")
+KEEP_INLINE = {"configuration.manager", "configuration.mode"}
+
+
+def local_masters(radio_rows: list[dict], wifi_rows: list[dict]) -> list[tuple[dict, dict | None]]:
+    """(radio, its interface) for every radio of the controller itself."""
+    by_name = {i["name"]: i for i in wifi_rows}
+    return [(r, by_name.get(r.get("interface", ""))) for r in radio_rows if not r.get("cap")]
+
+
+def local_plan(settings: dict, wlans: list[dict], radios: list[dict] | None, radio_rows: list[dict],
+               wifi_rows: list[dict]) -> list[dict]:
+    """Steps that make the controller's own radios carry the site's SSIDs, the way the MikroTik CAPsMAN manual
+    says to do it: set the same configuration profile on the local (static) interfaces yourself. CAPsMAN cannot
+    manage its own interfaces, and provisioning them deletes and re-creates them (breaking bridge-port links)."""
+    ops: list[dict] = []
+    active = [w for w in wlans if w["enabled"]]
+    own = {r["mac"]: r for r in radios or []}
+    for radio, iface in local_masters(radio_rows, wifi_rows):
+        if not iface or truthy(iface.get("dynamic", "false")):
+            continue        # still in the provisioned state of an older version; the endpoint repairs that first
+        band = _band(radio)
+        cfgs = [f"{PREFIX}{w['slug']}-{band}" for w in active if band in w["bands"].split(",")]
+        mac = (radio.get("radio-mac") or "").upper()
+        master = cfgs[0] if cfgs else None
+        if master and mac in own and own[mac]["dbm"] is not None:
+            master = f"{master}-r{mac.replace(':', '')[-6:].lower()}"
+        name = iface["name"]
+        if master:
+            data = {}
+            if iface.get("configuration") != master:
+                data["configuration"] = master
+            if truthy(iface.get("disabled", "false")):
+                data["disabled"] = "no"
+            if data:
+                ops.append({"op": "set", "path": WIFI, "id": iface[".id"], "data": data, "local": True,
+                            "text": f"Eigen radio {name}: profiel {master}", "show": data})
+            for k in [k for k in iface if k.startswith(INLINE) and k not in KEEP_INLINE]:
+                ops.append({"op": "unset", "path": WIFI, "id": iface[".id"], "key": k, "local": True,
+                            "text": f"Eigen radio {name}: eigen instelling {k} weg (het profiel geldt)"})
+        elif str(iface.get("configuration", "")).startswith(PREFIX):
+            ops.append({"op": "unset", "path": WIFI, "id": iface[".id"], "key": "configuration", "local": True,
+                        "text": f"Eigen radio {name}: geen netwerken meer op deze band"})
+        slaves = {i.get("comment", "")[len(LOCAL_TAG):]: i for i in wifi_rows
+                  if i.get("master-interface") == name and i.get("comment", "").startswith(LOCAL_TAG)}
+        for cfg in cfgs[1:]:
+            if cfg not in slaves:
+                data = {"master-interface": name, "configuration": cfg, "comment": LOCAL_TAG + cfg, "disabled": "no"}
+                ops.append({"op": "add", "path": WIFI, "data": data, "local": True,
+                            "text": f"Eigen radio {name}: virtuele interface voor {cfg}", "show": data})
+        for cfg, i in slaves.items():
+            if cfg not in cfgs[1:]:
+                ops.append({"op": "remove", "path": WIFI, "id": i[".id"], "local": True,
+                            "text": f"Eigen radio {name}: virtuele interface {i['name']} weg"})
+    return ops
 
 
 async def build_plan(ros: Ros, settings: dict, wlans: list[dict], radios: list[dict] | None = None) -> list[dict]:
@@ -217,6 +293,10 @@ async def build_plan(ros: Ros, settings: dict, wlans: list[dict], radios: list[d
                         "text": f"Nieuwe provisioning-regel {w.get('supported-bands') or 'radio ' + w['radio-mac']}",
                         "show": _clean(w)})
 
+    # 2b. the controller's own radios (only after they were handed over in the UI)
+    if settings.get("local_radios"):
+        ops += local_plan(settings, wlans, radios, await ros.get(RADIO), await ros.get(WIFI))
+
     # 3. remove profiles we no longer want; referencing ones first
     for path in (CFG, CH, DP, SEC):
         for name, cur in have[path].items():
@@ -239,14 +319,50 @@ async def _reprovision(ros: Ros) -> int:
     for cap in await ros.get(REMOTE_CAP):
         await ros.cmd(REMOTE_CAP + "/provision", {"numbers": cap[".id"]})
         n += 1
-    # Local radios of the controller that were handed over to us earlier.
-    ifaces = {i["name"]: i for i in await ros.get(WIFI)}
-    for radio in await ros.get(RADIO):
-        iface = ifaces.get(radio.get("interface", ""))
-        if not radio.get("cap") and iface and truthy(iface.get("dynamic", "false")):
-            await ros.cmd(RADIO + "/provision", {"numbers": radio[".id"]})
-            n += 1
+    # The controller's own radios are never provisioned (see local_plan).
     return n
+
+
+async def release_local(ros: Ros) -> list[str]:
+    """Undo the provisioning of the controller's own radios that MikroManager 0.1/0.2 did with "Radio's overnemen".
+
+    MikroTik CAPsMAN manual: "to regain control of local interfaces after provisioning, you will need to disable
+    the matching provisioning rules and press "provision" again, which will return local interfaces to an
+    unconfigured state." We re-enable our rules straight after, so the access points are not affected.
+    """
+    done = []
+    radio_rows, wifi_rows = await ros.get(RADIO), await ros.get(WIFI)
+    stuck = [r for r, i in local_masters(radio_rows, wifi_rows) if i and truthy(i.get("dynamic", "false"))]
+    if not stuck:
+        return done
+    rules = [r for r in await ros.get(PROV) if r.get("comment", "").startswith(TAG) and not truthy(r.get("disabled", "false"))]
+    for r in rules:
+        await ros.set(PROV, r[".id"], {"disabled": "yes"})
+    try:
+        for r in stuck:
+            await ros.cmd(RADIO + "/provision", {"numbers": r[".id"]})
+        done.append(f"{len(stuck)} eigen radio('s) losgemaakt van de provisioning (staan nu onbeheerd)")
+    finally:
+        for r in rules:
+            await ros.set(PROV, r[".id"], {"disabled": "no"})
+    return done
+
+
+async def unmanage_local(ros: Ros) -> list[str]:
+    """Remove MikroManager's profiles and virtual interfaces from the controller's own radios."""
+    done = []
+    radio_rows, wifi_rows = await ros.get(RADIO), await ros.get(WIFI)
+    for radio, iface in local_masters(radio_rows, wifi_rows):
+        if not iface:
+            continue
+        for i in wifi_rows:
+            if i.get("master-interface") == iface["name"] and i.get("comment", "").startswith(LOCAL_TAG):
+                await ros.remove(WIFI, i[".id"])
+                done.append(f"{i['name']} verwijderd")
+        if str(iface.get("configuration", "")).startswith(PREFIX):
+            await ros.cmd(WIFI + "/unset", {".id": iface[".id"], "value-name": "configuration"})
+            done.append(f"{iface['name']}: profiel van MikroManager weg")
+    return done
 
 
 async def apply_plan(ros: Ros, ops: list[dict]) -> list[dict]:
@@ -386,7 +502,9 @@ def access_points(site_id: int) -> list[dict]:
                 "managed": bool(name) and str(i.get("configuration", "")).startswith(PREFIX),
                 "dynamic": truthy(i.get("dynamic", "false")),
                 "tx": {**(prefs.get((r.get("radio-mac") or "").upper()) or {"mode": "high", "power": None}),
-                       "presets": {m: TX_PRESET.get((_band(r), m)) for m in ("low", "medium")}}}
+                       "max": radio_max(r), "max_reported": r.get("current-max-reg-power") is not None,
+                       "presets": {m: tx_dbm(m, None, radio_max(r)) for m in ("low", "medium")}},
+                "local": not r.get("cap"), "provisioned_local": not r.get("cap") and truthy(i.get("dynamic", "false"))}
 
     aps: dict[str, dict] = {}
     for cap in s.get("remote_caps") or []:

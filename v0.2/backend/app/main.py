@@ -782,20 +782,38 @@ async def device_release(dev_id: int, _: dict = Depends(user)):
 
 @app.post("/api/sites/{site_id}/wifi/local-radios")
 async def wifi_local(site_id: int, body: dict = Body(default={}), _: dict = Depends(user)):
-    """Hand the controller's own radios to the provisioning rules (or give them back)."""
+    """The controller's own radios: take them over (they carry the site's SSIDs) or give them back.
+
+    Taking over sets the configuration profiles directly on the static interfaces, as the MikroTik CAPsMAN manual
+    prescribes; it never provisions them. Both directions first repair radios that an older MikroManager did
+    provision (disable rules, provision again, enable rules)."""
+    site = _site(site_id)
     ctrl = _controller(site_id)
     ros = Ros.for_device(ctrl)
-    radios = [r for r in await ros.get(wifi.RADIO) if not r.get("cap")]
-    if not radios:
+    take = body.get("action", "take") == "take"
+    if not [r for r in await ros.get(wifi.RADIO) if not r.get("cap")]:
         raise ValueError("De controller heeft geen eigen radio's")
-    if not any(r.get("comment", "").startswith("tc:") for r in await ros.get(wifi.PROV)):
-        raise ValueError("Pas eerst de wifi-instellingen toe; er zijn nog geen provisioning-regels")
-    for r in radios:
-        await ros.cmd(wifi.RADIO + "/provision", {"numbers": r[".id"]})
-    db.log(site_id, f"Lokale radio's van {ctrl['name']} overgenomen ({len(radios)})", "ok")
+    done = await wifi.release_local(ros)
+    if done:
+        await asyncio.sleep(1)
+    st = {**site["settings"], "local_radios": take}
+    db.x("UPDATE sites SET settings=? WHERE id=?", json.dumps(st), site_id)
+    if take:
+        if not wifi.site_wlans(site_id):
+            raise ValueError("Maak eerst een wifi-netwerk aan")
+        ops = [o for o in await wifi.build_plan(ros, st, wifi.site_wlans(site_id), wifi.tx_radios(site_id)) if o.get("local")]
+        results = await wifi.apply_plan(ros, ops)
+        failed = next((r for r in results if not r["ok"]), None)
+        if failed:
+            raise RosError(f"{failed['text']}: {failed['error']}")
+        done += [r["text"] for r in results]
+        db.log(site_id, f"Eigen radio's van {ctrl['name']} zenden nu de netwerken van de site uit", "ok")
+    else:
+        done += await wifi.unmanage_local(ros)
+        db.log(site_id, f"Eigen radio's van {ctrl['name']} teruggegeven (onbeheerd)", "warn")
     await asyncio.sleep(0.5)
     await poller.refresh_device(ctrl)
-    return {"ok": True, "radios": len(radios)}
+    return {"ok": True, "steps": done}
 
 
 # ---- networks --------------------------------------------------------------

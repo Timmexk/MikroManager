@@ -20,6 +20,7 @@ DEFAULT_SITE_SETTINGS = {
     "country": "Netherlands",
     "bridge": "bridge",
     "capsman_interfaces": "",      # empty = same as bridge
+    "local_radios": False,         # controller's own radios carry the site's SSIDs (static interfaces, no provisioning)
     "ch2_width": "20mhz",
     "ch2_freq": "",                # empty = automatic
     "ch5_width": "20/40/80mhz",

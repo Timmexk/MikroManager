@@ -3,6 +3,7 @@
 Lets you click through the whole UI before pointing MikroManager at real hardware.
 """
 import asyncio
+import json
 import math
 import os
 import random
@@ -61,12 +62,12 @@ async def seed() -> None:
         db.x("INSERT INTO wlans (site_id, slug, ssid, passphrase_enc, security, vlan_id, bands, isolation, ft, position) "
              "VALUES (?,?,?,?,?,?,?,?,?,?)", sid, wifi.slugify(ssid), ssid, security.encrypt(pw),
              "wpa2" if vlan == 30 else "wpa2wpa3", vlan, bands, iso, 1, pos)
-    await wifi.apply_plan(ros, await wifi.build_plan(ros, site["settings"], wifi.site_wlans(sid), wifi.tx_radios(sid)))
+    # the router's own radios carry the SSIDs too (profiles set directly on wifi1/wifi2, no provisioning)
+    st = {**site["settings"], "local_radios": True}
+    db.x("UPDATE sites SET settings=? WHERE id=?", json.dumps(st), sid)
+    await wifi.apply_plan(ros, await wifi.build_plan(ros, st, wifi.site_wlans(sid), wifi.tx_radios(sid)))
     for ap in devs[3:]:
         await wifi.adopt_ap(Ros.for_device(ap), None)
-    for r in await ros.get(wifi.RADIO):
-        if not r.get("cap"):
-            await ros.cmd(wifi.RADIO + "/provision", {"numbers": r[".id"]})
 
     # Six hours of plausible history so the charts are not empty on first load.
     now = time.time()
