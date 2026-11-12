@@ -7,7 +7,7 @@
 > is niet aangepast aan het nieuwe ontwerp.
 
 Zelfgehoste beheerinterface voor MikroTik-netwerken, in de geest van UniFi Network: één plek voor
-apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Eén Docker-container, geen cloud, geen account.
+apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Draait direct op Linux (systemd) of in Docker, geen cloud, geen account.
 
 - **Apparaten**: status, CPU/geheugen, poortkaart met link, snelheid, PoE en verkeer per poort.
 - **Clients**: DHCP-leases, wifi-registraties en switchpoorten samengevoegd per MAC. Naam geven, vast IP, opnieuw verbinden, blokkeren.
@@ -31,9 +31,41 @@ docker run --rm -p 8080:8080 -e TIKCONTROL_DEMO=1 tikcontrol:0.1.0
 Open http://localhost:8080, maak een account en klik rond. Demomodus start vijf gesimuleerde apparaten
 (hAP ax², CRS310, hEX PoE, twee cAP ax) met clients. Alles wordt bij elke herstart gewist.
 
-## Installeren (Unraid / Docker)
+## Installeren op Linux (aanbevolen)
 
-Start vanuit deze map:
+Werkt op elke distro met systemd en Python 3.10 of nieuwer: Debian 12+, Ubuntu 22.04+, Fedora, Arch/CachyOS,
+openSUSE. Vooraf nodig: Python met venv (Debian/Ubuntu: `sudo apt install python3-venv`) en, alleen om de
+frontend te bouwen, `npm`.
+
+```bash
+git clone https://github.com/Timmexk/MikroManager.git
+cd MikroManager/v0.1
+sudo bash linux/install.sh
+```
+
+Het script maakt een systeemgebruiker `mikromanager`, zet het programma in `/opt/mikromanager` en start de
+systemd-service `mikromanager`. Bijwerken: `git pull` en het script opnieuw draaien. Je data en instellingen
+blijven daarbij staan.
+
+| Pad | Inhoud |
+|---|---|
+| `/etc/mikromanager/mikromanager.env` | Instellingen: poort, poll-interval, HTTPS-cookie, demomodus |
+| `/var/lib/mikromanager/` | `tikcontrol.db`, `secret.key` en `backups/`. **Bewaar `secret.key` samen met de database.** |
+| `/opt/mikromanager/` | Programma en Python-omgeving, wordt bij elke update vervangen |
+
+```bash
+sudo systemctl restart mikromanager      # na het wijzigen van de instellingen
+journalctl -u mikromanager -f            # logs
+sudo bash linux/install.sh --uninstall      # verwijderen, data blijft staan
+sudo bash linux/install.sh --purge          # alles verwijderen, ook de data
+```
+
+De service is afgeschermd: hij draait niet als root, mag alleen in `/var/lib/mikromanager` schrijven en ziet
+de home-mappen niet. Het back-upschema gebruikt de tijdzone van het systeem (`timedatectl`).
+
+## Installeren met Docker (Unraid)
+
+Op Unraid of als je liever een container gebruikt. Start vanuit deze map:
 
 ```bash
 docker compose up -d --build
@@ -68,7 +100,7 @@ TikControl gebruikt de REST API van RouterOS 7 (`https://router/rest`). Per appa
 /ip service set www-ssl certificate=tikcontrol-web address=192.168.88.50/32 disabled=no
 ```
 
-Vervang `192.168.88.50` door het adres van je Docker-host. `address=` op `www-ssl` beperkt ook WebFig tot
+Vervang `192.168.88.50` door het adres van de machine waarop MikroManager draait. `address=` op `www-ssl` beperkt ook WebFig tot
 dat adres. Krijg je bij toevoegen "Inloggen geweigerd", voeg dan `web` toe aan de policy van de groep.
 HTTP (`www`) werkt ook, maar dan gaat het wachtwoord onversleuteld over het netwerk.
 
