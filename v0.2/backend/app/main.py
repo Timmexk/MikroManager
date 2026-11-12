@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import clients as clients_mod
-from . import db, interfaces, maint, networks, poller, safe, security, wifi
+from . import db, interfaces, live, maint, networks, poller, safe, security, wifi
 from .config import DEFAULT_SITE_SETTINGS, DEMO, SECURE_COOKIE, STATIC_DIR, VERSION
 from .poller import STATE, snap
 from .ros import Ros, RosError, close_all, truthy
@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
     if DEMO:
         tasks += await demo.start()
     tasks.append(asyncio.create_task(poller.run()))
+    tasks.append(asyncio.create_task(live.run()))
     yield
     for t in tasks:
         t.cancel()
@@ -376,6 +377,52 @@ async def vlan_delete(dev_id: int, name: str, _: dict = Depends(user)):
     dev = _device(dev_id)
     ops = interfaces.plan_vlan(await interfaces.fetch(dev), {"delete": True}, current=name)
     return await _guarded(dev, ops, f"VLAN-interface {name} verwijderd")
+
+
+# ---- live -------------------------------------------------------------------
+
+@app.get("/api/sites/{site_id}/live")
+def site_live(site_id: int, since: float = 0, _: dict = Depends(user)):
+    """Fast-moving numbers for the overview: WAN traffic, internet latency, CPU per device."""
+    _site(site_id)
+    devs = db.site_devices(site_id)
+    live.watch([d["id"] for d in devs])
+    ctrl = db.controller(site_id)
+    cs = (STATE.get(ctrl["id"]) or {}) if ctrl else {}
+    wan = cs.get("wan")
+    traffic = [{"ts": p["ts"], "rx": p["rates"].get(wan, (None, None))[0], "tx": p["rates"].get(wan, (None, None))[1]}
+               for p in live.samples(ctrl["id"], since)] if ctrl and wan else []
+    latency = live.pings(ctrl["id"], since) if ctrl else []
+    if ctrl and not since:
+        # first request: fill the window with the stored 15-second measurements so the chart is not empty
+        first = traffic[0]["ts"] if traffic else time.time()
+        hist = poller.history(ctrl["id"], live.LIVE_WINDOW / 3600, points=live.LIVE_WINDOW // 15)
+        traffic = [{"ts": h["ts"], "rx": h["rx"], "tx": h["tx"]} for h in hist if h["ts"] < first - 1] + traffic
+        first = latency[0]["ts"] if latency else time.time()
+        wh = poller.wan_history(ctrl["id"], live.LIVE_WINDOW / 3600, points=live.LIVE_WINDOW // 15)
+        latency = [{"ts": h["ts"], "rtt": h["rtt"], "loss": h["loss"]} for h in wh
+                   if h["kind"] == "internet" and h["wan"] == wan and h["ts"] < first - 1] + latency
+    return {"now": time.time(), "interval": live.LIVE_INTERVAL, "window": live.LIVE_WINDOW, "wan": wan,
+            "traffic": traffic, "latency": latency,
+            "cpu": {d["id"]: (live.samples(d["id"])[-1]["cpu"] if live.samples(d["id"]) else None) for d in devs}}
+
+
+@app.get("/api/devices/{dev_id}/live")
+def device_live(dev_id: int, since: float = 0, _: dict = Depends(user)):
+    """CPU/memory series and current rate of every interface, for the device page."""
+    dev = _device(dev_id)
+    live.watch([dev_id])
+    pts = live.samples(dev_id, since)
+    last = live.samples(dev_id)[-1] if live.samples(dev_id) else None
+    load = [{"ts": p["ts"], "cpu": p["cpu"], "mem": p["mem"]} for p in pts]
+    if not since:
+        first = load[0]["ts"] if load else time.time()
+        load = [{"ts": h["ts"], "cpu": h["cpu"], "mem": h["mem"]}
+                for h in poller.history(dev_id, live.LIVE_WINDOW / 3600, points=live.LIVE_WINDOW // 15)
+                if h["ts"] < first - 1] + load
+    return {"now": time.time(), "interval": live.LIVE_INTERVAL, "window": live.LIVE_WINDOW,
+            "load": load,
+            "rates": {k: {"rx": v[0], "tx": v[1]} for k, v in (last or {}).get("rates", {}).items()}}
 
 
 # ---- overview --------------------------------------------------------------

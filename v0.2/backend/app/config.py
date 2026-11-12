@@ -36,3 +36,10 @@ DEFAULT_SITE_SETTINGS = {
 # this many seconds, unless MikroManager can still reach the device and disarms it.
 SAFE_SECS = int(os.environ.get("TIKCONTROL_SAFE_SECS", "90"))
 SAFE_CHECK_SECS = int(os.environ.get("TIKCONTROL_SAFE_CHECK_SECS", "20"))
+
+# Live view: while someone has the overview or a device page open, counters and CPU are read
+# every LIVE_INTERVAL seconds and kept in memory for LIVE_WINDOW seconds (not in the database).
+LIVE_INTERVAL = float(os.environ.get("TIKCONTROL_LIVE_INTERVAL", "2"))
+LIVE_WINDOW = int(os.environ.get("TIKCONTROL_LIVE_WINDOW", "600"))
+LIVE_PING_EVERY = int(os.environ.get("TIKCONTROL_LIVE_PING_EVERY", "3"))   # ping every N live ticks
+LIVE_IDLE_AFTER = 60   # stop fast polling this many seconds after the last viewer

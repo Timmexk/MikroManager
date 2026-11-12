@@ -195,7 +195,9 @@ async def poll_device(dev: dict, slow: bool = False) -> None:
         if prev and now > prev[0] and cur[0] >= prev[1] and cur[1] >= prev[2]:
             dt = now - prev[0]
             rates[i["name"]] = ((cur[0] - prev[1]) * 8 / dt, (cur[1] - prev[2]) * 8 / dt)
-    s["counters"], s["rates"] = counters, rates
+    s["counters"] = counters
+    if now - s.get("live_ts", 0) > 10:      # the live loop keeps fresher rates while someone watches
+        s["rates"] = rates
 
     if s["polls"] % RECHECK_UNSUPPORTED_EVERY == 0:
         s["unsupported"] = set()
