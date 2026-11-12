@@ -238,6 +238,30 @@ def run(c):
     c.post(f"/api/sites/{sid}/wifi/apply")
     check(rt.get("/interface/wifi/security/eigen-profiel").status_code == 200 and c.get(f"/api/sites/{sid}/wifi/plan").json()["ops"] == [], "hand-made profile is left alone")
 
+    print("transmit power per radio")
+    def radio(mac):
+        return next(r for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] for r in a["radios"] if r["mac"] == mac)
+    caps = [a for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if not a["local"]]
+    r5 = next(r for r in caps[0]["radios"] if r["band"] == "5g")
+    other = next(r for r in caps[1]["radios"] if r["band"] == "5g")
+    check(r5["tx"]["mode"] == "high" and r5["tx"]["presets"]["low"] == 11, "radios start on high, presets known")
+    check(c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "manual", "power": 45}).status_code == 400,
+          "impossible manual power refused")
+    c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "low"})
+    plan = c.get(f"/api/sites/{sid}/wifi/plan").json()["ops"]
+    check(any("radio " + r5["mac"] in o["text"] for o in plan), "plan adds a provisioning rule for that one radio")
+    check(c.post(f"/api/sites/{sid}/wifi/apply").json()["ok"], "apply transmit power")
+    x = wait(lambda: (v := radio(r5["mac"])) and v["tx_power"] == "11" and v, "low power on the radio")
+    check(x["tx"]["mode"] == "low" and x["ssids"] == r5["ssids"], "radio keeps all its SSIDs at low power")
+    check(radio(other["mac"])["tx_power"] != "11", "other radios untouched")
+    c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "manual", "power": 14})
+    c.post(f"/api/sites/{sid}/wifi/apply")
+    check(wait(lambda: radio(r5["mac"])["tx_power"] == "14", "manual power"), "manual power in dBm")
+    c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "high"})
+    c.post(f"/api/sites/{sid}/wifi/apply")
+    check(not [p for p in rt.get("/interface/wifi/provisioning").json() if p.get("radio-mac")]
+          and wait(lambda: radio(r5["mac"])["tx_power"] == "23", "back to high"), "high removes the radio rule again")
+
     print("backups")
     r = c.post(f"/api/sites/{sid}/backups").json()
     check(all(x.get("changed") for x in r), "first backup of all five devices (incl. file fallback on the switch)")
