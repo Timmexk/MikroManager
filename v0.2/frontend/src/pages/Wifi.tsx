@@ -105,9 +105,8 @@ export default function Wifi() {
                   {i === 0 && head}
                   <td>{bandLabel(r.band)}<div className="mono muted">{r.mac}</div></td>
                   <td className="num">{r.channel ? <>{r.channel.split("/")[0]} MHz</> : <span className="muted">–</span>}</td>
-                  <td>{r.managed ? <button className="btn sm" onClick={() => setTxRadio({ ap: ap.name, r })} title="Zendvermogen instellen">
-                      {TX_LABEL[r.tx?.mode ?? "high"]}{r.tx_power ? <span className="muted num" style={{ marginLeft: 6 }}>{r.tx_power} dBm</span> : null}</button>
-                    : r.tx_power ? <span className="num">{r.tx_power} dBm</span> : <span className="muted">–</span>}</td>
+                  <td><button className="btn sm" onClick={() => setTxRadio({ ap: ap.name, r })} title="Zendvermogen instellen">
+                      {TX_LABEL[r.tx?.mode ?? "high"]}{r.tx_power ? <span className="muted num" style={{ marginLeft: 6 }}>{r.tx_power} dBm</span> : null}</button></td>
                   <td>{r.ssids.length ? r.ssids.join(", ") : <span className="muted">{r.managed ? "geen" : "eigen instelling"}</span>}</td>
                   <td className="num right">{r.clients}</td>
                   {i === 0 && status}
@@ -298,7 +297,10 @@ function TxModal({ siteId, ap, r, onClose, onSaved }: { siteId: number; ap: stri
         </div>
         {mode === "manual" && <Field label="Zendvermogen (dBm)"><input className="input mono" inputMode="numeric" value={power} onChange={(e) => setPower(e.target.value)} style={{ width: 110 }} autoFocus /></Field>}
         <p className="muted small">{hint[mode]} Nu: {r.tx_power ? `${r.tx_power} dBm` : "onbekend"}.</p>
-        <p className="muted small">Wordt per radio via CAPsMAN ingesteld. Clients op deze radio verbinden bij het toepassen kort opnieuw.</p>
+        {r.managed
+          ? <p className="muted small">Wordt per radio via CAPsMAN ingesteld. Clients op deze radio verbinden bij het toepassen kort opnieuw.</p>
+          : <div className="banner info small">Deze radio zendt nog niet de wifi-netwerken van MikroManager uit. De instelling wordt bewaard en
+            gaat in zodra de radio beheerd wordt: adopteer het access point (of kies bij de router <b>Radio's overnemen</b>) en pas de wijzigingen toe.</div>}
       </div>
     </Modal>
   );
