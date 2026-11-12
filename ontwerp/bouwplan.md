@@ -8,7 +8,7 @@ hieronder zijn genomen.
 
 | | Stand |
 |---|---|
-| Proefversie v0.1 (werknaam TikControl) | Werkt tegen een simulator, 77 end-to-end-controles slagen. Nooit op echte hardware gedraaid. |
+| Proefversie v0.1 (werknaam TikControl) | Werkt tegen een simulator, 95 end-to-end-controles slagen. Nooit op echte hardware gedraaid. |
 | Ontwerp | Klaar: 40 schermen voor desktop en mobiel, zie [schermen.md](schermen.md). |
 | Ontwerpbesluiten | Vastgelegd in [ontwerpbesluiten.md](ontwerpbesluiten.md). |
 | Hardwareproef | Nog te doen. |

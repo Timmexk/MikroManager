@@ -112,6 +112,19 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
 - [ ] **[gedrag] Verbruik per WAN-verbinding.** Interfacetellers beginnen opnieuw bij een reboot. De app moet
   zelf optellen.
 - [ ] **[gedrag] Static lease maken** van een dynamische lease: verandert het `.id`, en blijft de client online?
+- [ ] **[gedrag] Geen dubbele clients.** Een wifi-client van een CAP staat ook in de host-tabel van de router en
+  van de switches ertussen. Verschijnt hij alleen bij zijn access point? En een bekabelde client achter een
+  switch alleen bij die switchpoort, niet ook op de router?
+- [ ] **[REST] IPv6 per client.** Geeft `GET /rest/ipv6/neighbor` per adres `mac-address` en `status`? Staan
+  SLAAC-adressen met privacy-extensies (meerdere per apparaat) er allemaal in, en verdwijnen ze op tijd?
+- [ ] **[REST] Live verbruik via Kid Control.** Staat in `/ip/kid-control/device` zonder eigen kid-profielen een
+  dynamische regel voor elk apparaat? Werkt `POST /rest/ip/kid-control/device/update-stats`, en in welk
+  formaat staan `rate-down` en `rate-up` (`1.2Mbps` of een getal)? Telt fasttrack mee?
+- [ ] **[REST] Internet pauzeren.** Werken `POST /rest/ip/kid-control/pause` en `resume` met `numbers=<naam>`?
+  Wordt het verkeer van een gepauzeerd apparaat echt geblokkeerd, ook IPv6?
+- [ ] **[REST] Tijdschema.** Welk formaat nemen `mon` t/m `sun` aan: `07:00-22:30` of `7h-22h30m`? En betekent
+  een ingevuld tijdvak "internet toegestaan" (zoals de app aanneemt)?
+- [ ] **[REST] Wake-on-LAN.** Werkt `POST /rest/tool/wol` met `mac` en `interface`, ook op een VLAN-interface?
 
 ## F. WAN en failover
 
@@ -121,6 +134,9 @@ De app past WAN niet aan, maar moet het wel goed lezen.
   welke verbinding actief is, ook bij een opzet met recursive routes of scripts?
 - [ ] **[gedrag] Geschiedenis.** Een failover die korter duurt dan één poll mist de app. Staat hij dan wel in
   de log van de router, en is die via REST te lezen?
+- [ ] **[REST] WAN-kwaliteit.** Geeft `POST /rest/ping` met `count` en `interval` per pakket een regel met
+  `packet-loss`, `avg-rtt`, `min-rtt` en `max-rtt`? Werkt ping naar de gateway met `interface=<wan>` ook voor
+  een standby-WAN (route niet actief), en bij PPPoE of LTE zonder gateway-IP?
 - [ ] **[gedrag] Publiek IP achter CGNAT.** Hoe herkent de app CGNAT: aan het adresbereik 100.64.0.0/10, of
   door het adres te vergelijken met IP Cloud?
 
