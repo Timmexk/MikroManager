@@ -102,6 +102,12 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
 - [ ] **[gedrag] Blokkeren en disconnect.** Werkt een access-list-regel op de controller direct voor een
   client die al verbonden is?
 
+- [ ] **[REST] Zendvermogen per radio (v0.2).** Wint een provisioning-regel met `radio-mac` van de regels op
+  `supported-bands` als hij erboven staat? Neemt een CAP `tx-power` uit de master-configuratie over, en houden de
+  virtuele SSID's op die radio hetzelfde vermogen?
+- [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
+  (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
+
 ## D. Netwerken en poortmatrix
 
 - [ ] **[blokkerend] Waar staan de VLAN's?** Op een CRS3xx in de bridge VLAN-tabel met hardware offload. Op
