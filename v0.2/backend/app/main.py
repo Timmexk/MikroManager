@@ -520,7 +520,7 @@ async def client_kick(site_id: int, mac: str, _: dict = Depends(user)):
         raise ValueError("Client is niet via wifi verbonden")
     dev = _device(c["wifi"]["device_id"])
     await Ros.for_device(dev).remove("/interface/wifi/registration-table", c["wifi"]["reg_id"])
-    db.log(site_id, f"{c['display']} opnieuw laten verbinden")
+    db.log(site_id, f"{c['display']} gedisconnect van de wifi")
     return {"ok": True}
 
 
@@ -661,7 +661,8 @@ async def _pending(site: dict) -> dict:
     if not ctrl:
         return {"count": None, "error": "Geen controller"}
     try:
-        plan = await wifi.build_plan(Ros.for_device(ctrl), site["settings"], wifi.site_wlans(site["id"]))
+        plan = await wifi.build_plan(Ros.for_device(ctrl), site["settings"], wifi.site_wlans(site["id"]),
+                                     wifi.tx_radios(site["id"]))
         return {"count": len(plan), "error": None}
     except RosError as e:
         return {"count": None, "error": str(e)}
@@ -677,6 +678,27 @@ async def wifi_get(site_id: int, _: dict = Depends(user)):
             "controller": {"id": ctrl["id"], "name": ctrl["name"], "online": cs.get("online"),
                            "has_wifi_menu": cs.get("wifi_ifaces") is not None,
                            "bridges": [b["name"] for b in cs.get("bridges") or []]} if ctrl else None}
+
+
+@app.post("/api/sites/{site_id}/wifi/radios/{mac}")
+def wifi_radio_tx(site_id: int, mac: str, body: dict = Body(...), _: dict = Depends(user)):
+    """Transmit power of one radio: manual (dBm), low, medium or high. Applied with the wifi plan."""
+    _site(site_id)
+    mode = body.get("mode")
+    if mode not in wifi.TX_MODES:
+        raise ValueError("Kies handmatig, laag, midden of hoog")
+    power = None
+    if mode == "manual":
+        try:
+            power = int(body.get("power"))
+        except (TypeError, ValueError):
+            raise ValueError("Vul het zendvermogen in dBm in")
+        if not 1 <= power <= 30:
+            raise ValueError("Zendvermogen moet tussen 1 en 30 dBm liggen")
+    db.x("INSERT INTO radio_settings (site_id, radio_mac, tx_mode, tx_power) VALUES (?,?,?,?) "
+         "ON CONFLICT(site_id, radio_mac) DO UPDATE SET tx_mode=excluded.tx_mode, tx_power=excluded.tx_power",
+         site_id, mac.upper(), mode, power)
+    return {"ok": True}
 
 
 @app.post("/api/sites/{site_id}/wifi/wlans")
@@ -716,7 +738,7 @@ def wlan_delete(wlan_id: int, _: dict = Depends(user)):
 async def wifi_plan(site_id: int, _: dict = Depends(user)):
     site = _site(site_id)
     ctrl = _controller(site_id)
-    plan = await wifi.build_plan(Ros.for_device(ctrl), site["settings"], wifi.site_wlans(site_id))
+    plan = await wifi.build_plan(Ros.for_device(ctrl), site["settings"], wifi.site_wlans(site_id), wifi.tx_radios(site_id))
     return {"controller": ctrl["name"], "ops": wifi.public_plan(plan)}
 
 
@@ -725,7 +747,7 @@ async def wifi_apply(site_id: int, _: dict = Depends(user)):
     site = _site(site_id)
     ctrl = _controller(site_id)
     ros = Ros.for_device(ctrl)
-    plan = await wifi.build_plan(ros, site["settings"], wifi.site_wlans(site_id))
+    plan = await wifi.build_plan(ros, site["settings"], wifi.site_wlans(site_id), wifi.tx_radios(site_id))
     results = await wifi.apply_plan(ros, plan)
     ok = all(r["ok"] for r in results) and len(results) == len(plan)
     db.log(site_id, f"Wifi-instellingen toegepast op {ctrl['name']}: {sum(r['ok'] for r in results)}/{len(plan)} stappen",
@@ -742,7 +764,7 @@ async def device_adopt(dev_id: int, body: dict = Body(default={}), _: dict = Dep
     if ctrl["id"] == dev["id"]:
         raise ValueError("De controller zelf kan geen CAP zijn. Gebruik 'Lokale radio's overnemen'.")
     steps = await wifi.adopt_ap(Ros.for_device(dev), ctrl["host"] if body.get("pin_controller") else None, body.get("bridge") or None)
-    db.log(dev["site_id"], f"{dev['name']} gekoppeld aan controller {ctrl['name']}", "ok")
+    db.log(dev["site_id"], f"{dev['name']} geadopteerd door controller {ctrl['name']}", "ok")
     await asyncio.sleep(1)
     await asyncio.gather(poller.refresh_device(dev), poller.refresh_device(ctrl))
     return {"ok": True, "steps": steps}

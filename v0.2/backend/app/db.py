@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS client_names (
 CREATE TABLE IF NOT EXISTS metrics (
   device_id INTEGER NOT NULL, ts REAL NOT NULL, cpu REAL, mem REAL, clients INTEGER, rx_bps REAL, tx_bps REAL);
 CREATE INDEX IF NOT EXISTS metrics_idx ON metrics (device_id, ts);
+CREATE TABLE IF NOT EXISTS radio_settings (
+  site_id INTEGER NOT NULL, radio_mac TEXT NOT NULL, tx_mode TEXT NOT NULL DEFAULT 'high', tx_power INTEGER,
+  PRIMARY KEY (site_id, radio_mac));
 CREATE TABLE IF NOT EXISTS client_schedules (
   site_id INTEGER NOT NULL, mac TEXT NOT NULL, start TEXT NOT NULL, stop TEXT NOT NULL, PRIMARY KEY (site_id, mac));
 CREATE TABLE IF NOT EXISTS wan_quality (

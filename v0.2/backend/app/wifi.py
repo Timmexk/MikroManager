@@ -31,6 +31,21 @@ AUTH = {"open": "", "wpa2": "wpa2-psk", "wpa2wpa3": "wpa2-psk,wpa3-psk", "wpa3":
 BANDS = {("2g", "ax"): "2ghz-ax", ("5g", "ax"): "5ghz-ax", ("2g", "ac"): "2ghz-n", ("5g", "ac"): "5ghz-ac"}
 RULE_ORDER = [("2g", "ax"), ("5g", "ax"), ("2g", "ac"), ("5g", "ac")]
 
+# Transmit power per radio. "high" = no limit: RouterOS uses the maximum the country allows.
+TX_MODES = ("manual", "low", "medium", "high")
+TX_PRESET = {("2g", "low"): 8, ("2g", "medium"): 14, ("5g", "low"): 11, ("5g", "medium"): 17}
+
+
+def radio_tx(site_id: int) -> dict[str, dict]:
+    return {r["radio_mac"].upper(): {"mode": r["tx_mode"], "power": r["tx_power"]}
+            for r in db.q("SELECT * FROM radio_settings WHERE site_id=?", site_id)}
+
+
+def tx_dbm(band: str, mode: str, power: int | None) -> int | None:
+    if mode == "manual":
+        return power
+    return TX_PRESET.get((band, mode))
+
 
 def slugify(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:20] or "wlan"
@@ -42,7 +57,8 @@ def site_wlans(site_id: int) -> list[dict]:
 
 # ---- desired state ---------------------------------------------------------
 
-def desired_state(settings: dict, wlans: list[dict]) -> dict:
+def desired_state(settings: dict, wlans: list[dict], radios: list[dict] | None = None) -> dict:
+    """radios: [{mac, band, ax, dbm}] for radios that get their own transmit power."""
     bridge = settings["bridge"]
     ac = bool(settings.get("ac_caps"))
     out = {SEC: {}, DP: {}, CH: {}, CFG: {}, PROV: []}
@@ -79,6 +95,19 @@ def desired_state(settings: dict, wlans: list[dict]) -> dict:
             out[CFG][f"{name}-{band}"] = {**base, "datapath": name}
             if ac:
                 out[CFG][f"{name}-{band}-ac"] = {**base, "datapath": f"{PREFIX}dp-ac"}
+
+    # Per-radio transmit power: a provisioning rule for exactly that radio (radio-mac), placed before the
+    # band rules, with its own copy of the master configuration carrying tx-power. Virtual SSIDs share the radio.
+    for r in radios or []:
+        drv = "ax" if r["ax"] or not ac else "ac"
+        cfgs = [f"{PREFIX}{w['slug']}-{r['band']}" + ("-ac" if drv == "ac" else "") for w in active
+                if r["band"] in w["bands"].split(",")]
+        if not cfgs or r["dbm"] is None:
+            continue
+        own = f"{cfgs[0]}-r{r['mac'].replace(':', '')[-6:].lower()}"
+        out[CFG][own] = {**out[CFG][cfgs[0]], "tx-power": str(r["dbm"]), "comment": f"{out[CFG][cfgs[0]]['comment']} ({r['mac']})"}
+        out[PROV].append({"action": "create-dynamic-enabled", "radio-mac": r["mac"], "master-configuration": own,
+                          "slave-configurations": ",".join(cfgs[1:]), "comment": f"{TAG}radio:{r['mac']}"})
 
     for band, drv in RULE_ORDER:
         if drv == "ac" and not ac:
@@ -121,8 +150,24 @@ def _clean(data: dict) -> dict:
     return {k: v for k, v in data.items() if v != "" or k in ("passphrase", "authentication-types")}
 
 
-async def build_plan(ros: Ros, settings: dict, wlans: list[dict]) -> list[dict]:
-    want = desired_state(settings, wlans)
+def tx_radios(site_id: int) -> list[dict]:
+    """Radios of this site that have a transmit power other than "high", as input for desired_state()."""
+    ctrl = db.controller(site_id)
+    s = (STATE.get(ctrl["id"]) or {}) if ctrl else {}
+    prefs = radio_tx(site_id)
+    out = []
+    for r in s.get("wifi_radios") or []:
+        mac = (r.get("radio-mac") or "").upper()
+        p = prefs.get(mac)
+        if not p or p["mode"] == "high":
+            continue
+        band = _band(r)
+        out.append({"mac": mac, "band": band, "ax": "ax" in (r.get("bands") or ""), "dbm": tx_dbm(band, p["mode"], p["power"])})
+    return out
+
+
+async def build_plan(ros: Ros, settings: dict, wlans: list[dict], radios: list[dict] | None = None) -> list[dict]:
+    want = desired_state(settings, wlans, radios)
     ops: list[dict] = []
     have = {}
     for path in (SEC, DP, CH, CFG):
@@ -161,15 +206,16 @@ async def build_plan(ros: Ros, settings: dict, wlans: list[dict]) -> list[dict]:
             if diff:
                 rules_touched = True
                 ops.append({"op": "set", "path": PROV, "id": h[".id"], "data": diff,
-                            "text": f"Wijzig provisioning-regel {w['supported-bands']}", "show": diff})
+                            "text": f"Wijzig provisioning-regel {w.get('supported-bands') or w.get('radio-mac')}", "show": diff})
     else:
         rules_touched = True
         for h in rules:
             ops.append({"op": "remove", "path": PROV, "id": h[".id"],
-                        "text": f"Verwijder provisioning-regel {h.get('supported-bands', '')}"})
+                        "text": f"Verwijder provisioning-regel {h.get('supported-bands') or h.get('radio-mac', '')}"})
         for w in want[PROV]:
             ops.append({"op": "add", "path": PROV, "data": _clean(w),
-                        "text": f"Nieuwe provisioning-regel {w['supported-bands']}", "show": _clean(w)})
+                        "text": f"Nieuwe provisioning-regel {w.get('supported-bands') or 'radio ' + w['radio-mac']}",
+                        "show": _clean(w)})
 
     # 3. remove profiles we no longer want; referencing ones first
     for path in (CFG, CH, DP, SEC):
@@ -317,9 +363,11 @@ def access_points(site_id: int) -> list[dict]:
     reg = s.get("wifi_reg") or []
     cfg_ssid = {f"{PREFIX}{w['slug']}-{b}{sfx}": w["ssid"]
                 for w in site_wlans(site_id) for b in ("2g", "5g") for sfx in ("", "-ac")}
+    prefs = radio_tx(site_id)
 
     def ssid_of(i: dict) -> str | None:
-        return i.get("configuration.ssid") or cfg_ssid.get(i.get("configuration", ""))
+        cfg = re.sub(r"-r[0-9a-f]{6}$", "", i.get("configuration", ""))     # per-radio copy of a master configuration
+        return i.get("configuration.ssid") or cfg_ssid.get(cfg)
 
     slaves: dict[str, list[dict]] = {}
     for i in ifaces.values():
@@ -336,7 +384,9 @@ def access_points(site_id: int) -> list[dict]:
                 "channel": m.get("channel"), "tx_power": m.get("tx-power"), "state": m.get("state"),
                 "ssids": ssids, "clients": sum(1 for c in reg if c.get("interface") in members),
                 "managed": bool(name) and str(i.get("configuration", "")).startswith(PREFIX),
-                "dynamic": truthy(i.get("dynamic", "false"))}
+                "dynamic": truthy(i.get("dynamic", "false")),
+                "tx": {**(prefs.get((r.get("radio-mac") or "").upper()) or {"mode": "high", "power": None}),
+                       "presets": {m: TX_PRESET.get((_band(r), m)) for m in ("low", "medium")}}}
 
     aps: dict[str, dict] = {}
     for cap in s.get("remote_caps") or []:
@@ -367,6 +417,6 @@ def access_points(site_id: int) -> list[dict]:
             out.append({"name": ds.get("identity") or d["name"], "address": d["host"], "local": False,
                         "board": (ds.get("resource") or {}).get("board-name"),
                         "version": (ds.get("resource") or {}).get("version"),
-                        "state": "Wacht op controller" if cap_on else "Niet gekoppeld",
+                        "state": "Wacht op controller" if cap_on else "Niet geadopteerd",
                         "device_id": d["id"], "radios": [], "adoptable": bool(ds.get("online")) and not cap_on})
     return out

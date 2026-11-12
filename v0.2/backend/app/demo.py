@@ -61,7 +61,7 @@ async def seed() -> None:
         db.x("INSERT INTO wlans (site_id, slug, ssid, passphrase_enc, security, vlan_id, bands, isolation, ft, position) "
              "VALUES (?,?,?,?,?,?,?,?,?,?)", sid, wifi.slugify(ssid), ssid, security.encrypt(pw),
              "wpa2" if vlan == 30 else "wpa2wpa3", vlan, bands, iso, 1, pos)
-    await wifi.apply_plan(ros, await wifi.build_plan(ros, site["settings"], wifi.site_wlans(sid)))
+    await wifi.apply_plan(ros, await wifi.build_plan(ros, site["settings"], wifi.site_wlans(sid), wifi.tx_radios(sid)))
     for ap in devs[3:]:
         await wifi.adopt_ap(Ros.for_device(ap), None)
     for r in await ros.get(wifi.RADIO):
