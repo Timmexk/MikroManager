@@ -4,7 +4,7 @@ import { api } from "../api";
 import { useApp } from "../App";
 import { Faceplate, LineChart, Port } from "../components";
 import { InterfacesPanel } from "./Interfaces";
-import { Busy, Check, Field, fmtAgo, fmtUptime, Loading, Meter, Modal, ROLE, Status, useAction, useLoad, useUi } from "../ui";
+import { Busy, Check, Field, fmtAgo, fmtUptime, Loading, Meter, Modal, ROLE, Seg, Status, useAction, useLive, useLoad, useUi } from "../ui";
 
 export default function Devices({ deviceId }: { deviceId: number | null }) {
   return deviceId ? <Detail id={deviceId} /> : <List />;
@@ -109,6 +109,8 @@ function Detail({ id }: { id: number }) {
   const ifs = useLoad(() => api.get(`/api/devices/${id}/interfaces`), [id], 10000);
   const [sel, setSel] = useState<string | null>(null);
   const reloadAll = () => { ifs.reload(); d.reload(); };
+  const [range, setRange] = useState<"live" | "6">("live");
+  const lv = useLive<any>(range === "live" ? `/api/devices/${id}/live` : null, ["load"]);
   const [editing, setEditing] = useState(false);
   const { busy, run } = useAction();
   if (!d.data) return <><a href="#/devices" className="row small"><ArrowLeft size={15} />Apparaten</a><Loading error={d.error} /></>;
@@ -161,13 +163,15 @@ function Detail({ id }: { id: number }) {
           </div>
         </section>
       )}
-      {v.online !== false && <InterfacesPanel deviceId={id} data={ifs.data} reload={reloadAll} open={sel} setOpen={setSel} />}
+      {v.online !== false && <InterfacesPanel deviceId={id} data={ifs.data} reload={reloadAll} open={sel} setOpen={setSel} rates={lv?.rates} />}
 
       <div className="cols">
         <section className="panel">
-          <header><h2>Belasting</h2><span className="muted small">laatste 6 uur</span></header>
+          <header><h2>Belasting{range === "live" && <span className="live-dot">Live</span>}</h2>
+            <Seg value={range} onChange={setRange} options={[["live", "Live"], ["6", "6 uur"]]} /></header>
           <div className="body">
-            <LineChart title="CPU en geheugen" data={v.history} max={100} height={190} fmt={(n) => `${Math.round(n)}%`}
+            <LineChart title="CPU en geheugen" data={range === "live" ? (lv?.load ?? []) : v.history} max={100} height={190} fmt={(n) => `${Math.round(n)}%`}
+              xRange={range === "live" && lv ? [lv.now - lv.window, lv.now] : undefined}
               series={[{ key: "cpu", label: "CPU", color: "var(--s1)", area: true }, { key: "mem", label: "Geheugen", color: "var(--s2)" }]} />
           </div>
         </section>

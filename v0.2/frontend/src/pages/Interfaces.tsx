@@ -37,13 +37,15 @@ function useApply(onDone: (view: any | null) => void) {
   return { busy, apply };
 }
 
-export function InterfacesPanel({ deviceId, data, reload, open, setOpen }: {
+export function InterfacesPanel({ deviceId, data, reload, open, setOpen, rates }: {
   deviceId: number; data: any | null; error?: string | null; reload: () => void; open: string | null; setOpen: (n: string | null) => void;
+  /** Live rates per interface (updated every few seconds), overrides the slower numbers in `data`. */
+  rates?: Record<string, { rx: number; tx: number }>;
 }) {
   const [adding, setAdding] = useState(false);
   const [kind, setKind] = useState("all");
   if (!data) return <section className="panel"><header><h2>Interfaces</h2></header><div className="body"><Loading /></div></section>;
-  const list: any[] = data.interfaces;
+  const list: any[] = data.interfaces.map((i: any) => rates?.[i.name] ? { ...i, rx_bps: rates[i.name].rx, tx_bps: rates[i.name].tx } : i);
   const kinds = Array.from(new Set(list.map((i) => i.kind)));
   const rows = list.filter((i) => kind === "all" || i.kind === kind);
   const current = list.find((i) => i.name === open);

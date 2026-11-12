@@ -3,12 +3,14 @@ import { ArrowDown, ArrowUp, Radio } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../App";
 import { Faceplate, LineChart } from "../components";
-import { bps, fmtAgo, fmtBps, fmtBytes, Loading, Meter, Seg, Status, useLoad } from "../ui";
+import { bps, fmtAgo, fmtBps, fmtBytes, Loading, Meter, Seg, Status, useLive, useLoad } from "../ui";
 
 export default function Dashboard() {
   const { site } = useApp();
-  const [hours, setHours] = useState<"1" | "6" | "24">("6");
-  const o = useLoad(() => api.get(`/api/sites/${site.id}/overview?hours=${hours}`), [site.id, hours], 10000);
+  const [hours, setHours] = useState<"live" | "1" | "6" | "24">("live");
+  const isLive = hours === "live";
+  const o = useLoad(() => api.get(`/api/sites/${site.id}/overview?hours=${isLive ? 1 : hours}`), [site.id, hours], 10000);
+  const lv = useLive<any>(isLive ? `/api/sites/${site.id}/live` : null, ["traffic", "latency"]);
   if (!o.data) return <Loading error={o.error} />;
   const d = o.data;
 
@@ -25,7 +27,9 @@ export default function Dashboard() {
     );
   }
 
-  const [rx, rxU] = fmtBps(d.wan.rx_bps), [tx, txU] = fmtBps(d.wan.tx_bps);
+  const now = lv?.traffic?.[lv.traffic.length - 1];
+  const [rx, rxU] = fmtBps(isLive && now ? now.rx : d.wan.rx_bps), [tx, txU] = fmtBps(isLive && now ? now.tx : d.wan.tx_bps);
+  const range: [number, number] | undefined = isLive && lv ? [lv.now - lv.window, lv.now] : undefined;
   const allUp = d.devices.online === d.devices.total;
   return (
     <div className="stack">
@@ -37,7 +41,7 @@ export default function Dashboard() {
             {`, ${d.clients.online} clients verbonden (${d.clients.wifi} via wifi, ${d.clients.wired} bedraad).`}
           </p>
         </div>
-        <Seg value={hours} onChange={setHours} options={[["1", "1 uur"], ["6", "6 uur"], ["24", "24 uur"]]} />
+        <Seg value={hours} onChange={setHours} options={[["live", "Live"], ["1", "1 uur"], ["6", "6 uur"], ["24", "24 uur"]]} />
       </div>
 
       {!allUp && <div className="banner bad"><strong>Offline:</strong> {d.devices.offline.join(", ")}</div>}
@@ -63,7 +67,7 @@ export default function Dashboard() {
                   : v.clients > 0 ? <span className="row" style={{ gap: 6 }}><Radio size={14} />{v.clients} {v.clients === 1 ? "wifi-client" : "wifi-clients"}</span>
                     : v.role === "ap" ? "Geen wifi-clients" : ""}
               </div>
-              <div className="hide-sm">{v.busy ? <Status online={v.online} busy={v.busy} /> : <Meter value={v.cpu} />}</div>
+              <div className="hide-sm">{v.busy ? <Status online={v.online} busy={v.busy} /> : <Meter value={lv?.cpu?.[v.id] ?? v.cpu} />}</div>
             </a>
           ))}
         </div>
@@ -72,7 +76,8 @@ export default function Dashboard() {
       <div className="cols">
         <section className="panel">
           <header>
-            <h2>Internet{d.wan.interface ? <span className="muted small" style={{ fontFamily: "var(--sans)", fontWeight: 400 }}> via {d.wan.interface}</span> : null}</h2>
+            <h2>Internet{d.wan.interface ? <span className="muted small" style={{ fontFamily: "var(--sans)", fontWeight: 400 }}> via {d.wan.interface}</span> : null}
+              {isLive && <span className="live-dot" title="Werkt elke paar seconden bij">Live</span>}</h2>
             <div className="row" style={{ gap: 18 }}>
               <span className="row" style={{ gap: 5 }}><ArrowDown size={16} color="var(--s1)" /><span className="figure" style={{ fontSize: 22 }}>{rx}<small>{rxU}</small></span></span>
               <span className="row" style={{ gap: 5 }}><ArrowUp size={16} color="var(--s2)" /><span className="figure" style={{ fontSize: 22 }}>{tx}<small>{txU}</small></span></span>
@@ -80,7 +85,7 @@ export default function Dashboard() {
           </header>
           <div className="body">
             {d.wan.interface
-              ? <LineChart title="Internetverkeer" data={d.wan.history} fmt={bps}
+              ? <LineChart title="Internetverkeer" data={isLive ? (lv?.traffic ?? []) : d.wan.history} fmt={bps} xRange={range}
                 series={[{ key: "rx", label: "Download", color: "var(--s1)", area: true }, { key: "tx", label: "Upload", color: "var(--s2)" }]} />
               : <div className="empty">Geen standaardroute gevonden op de router, dus de internetpoort is onbekend.</div>}
           </div>
@@ -116,7 +121,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {d.wan_quality?.wans?.length > 0 && <WanQuality q={d.wan_quality} />}
+      {d.wan_quality?.wans?.length > 0 && <WanQuality q={d.wan_quality} live={isLive ? lv : null} />}
 
       <section className="panel">
         <header><h2>Logboek</h2></header>
@@ -135,11 +140,12 @@ export default function Dashboard() {
 const ms = (v?: number | null) => (v == null ? "–" : v < 10 ? `${v.toFixed(1)} ms` : `${Math.round(v)} ms`);
 const pct = (v?: number | null) => (v == null ? "–" : `${v < 1 && v > 0 ? v.toFixed(1) : Math.round(v)}%`);
 
-function WanQuality({ q }: { q: any }) {
+function WanQuality({ q, live }: { q: any; live: any | null }) {
   const active = q.wans.find((w: any) => w.active) ?? q.wans[0];
-  const inet = (q.history as any[]).filter((h) => h.kind === "internet" && h.wan === active.interface);
-  const series = inet.map((h) => ({ ts: h.ts, rtt: h.rtt, peak: h.rtt_max }));
-  const lossAvg = inet.length ? inet.reduce((a, h) => a + (h.loss ?? 0), 0) / inet.length : null;
+  const inet = live ? (live.latency ?? []) : (q.history as any[]).filter((h) => h.kind === "internet" && h.wan === active.interface);
+  const series = live ? inet.map((h: any) => ({ ts: h.ts, rtt: h.rtt })) : inet.map((h: any) => ({ ts: h.ts, rtt: h.rtt, peak: h.rtt_max }));
+  const lossAvg = inet.length ? inet.reduce((a: number, h: any) => a + (h.loss ?? 0), 0) / inet.length : null;
+  const lastLive = live?.latency?.[live.latency.length - 1];
   const tone = (p?: any) => !p || p.avg == null ? "" : p.loss >= 5 || p.avg > 100 ? "bad" : p.loss > 0 || p.avg > 40 ? "warn" : "ok";
   const Ping = ({ p }: { p?: any }) => p ? <span className={`tag ${tone(p)}`}>{ms(p.avg)}</span> : <span className="muted">–</span>;
   return (
@@ -154,7 +160,7 @@ function WanQuality({ q }: { q: any }) {
           <tr key={w.interface}>
             <td><span className="strong mono">{w.interface}</span>{w.gateway && <div className="muted small mono">{w.gateway}</div>}</td>
             <td>{w.active ? <span className="tag ok">Actief</span> : <span className="tag">Standby</span>}</td>
-            <td className="num right"><Ping p={w.ping?.internet} /></td>
+            <td className="num right"><Ping p={w.active && lastLive ? { avg: lastLive.rtt, loss: lastLive.loss } : w.ping?.internet} /></td>
             <td className="num right"><Ping p={w.ping?.gateway} /></td>
             <td className="num right">{pct((w.ping?.internet ?? w.ping?.gateway)?.loss)}</td>
           </tr>
@@ -163,7 +169,9 @@ function WanQuality({ q }: { q: any }) {
       <div className="body">
         {series.length > 0
           ? <LineChart title={`Latency naar internet via ${active.interface}`} data={series} fmt={(v) => ms(v)}
-            series={[{ key: "rtt", label: "Gemiddeld", color: "var(--s1)", area: true }, { key: "peak", label: "Piek", color: "var(--s2)" }]} />
+            xRange={live ? [live.now - live.window, live.now] : undefined}
+            series={live ? [{ key: "rtt", label: "Latency", color: "var(--s1)", area: true }]
+              : [{ key: "rtt", label: "Gemiddeld", color: "var(--s1)", area: true }, { key: "peak", label: "Piek", color: "var(--s2)" }]} />
           : <div className="empty">Nog geen metingen. De eerste verschijnen na een halve minuut.</div>}
       </div>
     </section>
