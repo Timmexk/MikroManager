@@ -39,6 +39,24 @@ scheduler met een rollback-script op het apparaat zet en die na bevestigen weer 
 - [ ] **[gedrag] Bevestigen.** Het weghalen van de scheduler is zelf een REST-aanroep. Wat ziet de gebruiker
   als die aanroep net niet aankomt?
 
+### Zoals v0.2 het doet
+
+v0.2 gebruikt vorm (1): een eenmalige scheduler `mm-terugdraai-<code>` met `start-date`/`start-time` = klok van
+het apparaat + 90 s, `interval=0s`, en een script met per stap `:do { … } on-error={}` en als laatste regel
+`/system scheduler remove`. Daarna kijkt de app of alle apparaten van de site nog antwoorden.
+
+- [ ] **[blokkerend] Terugdraaien in v0.2.** Zet de PVID van de uplink van een switch op een ander VLAN. Geeft
+  de app "niet meer bereikbaar", en is de switch na ~90 s terug met de oude PVID?
+- [ ] **[REST] Scheduler aanmaken.** Accepteert `PUT /rest/system/scheduler` een `on-event` met meerdere regels
+  en aanhalingstekens? Welk datumformaat geeft `/system/clock` (7.10+ `2026-11-12`, ouder `nov/12/2026`)?
+- [ ] **[REST] Undo-commando's.** Werken `set *1A key="waarde"` met een intern id, en
+  `/interface bridge vlan remove [find bridge="bridge" vlan-ids="10"]` (vlan-ids is een lijst)?
+- [ ] **[REST] Snelheid.** Vanaf 7.12 heet het `speed=1G-baseT-full` en verandert `auto-negotiation`/`advertise`.
+  Klopt de lijst snelheden per poorttype, en wat geeft een CRS3xx/hEX bij een snelheid die de poort niet kan?
+- [ ] **[REST] MTU via `/interface`.** Kan `mtu` via het algemene `/interface`-menu, ook voor VLAN en bonding?
+- [ ] **[gedrag] PoE uit naar een AP.** De app ziet het AP wegvallen en zet PoE meteen weer aan. Hoe lang duurt
+  het voordat het AP weer antwoordt, en is 20 s controleren genoeg?
+
 ## B. Verbinding en rechten
 
 - [ ] **[blokkerend] Kleinste policy.** Werkt alles met een groep met
