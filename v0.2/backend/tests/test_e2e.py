@@ -157,9 +157,36 @@ def run(c):
     check(r5["ssids"] == ["Thuis", "Thuis-IoT", "Thuis-Gast"] and r5["channel"], "5 GHz radio carries three SSIDs")
     local = next(a for a in aps if a["local"])
     check(not any(r["managed"] for r in local["radios"]), "controller's own radios untouched until asked")
-    check(c.post(f"/api/sites/{sid}/wifi/local-radios").status_code == 200, "take over local radios")
-    local = next(a for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if a["local"])
-    check(all(r["managed"] for r in local["radios"]), "local radios now managed")
+    # The way MikroManager 0.1 did it (provisioning the controller's own radios) breaks them on real hardware.
+    for r in rt.get("/interface/wifi/radio").json():
+        if r.get("local") == "true":
+            rt.post("/interface/wifi/radio/provision", json={"numbers": r[".id"]})
+    request_refresh = c.get(f"/api/sites/{sid}/wifi/plan")
+    local = wait(lambda: (a := next(a for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if a["local"]))
+                 and all(r["provisioned_local"] for r in a["radios"]) and a, "old provisioned state visible", timeout=20)
+    check(len(local["radios"]) == 2, "old provisioned state of the router's own radios is recognised")
+    r = c.post(f"/api/sites/{sid}/wifi/local-radios", json={"action": "take"})
+    check(r.status_code == 200 and any("losgemaakt" in t for t in r.json()["steps"]), "take-over repairs the old provisioning first")
+    ifs = rt.get("/interface/wifi").json()
+    local_ifs = {r.get("interface") for r in rt.get("/interface/wifi/radio").json() if r.get("local") == "true"}
+    masters = [i for i in ifs if i["name"] in local_ifs]
+    check(len(masters) == 2, "router's own radios are wifi1/wifi2 again")
+    check(all(i.get("dynamic") != "true" and i.get("configuration", "").startswith("tc-") and "configuration.ssid" not in i
+              for i in masters), "router's own radios use the profile directly, no provisioning, no inline SSID")
+    check(sorted(i["configuration"] for i in ifs if i.get("comment", "").startswith("tc:local:")) == ["tc-thuis-gast-5g", "tc-thuis-iot-2g", "tc-thuis-iot-5g"],
+          "extra SSIDs as static virtual interfaces")
+    rules = rt.get("/interface/wifi/provisioning").json()
+    check(rules and all(p.get("disabled") != "true" for p in rules), "provisioning rules enabled again for the APs")
+    local = wait(lambda: (a := next(a for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if a["local"]))
+                 and all(r["managed"] and not r["provisioned_local"] for r in a["radios"]) and a, "local radios managed", timeout=20)
+    check(local["radios"][0]["ssids"], "local radios carry the site's SSIDs")
+    check(not c.get(f"/api/sites/{sid}/wifi/plan").json()["ops"], "nothing left to apply after taking over")
+    r = c.post(f"/api/sites/{sid}/wifi/local-radios", json={"action": "release"})
+    ifs = rt.get("/interface/wifi").json()
+    check(r.status_code == 200 and not [i for i in ifs if i.get("comment", "").startswith("tc:local:")]
+          and not [i for i in ifs if i["name"] in local_ifs and i.get("configuration", "").startswith("tc-")],
+          "give back removes MikroManager from them")
+    check(c.post(f"/api/sites/{sid}/wifi/local-radios", json={"action": "take"}).status_code == 200, "take over again")
 
     print("clients")
     cl = wait(lambda: (x := c.get(f"/api/sites/{sid}/clients").json()) and sum(1 for i in x if i["online"]) >= 19 and x, "clients appear")
@@ -224,7 +251,9 @@ def run(c):
     c.patch(f"/api/sites/{sid}", json={"settings": {"ch5_freq": "5180,5260", "ch2_width": "20mhz"}})
     plan = c.get(f"/api/sites/{sid}/wifi/plan").json()["ops"]
     kinds = [o["op"] for o in plan]
-    check(kinds.count("remove") == 3 and "reprovision" in kinds, "deleting an SSID removes its 3 objects and re-provisions")
+    check(kinds.count("remove") == 4 and "reprovision" in kinds
+          and any(o["op"] == "remove" and "Eigen radio" in o["text"] for o in plan),
+          "deleting an SSID removes its 3 objects, its virtual interface on the router, and re-provisions")
     check(c.post(f"/api/sites/{sid}/wifi/apply").json()["ok"], "apply changes")
     check(rt.get("/interface/wifi/security/tc-thuis").json()["passphrase"] == "nieuw-wachtwoord-2026", "new passphrase on router")
     check(rt.get("/interface/wifi/channel/tc-ch-5g").json()["frequency"] == "5180,5260", "channel list set")
@@ -244,7 +273,8 @@ def run(c):
     caps = [a for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if not a["local"]]
     r5 = next(r for r in caps[0]["radios"] if r["band"] == "5g")
     other = next(r for r in caps[1]["radios"] if r["band"] == "5g")
-    check(r5["tx"]["mode"] == "high" and r5["tx"]["presets"]["low"] == 11, "radios start on high, presets known")
+    check(r5["tx"]["mode"] == "high" and r5["tx"]["max"] == 23 and r5["tx"]["presets"] == {"low": 11, "medium": 17},
+          "radios start on high; low/medium are 12/6 dB under the radio's own maximum")
     check(c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "manual", "power": 45}).status_code == 400,
           "impossible manual power refused")
     c.post(f"/api/sites/{sid}/wifi/radios/{r5['mac']}", json={"mode": "low"})
@@ -261,6 +291,14 @@ def run(c):
     c.post(f"/api/sites/{sid}/wifi/apply")
     check(not [p for p in rt.get("/interface/wifi/provisioning").json() if p.get("radio-mac")]
           and wait(lambda: radio(r5["mac"])["tx_power"] == "23", "back to high"), "high removes the radio rule again")
+
+    lr = next(r for a in c.get(f"/api/sites/{sid}/wifi").json()["aps"] if a["local"] for r in a["radios"] if r["band"] == "5g")
+    c.post(f"/api/sites/{sid}/wifi/radios/{lr['mac']}", json={"mode": "medium"})
+    check(c.post(f"/api/sites/{sid}/wifi/apply").json()["ok"], "apply medium power on the router's own radio")
+    check(wait(lambda: radio(lr["mac"])["tx_power"] == "17", "medium on local radio"), "router's own radio at medium (max - 6 dB)")
+    check(not [p for p in rt.get("/interface/wifi/provisioning").json() if p.get("radio-mac")]
+          and next(i for i in rt.get("/interface/wifi").json() if i["name"] == lr["interface"])["configuration"].endswith(lr["mac"].replace(":", "")[-6:].lower()),
+          "router's own radio gets its own profile, never a provisioning rule")
 
     print("backups")
     r = c.post(f"/api/sites/{sid}/backups").json()
