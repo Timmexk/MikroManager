@@ -5,7 +5,10 @@
 #   sudo bash linux/install.sh --uninstall  service en programma verwijderen, data blijft staan
 #   sudo bash linux/install.sh --purge      alles verwijderen, ook database, secret.key en back-ups
 #
-# Variabelen: PYTHON=python3.12 om een andere Python te kiezen.
+# Variabelen:
+#   PYTHON=python3.12           een andere Python kiezen
+#   MM_FRONTEND=build           frontend zelf bouwen met npm in plaats van downloaden
+#   MM_FRONTEND_URL=...         frontend van een ander adres downloaden
 set -euo pipefail
 
 APP=mikromanager
@@ -15,20 +18,28 @@ DATA_DIR=/var/lib/$APP
 UNIT=/etc/systemd/system/$APP.service
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # map v0.1
 PYTHON="${PYTHON:-python3}"
+REPO=Timmexk/MikroManager
+MM_FRONTEND="${MM_FRONTEND:-download}"
+MM_FRONTEND_URL="${MM_FRONTEND_URL:-https://github.com/$REPO/releases/download/frontend-latest/mikromanager-frontend.tar.gz}"
 MIN_PY="3.10"
 
 say()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx\033[0m %s\n' "$*" >&2; exit 1; }
 
-hint_packages() {
+hint_python() {
     # Welke pakketten nodig zijn verschilt per distro
-    if   command -v apt-get >/dev/null; then echo "sudo apt install python3 python3-venv  (en voor de frontend: nodejs npm)"
-    elif command -v dnf     >/dev/null; then echo "sudo dnf install python3  (en voor de frontend: nodejs npm)"
-    elif command -v pacman  >/dev/null; then echo "sudo pacman -S python  (en voor de frontend: nodejs npm)"
-    elif command -v zypper  >/dev/null; then echo "sudo zypper install python311  (en voor de frontend: nodejs npm)"
-    elif command -v apk     >/dev/null; then echo "Alpine gebruikt geen systemd; gebruik daar Docker."
+    if   command -v apt-get >/dev/null; then echo "sudo apt install python3 python3-venv"
+    elif command -v dnf     >/dev/null; then echo "sudo dnf install python3"
+    elif command -v pacman  >/dev/null; then echo "sudo pacman -S python"
+    elif command -v zypper  >/dev/null; then echo "sudo zypper install python311"
     else echo "installeer Python $MIN_PY of nieuwer met venv-ondersteuning"; fi
+}
+
+download() {   # download URL BESTAND
+    if   command -v curl >/dev/null; then curl -fsSL --retry 2 -o "$2" "$1"
+    elif command -v wget >/dev/null; then wget -q -O "$2" "$1"
+    else return 1; fi
 }
 
 [[ $EUID -eq 0 ]] || die "Draai dit script met sudo."
@@ -51,17 +62,39 @@ if [[ "${1:-}" == "--uninstall" || "${1:-}" == "--purge" ]]; then
 fi
 
 # ---- controles --------------------------------------------------------------
-command -v "$PYTHON" >/dev/null || die "Python niet gevonden. $(hint_packages)"
+command -v "$PYTHON" >/dev/null || die "Python niet gevonden: $(hint_python)"
 "$PYTHON" -c "import sys; sys.exit(0 if sys.version_info >= tuple(map(int, '$MIN_PY'.split('.'))) else 1)" \
     || die "Python $MIN_PY of nieuwer nodig, gevonden: $("$PYTHON" -V). Kies een andere met PYTHON=python3.12."
-"$PYTHON" -c "import venv, ensurepip" 2>/dev/null || die "Python-venv ontbreekt. $(hint_packages)"
+"$PYTHON" -c "import venv, ensurepip" 2>/dev/null || die "Python-venv ontbreekt: $(hint_python)"
 
 # ---- frontend ---------------------------------------------------------------
-if [[ ! -f "$SRC/backend/static/index.html" ]]; then
-    command -v npm >/dev/null || die "Frontend is nog niet gebouwd en npm ontbreekt. $(hint_packages)
-Of bouw de frontend op een andere machine (cd frontend && npm ci && npm run build) en kopieer backend/static mee."
-    say "Frontend bouwen"
-    (cd "$SRC/frontend" && npm ci --no-audit --no-fund && npm run build)
+# De gebouwde frontend komt standaard van GitHub (gebouwd door GitHub Actions), dan is npm niet nodig.
+WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+STATIC="$WORK/static"; mkdir -p "$STATIC"
+
+build_frontend() {
+    command -v npm >/dev/null || return 1
+    say "Frontend bouwen met npm"
+    (cd "$SRC/frontend" && npm ci --no-audit --no-fund && npm run build) || return 1
+    cp -r "$SRC/backend/static/." "$STATIC/"
+}
+
+if [[ "$MM_FRONTEND" == "build" ]]; then
+    build_frontend || die "Frontend bouwen mislukt. Is npm geïnstalleerd (pakket nodejs/npm)?"
+elif say "Frontend downloaden" && download "$MM_FRONTEND_URL" "$WORK/frontend.tar.gz" \
+        && tar -xzf "$WORK/frontend.tar.gz" -C "$STATIC" && [[ -f "$STATIC/index.html" ]]; then
+    :
+else
+    warn "Downloaden van de frontend lukte niet ($MM_FRONTEND_URL)"
+    rm -rf "${STATIC:?}"/*
+    if ! build_frontend; then
+        if [[ -f "$SRC/backend/static/index.html" ]]; then
+            warn "Ik gebruik de eerder gebouwde frontend in backend/static (mogelijk verouderd)"
+            cp -r "$SRC/backend/static/." "$STATIC/"
+        else
+            die "Geen frontend: downloaden mislukte en npm ontbreekt. Controleer de internetverbinding, of installeer nodejs en npm en draai opnieuw met MM_FRONTEND=build."
+        fi
+    fi
 fi
 
 # ---- gebruiker --------------------------------------------------------------
@@ -78,7 +111,7 @@ install -d -m 0755 "$PREFIX"
 rm -rf "$PREFIX/app.new" "$PREFIX/mock.new" "$PREFIX/static.new"
 cp -r "$SRC/backend/app"    "$PREFIX/app.new"
 cp -r "$SRC/backend/mock"   "$PREFIX/mock.new"
-cp -r "$SRC/backend/static" "$PREFIX/static.new"
+cp -r "$STATIC" "$PREFIX/static.new"
 find "$PREFIX"/*.new -name __pycache__ -type d -prune -exec rm -rf {} +
 for d in app mock static; do rm -rf "${PREFIX:?}/$d"; mv "$PREFIX/$d.new" "$PREFIX/$d"; done
 install -m 0644 "$SRC/backend/requirements.txt" "$PREFIX/requirements.txt"
@@ -94,7 +127,7 @@ fi
 say "Python-pakketten installeren"
 "$PREFIX/venv/bin/pip" install --quiet --disable-pip-version-check --upgrade pip
 "$PREFIX/venv/bin/pip" install --quiet --disable-pip-version-check -r "$PREFIX/requirements.txt"
-chown -R root:root "$PREFIX"; chmod -R go-w "$PREFIX"
+chown -R root:root "$PREFIX"; chmod -R go-w,a+rX "$PREFIX"
 command -v restorecon >/dev/null && restorecon -R "$PREFIX" 2>/dev/null || true   # SELinux (Fedora/RHEL)
 
 # ---- instellingen en service ------------------------------------------------
