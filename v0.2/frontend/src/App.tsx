@@ -77,6 +77,7 @@ function Auth({ mode, done, demo }: { mode: "setup" | "login"; done: () => void;
     <div className="auth">
       <form className="card" onSubmit={submit}>
         <div>
+          <div className="auth-logo"><Logo size={40} /><span><b>Mikro</b>Manager</span></div>
           <h1>{mode === "setup" ? "Welkom bij MikroManager" : "Inloggen"}</h1>
           <p className="muted" style={{ marginTop: 6 }}>
             {mode === "setup" ? "Maak het beheerdersaccount aan. Dit is het enige account; het staat alleen op deze server." : "Beheer voor je MikroTik-netwerk."}
@@ -114,7 +115,7 @@ function Shell({ state, onLogout }: { state: any; onLogout: () => void }) {
     <Ctx.Provider value={{ sites: sites.data, site, reloadSites, setSiteId, state }}>
       <div className="shell">
         <aside className="side">
-          <div className="brand"><i><b /><b /><b /></i>MikroManager</div>
+          <div className="brand"><Logo size={26} /><span><b>Mikro</b>Manager</span></div>
           <select className="site-pick" value={site.id} onChange={(e) => setSiteId(Number(e.target.value))} aria-label="Site">
             {sites.data.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -157,5 +158,16 @@ function FirstSite({ done }: { done: (id: number) => void }) {
         <button className="btn primary" disabled={!!busy} style={{ justifyContent: "center" }}>Site aanmaken</button>
       </form>
     </div>
+  );
+}
+
+/** The MikroManager pictogram: a switch with four ports, one of them blue (ontwerp/ontwerpbesluiten.md, 1). */
+export function Logo({ size = 24 }: { size?: number }) {
+  return (
+    <svg className="logo" width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <path className="logo-n" d="M6 11h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V14a3 3 0 0 1 3-3z" fill="none" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path className="logo-f" d="M7 17h5v6H7zM14 17h5v6h-5zM28 17h5v6h-5z" />
+      <path className="logo-a" d="M21 17h5v6h-5z" />
+    </svg>
   );
 }
