@@ -1,10 +1,11 @@
-# TikControl (proefversie v0.1)
+# MikroManager (proefversie v0.1)
 
-> **Dit is de eerste proefversie, onder de oude werknaam TikControl.**
-> Hij is alleen getest tegen de meegeleverde simulator en nooit tegen echte hardware. Het nieuwe ontwerp heet
-> MikroManager en staat in [`../ontwerp/`](../ontwerp/). Wat uit deze versie blijft, staat in
-> [`../ontwerp/bouwplan.md`](../ontwerp/bouwplan.md). De tekst hieronder is die van de proefversie zelf en
-> is niet aangepast aan het nieuwe ontwerp.
+> **Dit is de eerste proefversie** (gebouwd onder de werknaam TikControl).
+> Hij is alleen getest tegen de meegeleverde simulator en nooit tegen echte hardware. Het nieuwe ontwerp staat
+> in [`../ontwerp/`](../ontwerp/). Wat uit deze versie blijft, staat in
+> [`../ontwerp/bouwplan.md`](../ontwerp/bouwplan.md). Technische namen uit de werknaam (`TIKCONTROL_*`,
+> `tikcontrol.db`, het kenmerk `tc-` op de router) blijven in deze versie staan, zodat bestaande installaties
+> blijven werken.
 
 Zelfgehoste beheerinterface voor MikroTik-netwerken, in de geest van UniFi Network: één plek voor
 apparaten, clients, wifi-netwerken, VLAN's, updates en back-ups. Draait direct op Linux (systemd) of in Docker, geen cloud, geen account.
@@ -80,36 +81,36 @@ opgeslagen routerwachtwoorden niet meer te lezen.
 |---|---|---|
 | `TZ` | UTC | Tijdzone voor het back-upschema |
 | `TIKCONTROL_POLL` | `15` | Seconden tussen metingen |
-| `TIKCONTROL_SECURE_COOKIE` | uit | Zet op `1` als je TikControl via HTTPS (reverse proxy) aanbiedt |
+| `TIKCONTROL_SECURE_COOKIE` | uit | Zet op `1` als je MikroManager via HTTPS (reverse proxy) aanbiedt |
 | `TIKCONTROL_DEMO` | uit | Simulator in plaats van echte apparaten |
 
-TikControl bewaart beheerdersrechten voor je routers. Zet het niet open aan internet; bereik het via VPN
+MikroManager bewaart beheerdersrechten voor je routers. Zet het niet open aan internet; bereik het via VPN
 of een reverse proxy met eigen authenticatie.
 
 ## Router voorbereiden
 
-TikControl gebruikt de REST API van RouterOS 7 (`https://router/rest`). Per apparaat:
+MikroManager gebruikt de REST API van RouterOS 7 (`https://router/rest`). Per apparaat:
 
 ```routeros
 # eigen gebruiker met alleen wat nodig is
-/user group add name=tikcontrol policy=read,write,policy,test,sensitive,reboot,rest-api,api
-/user add name=tikcontrol group=tikcontrol password="kies-een-lang-wachtwoord" address=192.168.88.50/32
+/user group add name=mikromanager policy=read,write,policy,test,sensitive,reboot,rest-api,api
+/user add name=mikromanager group=mikromanager password="kies-een-lang-wachtwoord" address=192.168.88.50/32
 
-# HTTPS aanzetten met een zelfondertekend certificaat, alleen bereikbaar voor de TikControl-host
-/certificate add name=tikcontrol-web common-name=router.lan days-valid=3650 key-usage=tls-server
-/certificate sign tikcontrol-web
-/ip service set www-ssl certificate=tikcontrol-web address=192.168.88.50/32 disabled=no
+# HTTPS aanzetten met een zelfondertekend certificaat, alleen bereikbaar voor de MikroManager-host
+/certificate add name=mikromanager-web common-name=router.lan days-valid=3650 key-usage=tls-server
+/certificate sign mikromanager-web
+/ip service set www-ssl certificate=mikromanager-web address=192.168.88.50/32 disabled=no
 ```
 
 Vervang `192.168.88.50` door het adres van de machine waarop MikroManager draait. `address=` op `www-ssl` beperkt ook WebFig tot
 dat adres. Krijg je bij toevoegen "Inloggen geweigerd", voeg dan `web` toe aan de policy van de groep.
 HTTP (`www`) werkt ook, maar dan gaat het wachtwoord onversleuteld over het netwerk.
 
-Daarna in TikControl: **Apparaten → Apparaat toevoegen**. De eerste router van een site wordt de wifi-controller.
+Daarna in MikroManager: **Apparaten → Apparaat toevoegen**. De eerste router van een site wordt de wifi-controller.
 
-## Wat TikControl op je router schrijft
+## Wat MikroManager op je router schrijft
 
-Alles wat TikControl aanmaakt is herkenbaar en verder blijft het van je configuratie af:
+Alles wat MikroManager aanmaakt is herkenbaar en verder blijft het van je configuratie af:
 
 | Waar | Herkenbaar aan | Wanneer |
 |---|---|---|
@@ -124,7 +125,7 @@ Alles wat TikControl aanmaakt is herkenbaar en verder blijft het van je configur
 Wifi-wijzigingen worden nooit direct doorgevoerd: je ziet eerst de lijst met stappen (met de exacte
 eigenschappen) en past ze dan toe. Dezelfde stappen twee keer toepassen verandert niets.
 
-Wat TikControl bewust **niet** doet: `vlan-filtering` op een bridge aan- of uitzetten, bestaande
+Wat MikroManager bewust **niet** doet: `vlan-filtering` op een bridge aan- of uitzetten, bestaande
 firewallregels wijzigen, objecten zonder `tc-`-kenmerk aanpassen.
 
 ### Zo is wifi opgebouwd
@@ -148,10 +149,10 @@ RouterOS zich anders kan gedragen dan de documentatie doet vermoeden. Loop ze é
 testapparaat of buiten kantooruren:
 
 1. **Wifi-plan blijft "N wijzigingen" tonen na toepassen.** Dan geeft RouterOS een eigenschap anders terug
-   dan TikControl hem zet (bijvoorbeeld een standaardwaarde die wordt weggelaten). De vergelijking staat in
+   dan MikroManager hem zet (bijvoorbeeld een standaardwaarde die wordt weggelaten). De vergelijking staat in
    `backend/app/wifi.py` (`_norm`, `DEFAULTS`); de plan-weergave laat zien om welke eigenschap het gaat.
 2. **Back-up.** Eerst wordt `:execute "/export" as-string` geprobeerd, anders export naar bestand en uitlezen
-   via `/file`. Op oudere 7.x is `contents` beperkt in grootte; dan meldt TikControl dat de export te groot is.
+   via `/file`. Op oudere 7.x is `contents` beperkt in grootte; dan meldt MikroManager dat de export te groot is.
 3. **Kanaal en zendvermogen per radio** komen uit `/interface/wifi/monitor … once` met meerdere interfaces
    tegelijk. Blijft de kolom leeg, dan accepteert jouw versie dat niet.
 4. **Gastisolatie** verplaatst de drop-regel met `/ip/firewall/filter/move` tot direct na de
