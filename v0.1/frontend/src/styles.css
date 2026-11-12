@@ -66,9 +66,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .side { background: var(--plate); color: #dbe2e9; display: flex; flex-direction: column; padding: 16px 12px; gap: 14px;
   position: sticky; top: 0; height: 100vh; }
 .brand { display: flex; align-items: center; gap: 9px; font: 600 20px var(--cond); padding: 2px 6px 4px; color: #fff; }
-.brand i { display: flex; gap: 3px; }
-.brand i b { width: 7px; height: 11px; border-radius: 1.5px; background: var(--led-on); }
-.brand i b:last-child { background: var(--led-off); }
+.brand b, .auth-logo b { font-weight: 700; }
+.brand span, .auth-logo span { font-weight: 400; letter-spacing: .01em; }
+/* pictogram colours from ontwerpbesluiten: neutral #c4cbd4 / #333b45, accent #3d8bfd / #1a66d9 */
+.logo { flex-shrink: 0; }
+.logo .logo-n { stroke: #333b45; } .logo .logo-f { fill: #333b45; } .logo .logo-a { fill: #1a66d9; }
+.side .logo .logo-n { stroke: #c4cbd4; } .side .logo .logo-f { fill: #c4cbd4; } .side .logo .logo-a { fill: #3d8bfd; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo .logo-n { stroke: #c4cbd4; }
+  :root:not([data-theme="light"]) .logo .logo-f { fill: #c4cbd4; } :root:not([data-theme="light"]) .logo .logo-a { fill: #3d8bfd; } }
+:root[data-theme="dark"] .logo .logo-n { stroke: #c4cbd4; } :root[data-theme="dark"] .logo .logo-f { fill: #c4cbd4; }
+:root[data-theme="dark"] .logo .logo-a { fill: #3d8bfd; }
+.auth-logo { display: flex; align-items: center; gap: 10px; font: 400 22px var(--cond); margin-bottom: 18px; }
 .site-pick { width: 100%; background: #2a333d; border: 1px solid #3a4652; color: #fff; border-radius: 6px; padding: 8px 10px; font-weight: 500; }
 .nav { display: grid; gap: 2px; }
 .nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; color: #b9c4cf; font-weight: 500; }
