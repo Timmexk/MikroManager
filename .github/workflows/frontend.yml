@@ -1,0 +1,63 @@
+# Bouwt de frontend en zet hem als download klaar, zodat install.sh op de server geen npm nodig heeft.
+# - Bij elke push naar main die de frontend raakt: release "frontend-latest" wordt bijgewerkt.
+# - Bij een tag v*: de frontend komt ook bij die release te staan.
+name: Frontend bouwen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "v0.1/frontend/**"
+      - ".github/workflows/frontend.yml"
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: v0.1/frontend/package-lock.json
+
+      - name: Bouwen
+        working-directory: v0.1/frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Inpakken
+        run: |
+          tar --owner=0 --group=0 --mode='u+rwX,go+rX,go-w' \
+              -czf mikromanager-frontend.tar.gz -C v0.1/backend/static .
+          sha256sum mikromanager-frontend.tar.gz > mikromanager-frontend.tar.gz.sha256
+
+      - name: Publiceren als frontend-latest
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view frontend-latest >/dev/null 2>&1 || \
+            gh release create frontend-latest --title "Frontend (laatste build van main)" \
+              --notes "Automatisch gebouwd. Wordt gebruikt door v0.1/linux/install.sh." --prerelease --target main
+          git tag -f frontend-latest && git push -f origin frontend-latest
+          gh release upload frontend-latest mikromanager-frontend.tar.gz mikromanager-frontend.tar.gz.sha256 --clobber
+
+      - name: Toevoegen aan versie-release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" mikromanager-frontend.tar.gz mikromanager-frontend.tar.gz.sha256 --clobber
