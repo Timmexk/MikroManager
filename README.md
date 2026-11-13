@@ -10,8 +10,8 @@ opgezet zoals UniFi Network en Omada, met de vaktermen die je uit RouterOS kent.
 > **Stand van zaken: het ontwerp is klaar, de bouw is nog niet gestart.**
 > De eerste versie richt zich op het beheren van je eigen MikroTik-netwerk op locatie. Externe sites
 > koppelen is uitgewerkt in het ontwerp, maar blijft een functie voor later.
-> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en twee proefversies (v0.1 en v0.2,
-> met interfacebeheer en veilige modus). Die draaien alleen tegen een simulator en zijn nog nooit op echte
+> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en drie proefversies (v0.1, v0.2 met
+> interfacebeheer en veilige modus, en v0.3 met meer client- en wififuncties). Die draaien alleen tegen een simulator en zijn nog nooit op echte
 > hardware getest.
 
 ![Overzicht van de site Thuis](docs/schermen/overzicht.webp)
@@ -100,6 +100,7 @@ die de externe router zelf opzet en die alleen de REST API doorlaat.
 | [`docs/`](docs/) | De projectwebsite voor GitHub Pages, met de schermafbeeldingen |
 | [`v0.1/`](v0.1/) | De eerste proefversie onder de oude werknaam TikControl: FastAPI, React en een RouterOS-simulator |
 | [`v0.2/`](v0.2/) | Tweede proefversie: v0.1 plus interfacebeheer per apparaat (snelheid, PoE, bridge/VLAN, VLAN-interfaces) met veilige modus |
+| [`v0.3/`](v0.3/) | Derde proefversie (aanbevolen): fabrikant en historie per client, bedrade clients blokkeren, kanaal per radio, QR-code per SSID, diagnosebestand |
 
 ## Hoe verder
 
