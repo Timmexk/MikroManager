@@ -111,6 +111,13 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   virtuele interface per extra SSID: zenden alle SSID's uit, en komen ze in de bridge via het datapath? Werkt het
   herstel van een eerder geprovisioned radio (regels uit, `radio provision`, regels aan) zonder dat de CAP's
   opnieuw provisionen?
+- [ ] **[REST] Kanaal per radio (v0.3).** Een eigen channel-profiel per radio (`frequency`, `width`) via de
+  configuratie-kopie van die radio: neemt de CAP dat over na provisionen? In welk formaat geeft
+  `/interface/wifi/radio` `5g-channels` en `2g-channels`, en wat meldt `monitor` als `channel`?
+- [ ] **[gedrag] Opnieuw provisionen (v0.3).** `radio/provision` op de radio's van één CAP: hoe lang zijn de
+  clients weg, en blijven de andere CAP's ongemoeid?
+- [ ] **[gedrag] Diagnosebestand (v0.3).** Eén keer het anonieme bestand van een echte router nalopen: staat
+  er niets herleidbaars meer in, en zijn alle menu's gevuld?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
@@ -148,8 +155,15 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
 - [ ] **[REST] IPv6 per client.** Geeft `GET /rest/ipv6/neighbor` per adres `mac-address` en `status`? Staan
   SLAAC-adressen met privacy-extensies (meerdere per apparaat) er allemaal in, en verdwijnen ze op tijd?
 - [ ] **[REST] Live verbruik via Kid Control.** Staat in `/ip/kid-control/device` zonder eigen kid-profielen een
-  dynamische regel voor elk apparaat? Werkt `POST /rest/ip/kid-control/device/update-stats`, en in welk
-  formaat staan `rate-down` en `rate-up` (`1.2Mbps` of een getal)? Telt fasttrack mee?
+  dynamische regel voor elk apparaat? In welk formaat staan `rate-down` en `rate-up` (`1.2Mbps` of een getal)?
+  Telt fasttrack mee? (`update-stats` bestaat volgens de handleiding niet; v0.3 roept het niet meer aan.)
+- [ ] **[REST] Snelheid van wifi-clients (v0.3).** Geeft de registration-table `tx-bits-per-second` en
+  `rx-bits-per-second` via REST, en is "tx" gezien vanuit de AP (dus download voor de client)?
+- [ ] **[gedrag] Bedrade client blokkeren (v0.3).** Een drop-regel op `src-mac-address` bovenaan forward, IPv4
+  en IPv6. Wordt een verbinding die al via fasttrack loopt ook verbroken, of pas na een time-out? Werkt
+  `place-before`/`move` via REST zoals de app het doet? Verkeer binnen hetzelfde VLAN blijft mogelijk.
+- [ ] **[gedrag] Fabrikantenlijst (v0.3).** Lukt het downloaden van de IEEE-lijst vanaf de server (ongeveer
+  3 MB), en klopt de fabrikant bij bekende apparaten?
 - [ ] **[REST] Internet pauzeren.** Werken `POST /rest/ip/kid-control/pause` en `resume` met `numbers=<naam>`?
   Wordt het verkeer van een gepauzeerd apparaat echt geblokkeerd, ook IPv6?
 - [ ] **[REST] Tijdschema.** Welk formaat nemen `mon` t/m `sun` aan: `07:00-22:30` of `7h-22h30m`? En betekent
