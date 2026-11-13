@@ -9,6 +9,7 @@ on:
     paths:
       - "v0.1/frontend/**"
       - "v0.2/frontend/**"
+      - "v0.3/frontend/**"
       - ".github/workflows/frontend.yml"
     tags: ["v*"]
   workflow_dispatch:
@@ -31,6 +32,8 @@ jobs:
             asset: mikromanager-frontend      # name kept for existing v0.1 installs
           - dir: v0.2
             asset: mikromanager-frontend-v0.2
+          - dir: v0.3
+            asset: mikromanager-frontend-v0.3
     steps:
       - uses: actions/checkout@v4
 
