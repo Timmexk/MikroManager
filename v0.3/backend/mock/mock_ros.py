@@ -1,0 +1,1026 @@
+"""A small simulated RouterOS v7 REST API for tests and demo mode.
+
+Five devices on consecutive ports that share one "world":
+  router  hAP ax2   (CAPsMAN controller, 2 local radios, DHCP, firewall)
+  crs     CRS310    (switch, no wifi menu, no `:execute as-string`)
+  hexpoe  hEX PoE   (switch with PoE-out feeding the APs)
+  ap1/2   cAP ax    (become CAPs once /interface/wifi/cap is enabled)
+
+It mimics the parts of RouterOS that TikControl uses: string-typed values,
+PUT/PATCH/DELETE/POST semantics, reference checks between wifi profiles,
+provisioning rules that create dynamic interfaces, reboots during upgrades.
+It is NOT a faithful RouterOS; real hardware remains the reference.
+"""
+import asyncio
+import base64
+import ipaddress
+import math
+import os
+import random
+import shlex
+import threading
+import time
+
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, Response
+
+USER, PASSWORD = "mikromanager", "demo-pass"
+REBOOT_SECS = float(os.environ.get("MOCK_REBOOT_SECS", "25"))
+BASE_PORT = int(os.environ.get("MOCK_BASE_PORT", "18081"))
+LATEST = "7.20.2"
+
+WIFI_REFS = {"security": "/interface/wifi/security", "datapath": "/interface/wifi/datapath",
+             "channel": "/interface/wifi/channel"}
+ALLOWED = {
+    "/interface/wifi/security": {"name", "authentication-types", "passphrase", "ft", "ft-over-ds", "wps", "comment", "disabled"},
+    "/interface/wifi/datapath": {"name", "bridge", "vlan-id", "client-isolation", "comment", "disabled", "interface-list"},
+    "/interface/wifi/channel": {"name", "width", "frequency", "band", "skip-dfs-channels", "comment", "disabled"},
+    "/interface/wifi/configuration": {"name", "ssid", "country", "security", "datapath", "channel", "hide-ssid", "comment",
+                                      "disabled", "mode", "tx-power"},
+    "/interface/wifi/provisioning": {"action", "supported-bands", "master-configuration", "slave-configurations", "comment",
+                                     "disabled", "radio-mac", "identity-regexp", "name-format"},
+    "/interface/wifi/access-list": {"mac-address", "action", "comment", "disabled", "interface", "ssid-regexp"},
+    "/interface/vlan": {"name", "vlan-id", "interface", "comment", "disabled", "mtu"},
+    "/ip/dhcp-server": {"name", "interface", "address-pool", "disabled", "comment", "lease-time"},
+    "/ip/kid-control": {"name", "mon", "tue", "wed", "thu", "fri", "sat", "sun", "comment", "disabled", "rate-limit"},
+    "/ip/kid-control/device": {"name", "mac-address", "user", "comment", "disabled"},
+    "/system/scheduler": {"name", "start-date", "start-time", "interval", "on-event", "comment", "disabled", "policy"},
+}
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+EXPORT_ORDER = ["/interface/bridge", "/interface/vlan", "/interface/list", "/interface/wifi/channel",
+                "/interface/wifi/datapath", "/interface/wifi/security", "/interface/wifi/configuration",
+                "/interface/wifi", "/ip/pool", "/ip/dhcp-server", "/interface/bridge/port", "/interface/bridge/vlan",
+                "/interface/list/member", "/interface/wifi/access-list", "/interface/wifi/provisioning", "/ip/address",
+                "/ip/dhcp-server/lease", "/ip/dhcp-server/network", "/ip/dns/static", "/ip/firewall/address-list",
+                "/ip/firewall/filter"]
+
+
+def norm(v) -> str:
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    v = str(v)
+    return {"yes": "true", "no": "false"}.get(v, v)
+
+
+def mac(prefix: str, n: int) -> str:
+    return f"{prefix}:{n >> 8 & 0xFF:02X}:{n & 0xFF:02X}"
+
+
+def fmt_uptime(sec: float) -> str:
+    sec = int(sec)
+    w, sec = divmod(sec, 604800)
+    d, sec = divmod(sec, 86400)
+    h, sec = divmod(sec, 3600)
+    m, s = divmod(sec, 60)
+    return "".join(f"{n}{u}" for n, u in ((w, "w"), (d, "d"), (h, "h"), (m, "m"), (s, "s")) if n or u == "s")
+
+
+class Dev:
+    def __init__(self, world, key, port, identity, board, arch, ip, mac_prefix, ports, radios=(), poe=(),
+                 version="7.20.1", fw=("7.20.1", "7.20.1"), has_wifi=True, exec_as_string=True, uptime=0.0):
+        self.world, self.key, self.port, self.ip, self.board, self.arch = world, key, port, ip, board, arch
+        self.version, self.fw_cur, self.fw_new, self.fw_pending = version, fw[0], fw[1], False
+        self.ports, self.radios, self.poe = list(ports), list(radios), list(poe)
+        self.has_wifi, self.exec_as_string = has_wifi, exec_as_string
+        self.mac_prefix = mac_prefix
+        self.boot = time.time() - uptime
+        self.reboot_until = 0.0
+        self.after_reboot = None
+        self.seq = 0x10
+        self.local_provisioned = False
+        self.kicked: dict[str, float] = {}
+        self.static_leases: dict[str, dict] = {}
+        self.files: list[dict] = []
+        self.wol_sent: list[tuple[str, str]] = []
+        self.last_tick = time.time()
+        self.t: dict[str, list[dict]] = {}
+        self.single = {"/system/identity": {"name": identity},
+                       "/system/package/update": {"channel": "stable", "installed-version": version}}
+        self.base_mac = mac(mac_prefix, 0)
+        self._build_interfaces()
+
+    # -- construction ------------------------------------------------------
+    def nid(self) -> str:
+        self.seq += 1
+        return f"*{self.seq:X}"
+
+    def _build_interfaces(self):
+        ifs, eth = [], []
+        for n, p in enumerate(self.ports):
+            m = mac(self.mac_prefix, n + 1)
+            ifs.append({".id": self.nid(), "name": p, "default-name": p, "type": "ether", "mtu": "1500", "mac-address": m,
+                        "running": "false", "disabled": "false", "rx-byte": str(random.randint(10 ** 8, 10 ** 10)),
+                        "tx-byte": str(random.randint(10 ** 8, 10 ** 10))})
+            eth.append({".id": ifs[-1][".id"], "name": p, "default-name": p, "mac-address": m, "disabled": "false",
+                        "auto-negotiation": "true", "speed": "10G-baseSR-LR" if p.startswith("sfp") else "1G-baseT-full",
+                        "mtu": "1500"})
+        ifs.append({".id": self.nid(), "name": "bridge", "type": "bridge", "mtu": "1500", "mac-address": self.base_mac,
+                    "running": "true", "disabled": "false", "rx-byte": "0", "tx-byte": "0"})
+        self.t["/interface"], self.t["/interface/ethernet"] = ifs, eth
+        self.t["/interface/bridge"] = [{".id": self.nid(), "name": "bridge", "vlan-filtering": "true",
+                                        "mac-address": self.base_mac, "disabled": "false", "protocol-mode": "rstp"}]
+        self.t["/interface/bridge/port"] = [{".id": self.nid(), "interface": p, "bridge": "bridge", "pvid": "1",
+                                             "disabled": "false"} for p in self.ports if not (self.key == "router" and p == "ether1")]
+        self.t["/interface/bridge/vlan"] = []
+        self.t["/interface/ethernet/poe"] = [{".id": f"*P{n}", "name": p, "poe-out": "auto-on", "poe-priority": "10"}
+                                             for n, p in enumerate(self.poe)]
+        self.t["/system/scheduler"] = []
+        self.t["/interface/vlan"] = []
+        self.t["/interface/list"] = [{".id": self.nid(), "name": n, "builtin": "true"} for n in ("all", "none", "dynamic", "static")]
+        self.t["/interface/list/member"] = []
+        self.t["/ip/address"] = []
+        self.t["/ip/dns/static"] = []
+        self.t["/system/package"] = [{".id": "*1", "name": "routeros", "version": self.version}]
+        if self.has_wifi:
+            self.t["/system/package"].append({".id": "*2", "name": "wifi-qcom", "version": self.version})
+            for p in ("security", "datapath", "channel", "configuration", "provisioning", "access-list"):
+                self.t[f"/interface/wifi/{p}"] = []
+            self.t["/interface/wifi"] = []
+            for n, (name, band) in enumerate(self.radios):
+                self.t["/interface/wifi"].append({
+                    ".id": self.nid(), "name": name, "default-name": name, "radio-mac": mac(self.mac_prefix, 0x80 + n),
+                    "mac-address": mac(self.mac_prefix, 0x80 + n), "disabled": "false", "running": "true", "dynamic": "false",
+                    "configuration.manager": "local", "configuration.mode": "ap", "configuration.ssid": "MikroTik-oud",
+                    "security.authentication-types": "wpa2-psk", "master": "true"})
+            self.single["/interface/wifi/capsman"] = {"enabled": "false", "interfaces": "", "ca-certificate": "none"}
+            self.single["/interface/wifi/cap"] = {"enabled": "false", "discovery-interfaces": ""}
+
+    # -- state -------------------------------------------------------------
+    @property
+    def rebooting(self) -> bool:
+        if self.reboot_until and time.time() >= self.reboot_until:
+            self.reboot_until = 0.0
+            self.boot = time.time()
+            if self.after_reboot:
+                self.after_reboot()
+                self.after_reboot = None
+        return bool(self.reboot_until)
+
+    def reboot(self, then=None):
+        self.reboot_until = time.time() + REBOOT_SECS
+        self.after_reboot = then
+
+    def tick(self):
+        now = time.time()
+        dt, self.last_tick = now - self.last_tick, now
+        linked = self.world.linked_ports(self)
+        for i in self.t["/interface"]:
+            if i["type"] != "ether":
+                continue
+            up = i["name"] in linked and i["disabled"] == "false"
+            i["running"] = norm(up)
+            if not up:
+                continue
+            base = linked[i["name"]]
+            wave = 0.6 + 0.3 * math.sin(now / 240 + hash(i["name"]) % 7) + 0.08 * math.sin(now / 9) + random.uniform(-0.06, 0.06)
+            rate = max(0.15, wave) * base
+            i["rx-byte"] = str(int(i["rx-byte"]) + int(rate * dt / 8))
+            i["tx-byte"] = str(int(i["tx-byte"]) + int(rate * 0.18 * dt / 8))
+
+    def resource(self) -> dict:
+        total = 1024 ** 3 if "ax" in self.board else 512 * 1024 ** 2
+        return {"uptime": fmt_uptime(time.time() - self.boot), "version": f"{self.version} (stable)",
+                "build-time": "2026-09-18 09:12:44", "free-memory": str(int(total * random.uniform(0.52, 0.6))),
+                "total-memory": str(total), "cpu": "ARM64", "cpu-count": "4", "cpu-frequency": "864",
+                "cpu-load": str(random.randint(1, 9) + (12 if self.key == "router" else 0)),
+                "free-hdd-space": "92000000", "total-hdd-space": "128000000", "architecture-name": self.arch,
+                "board-name": self.board, "platform": "MikroTik"}
+
+    # -- derived tables ----------------------------------------------------
+    def all_radios(self):
+        """(owner device, local iface, band, radio mac, is_local) for every radio this CAPsMAN sees."""
+        out = [(self, n, b, mac(self.mac_prefix, 0x80 + i), True) for i, (n, b) in enumerate(self.radios)]
+        if self.single.get("/interface/wifi/capsman", {}).get("enabled") == "true":
+            for ap in self.world.devs.values():
+                if ap is not self and ap.has_wifi and ap.single["/interface/wifi/cap"]["enabled"] == "true" and not ap.reboot_until:
+                    out += [(ap, n, b, mac(ap.mac_prefix, 0x80 + i), False) for i, (n, b) in enumerate(ap.radios)]
+        return out
+
+    def _rule_for(self, band: str, rmac: str = ""):
+        for r in self.t["/interface/wifi/provisioning"]:
+            sb = r.get("supported-bands", "")
+            if r.get("disabled") == "true":
+                continue
+            if r.get("radio-mac"):
+                if r["radio-mac"].upper() == rmac.upper():
+                    return r
+                continue
+            if not sb or sb.startswith("2ghz" if band == "2g" else "5ghz"):
+                return r
+        return None
+
+    def dyn_wifi(self) -> list[dict]:
+        out, n = [], 0
+        for owner, _, band, rmac, local in self.all_radios():
+            if local and not self.local_provisioned:
+                continue
+            rule = self._rule_for(band, rmac)
+            if not rule or rule.get("action") == "none":
+                continue
+            n += 1
+            master = f"cap-wifi{n}"
+            common = {"dynamic": "true", "disabled": "false", "running": "true", "bound": "true", "inactive": "false"}
+            out.append({".id": f"*D{n:02d}0", "name": master, "radio-mac": rmac, "configuration": rule["master-configuration"],
+                        "master": "true", **common})
+            for j, sc in enumerate(x for x in rule.get("slave-configurations", "").split(",") if x):
+                out.append({".id": f"*D{n:02d}{j + 1}", "name": f"{master}-virtual{j + 1}", "master-interface": master,
+                            "configuration": sc, "master": "false", **common})
+        return out
+
+    def wifi_ifaces(self) -> list[dict]:
+        static = [] if self.local_provisioned else self.t["/interface/wifi"]
+        return static + self.dyn_wifi()
+
+    def radio_table(self) -> list[dict]:
+        ifs = {i.get("radio-mac"): i["name"] for i in self.wifi_ifaces() if i.get("radio-mac")}
+        out = []
+        for n, (owner, _, band, rmac, local) in enumerate(self.all_radios()):
+            g = "2ghz" if band == "2g" else "5ghz"
+            rec = {".id": f"*R{n}", "radio-mac": rmac, "local": norm(local), "tx-chains": "0,1", "rx-chains": "0,1",
+                   "bands": f"{g}-n:20mhz,20/40mhz,{g}-ax:20mhz,20/40mhz" + (",20/40/80mhz" if band == "5g" else ""),
+                   "hw-type": "QCA6018", "countries": "all", "current-max-reg-power": "23" if band == "5g" else "20",
+                   **({"5g-channels": "5180,5200,5220,5240,5260,5280,5300,5320,5500,5520,5540,5560,5580,5600,5620,5640,5660,5680,5700"}
+                      if band == "5g" else {"2g-channels": "2412,2417,2422,2427,2432,2437,2442,2447,2452,2457,2462,2467,2472"})}
+            if not local:
+                rec["cap"] = f"{owner.single['/system/identity']['name']}@{owner.ip}"
+            if rmac in ifs:
+                rec["interface"] = ifs[rmac]
+            out.append(rec)
+        return out
+
+    def remote_caps(self) -> list[dict]:
+        seen, out = set(), []
+        for owner, *_rest, local in self.all_radios():
+            if not local and owner.key not in seen:
+                seen.add(owner.key)
+                out.append({".id": f"*C{len(out)}", "address": owner.ip, "identity": owner.single["/system/identity"]["name"],
+                            "board-name": owner.board, "version": owner.version, "state": "Ok",
+                            "base-mac": owner.base_mac, "serial": f"HG{owner.mac_prefix[-2:]}0A1B2C"})
+        return out
+
+    def ssid_of(self, iface: dict) -> str | None:
+        if iface.get("configuration.ssid"):
+            return iface["configuration.ssid"]
+        cfg = next((c for c in self.t["/interface/wifi/configuration"] if c["name"] == iface.get("configuration")), None)
+        return cfg.get("ssid") if cfg else None
+
+    def reg_table(self) -> list[dict]:
+        if not self.has_wifi:
+            return []
+        blocked = {a.get("mac-address") for a in self.t["/interface/wifi/access-list"] if a.get("action") == "reject"}
+        radio_owner = {rmac: (owner.key, band) for owner, _, band, rmac, _l in self.all_radios()}
+        ifs = self.wifi_ifaces()
+        by_name = {i["name"]: i for i in ifs}
+        out, now = [], time.time()
+        for c in self.world.clients:
+            if c["type"] != "wifi" or c["mac"] in blocked or self.kicked.get(c["mac"], 0) > now:
+                continue
+            for i in ifs:
+                root = by_name.get(i.get("master-interface", ""), i)
+                if radio_owner.get(root.get("radio-mac")) == (c["ap"], c["band"]) and self.ssid_of(i) == c["ssid"]:
+                    sig = c["signal"] + int(3 * math.sin(now / 30 + c["n"]))
+                    g = "2ghz-ax" if c["band"] == "2g" else "5ghz-ax"
+                    used = int((now - self.world.t0 + 3600 * (c["n"] + 1)) * c["bps"] / 8)
+                    out.append({".id": f"*W{c['n']:02d}", "interface": i["name"], "ssid": c["ssid"], "mac-address": c["mac"],
+                                "uptime": fmt_uptime(now - self.world.t0 + 900 * (c["n"] + 3)), "signal": str(sig),
+                                "band": g, "auth-type": "wpa3-psk" if c["n"] % 2 else "wpa2-psk", "authorized": "true",
+                                # numbers in bit/s, as real RouterOS returns them over REST
+                                "tx-rate": "286800000" if c["band"] == "2g" else "1200900000",
+                                "rx-rate": "229400000" if c["band"] == "2g" else "864700000",
+                                "tx-bits-per-second": str(int(c["bps"] * 8 * (0.55 + 0.45 * math.sin(now / 20 + c["n"])))),
+                                "rx-bits-per-second": str(int(c["bps"] * (0.55 + 0.45 * math.sin(now / 20 + c["n"])))),
+                                "dhcp-hostname": c["host"], "dhcp-address": c["ip"],
+                                "bytes": f"{used},{used // 6}", "packets": f"{used // 900},{used // 5000}"})
+                    break
+        return out
+
+    def leases(self) -> list[dict]:
+        if "/ip/dhcp-server" not in self.t:
+            return []
+        nets = []
+        for a in self.t["/ip/address"]:
+            srv = next((s for s in self.t["/ip/dhcp-server"] if s["interface"] == a["interface"]), None)
+            if srv:
+                nets.append((ipaddress.ip_interface(a["address"]).network, srv["name"]))
+        online = {r["mac-address"] for r in self.reg_table()}
+        out = list(self.static_leases.values())
+        for c in self.world.clients:
+            if c["mac"] in self.static_leases:
+                continue
+            srv = next((name for net, name in nets if ipaddress.ip_address(c["ip"]) in net), None)
+            if not srv:
+                continue
+            up = c["type"] == "wired" or c["mac"] in online
+            out.append({".id": f"*L{c['n']:02d}", "address": c["ip"], "mac-address": c["mac"], "server": srv,
+                        "dynamic": "true", "status": "bound" if up else "waiting", "host-name": c["host"],
+                        "last-seen": "12s" if up else "3h14m", **({"active-address": c["ip"]} if up else {})})
+        return out
+
+    # -- scheduler: runs the one-shot undo scripts MikroManager's safe mode leaves behind --
+    def clock(self) -> dict:
+        t = time.localtime()
+        return {"time": time.strftime("%H:%M:%S", t), "date": time.strftime("%Y-%m-%d", t), "time-zone-name": "Europe/Amsterdam"}
+
+    def run_schedulers(self):
+        now = time.time()
+        for sch in list(self.t.get("/system/scheduler", [])):
+            if sch.get("disabled") == "true" or sch.get("_ran"):
+                continue
+            try:
+                due = time.mktime(time.strptime(f"{sch['start-date']} {sch['start-time']}", "%Y-%m-%d %H:%M:%S"))
+            except (KeyError, ValueError):
+                continue
+            if now >= due:
+                sch["_ran"] = True
+                self.run_script(sch.get("on-event", ""))
+
+    def run_script(self, script: str):
+        for line in script.splitlines():
+            line = line.strip()
+            if line.startswith(":do {"):
+                line = line[len(":do {"):line.rindex("}", 0, line.rindex("on-error"))].strip()
+            try:
+                self.run_cli(line)
+            except Exception:
+                pass
+
+    def run_cli(self, line: str):
+        toks = [t.replace("\\$", "$") for t in shlex.split(line)]
+        verbs = ("set", "add", "remove")
+        i = next(n for n, t in enumerate(toks) if t in verbs)
+        menu = "/" + "/".join(w.strip("/") for w in toks[:i])
+        verb, rest = toks[i], toks[i + 1:]
+        rows = self.t.get(menu)
+        if rows is None:
+            return
+
+        def pairs(items):
+            return {k: norm(v) for k, _, v in (x.strip("[]").partition("=") for x in items if "=" in x)}
+
+        def found(items):
+            crit = pairs([x for x in items if x != "[find"])
+            return [r for r in rows if all(r.get(k) == v for k, v in crit.items())]
+
+        if verb == "set":
+            rec = next((r for r in rows if r.get(".id") == rest[0] or r.get("name") == rest[0]), None)
+            if rec:
+                rec.update(pairs(rest[1:]))
+                self.sync_interface(menu, rec)
+        elif verb == "remove":
+            for r in found(rest):
+                rows.remove(r)
+        elif verb == "add":
+            rec = {".id": self.nid(), "dynamic": "false", "disabled": "false", **pairs(rest)}
+            rows.append(rec)
+
+    def sync_interface(self, menu: str, rec: dict):
+        """/interface/ethernet and /interface share ids on a real router; keep the generic row in step."""
+        if menu == "/interface/ethernet":
+            gen = next((i for i in self.t["/interface"] if i[".id"] == rec[".id"]), None)
+            if gen:
+                for k in ("disabled", "mtu", "comment", "name"):
+                    if k in rec:
+                        gen[k] = rec[k]
+        if menu == "/interface":
+            e = next((i for i in self.t["/interface/ethernet"] if i[".id"] == rec[".id"]), None)
+            if e:
+                for k in ("disabled", "mtu", "comment", "name"):
+                    if k in rec:
+                        e[k] = rec[k]
+
+    def ipv6_neighbors(self) -> list[dict]:
+        online = {l["mac-address"] for l in self.leases() if l.get("status") == "bound"}
+        out = []
+        for c in self.world.clients:
+            for a in c.get("ipv6", []):
+                out.append({".id": f"*N{len(out)}", "address": a, "interface": "bridge", "mac-address": c["mac"],
+                            "status": "reachable" if c["mac"] in online else "failed", "router": "false"})
+        return out
+
+    def kid_devices(self) -> list[dict]:
+        """Static devices (added by MikroManager) plus dynamic ones for every active lease, with live rates."""
+        paused = {k["name"] for k in self.t["/ip/kid-control"] if k.get("paused") == "true"}
+        static = {d["mac-address"]: d for d in self.t["/ip/kid-control/device"]}
+        now = time.time()
+        out = []
+        for l in self.leases():
+            if l.get("status") != "bound":
+                continue
+            c = next((c for c in self.world.clients if c["mac"] == l["mac-address"]), None)
+            bps = (c or {}).get("bps", 6e5)
+            wave = 0.55 + 0.45 * math.sin(now / 20 + (c or {}).get("n", 0))
+            rec = static.get(l["mac-address"])
+            blocked = bool(rec and rec.get("user") in paused)
+            down, up = (0, 0) if blocked else (int(bps * 8 * wave), int(bps * wave))
+            base = rec or {".id": f"*K{len(out)}", "name": l.get("host-name", ""), "mac-address": l["mac-address"],
+                           "user": "", "dynamic": "true"}
+            out.append({**base, "ip-address": l.get("active-address", l["address"]), "rate-down": f"{down}bps",
+                        "rate-up": f"{up}bps", "blocked": "true" if blocked else "false"})
+        for m, rec in static.items():
+            if not any(o["mac-address"] == m for o in out):
+                out.append({**rec, "rate-down": "0bps", "rate-up": "0bps"})
+        return out
+
+    def hosts(self) -> list[dict]:
+        out = [{".id": "*H0", "mac-address": self.base_mac, "on-interface": "bridge", "bridge": "bridge", "local": "true",
+                "dynamic": "true"}]
+        seen = self.world.learned(self)
+        for n, (m, port) in enumerate(sorted(seen.items())):
+            out.append({".id": f"*H{n + 1}", "mac-address": m, "on-interface": port, "bridge": "bridge", "local": "false",
+                        "dynamic": "true"})
+        return out
+
+    def table(self, path: str) -> list[dict] | None:
+        if path.startswith("/interface/wifi") and not self.has_wifi:
+            return None
+        dyn = {"/interface/wifi": self.wifi_ifaces, "/interface/wifi/radio": self.radio_table,
+               "/interface/wifi/capsman/remote-cap": self.remote_caps, "/interface/wifi/registration-table": self.reg_table,
+               "/ip/dhcp-server/lease": self.leases, "/interface/bridge/host": self.hosts,
+               **({"/ipv6/neighbor": self.ipv6_neighbors, "/ip/kid-control/device": self.kid_devices}
+                  if "/ip/kid-control" in self.t else {}),
+               "/system/health": lambda: [{".id": "*1", "name": "temperature", "value": str(44 + self.port % 9), "type": "C"}]
+               + ([{".id": "*2", "name": "voltage", "value": "24.1", "type": "V"}] if self.poe else []),
+               "/file": lambda: self.files,
+               "/ip/arp": lambda: [{".id": f"*A{n}", "address": l.get("active-address", l["address"]), "mac-address": l["mac-address"],
+                                    "interface": "bridge", "complete": "true", "dynamic": "true"}
+                                   for n, l in enumerate(self.leases()) if l.get("status") == "bound"]}
+        if path in dyn:
+            if path == "/ip/dhcp-server/lease" and "/ip/dhcp-server" not in self.t:
+                return None
+            return dyn[path]()
+        if path == "/interface":
+            extra = [{".id": v[".id"], "name": v["name"], "type": "vlan", "mtu": v.get("mtu", "1500"),
+                      "running": "false" if v.get("disabled") == "true" else "true", "disabled": v.get("disabled", "false"),
+                      **({"comment": v["comment"]} if v.get("comment") else {}),
+                      "mac-address": self.base_mac, "rx-byte": "0", "tx-byte": "0"}
+                     for v in self.t["/interface/vlan"]]
+            extra += [{".id": w[".id"], "name": w["name"], "type": "wifi", "mtu": "1500", "running": w.get("running", "true"),
+                       "disabled": w.get("disabled", "false"), "mac-address": w.get("mac-address", w.get("radio-mac", "")),
+                       "rx-byte": "0", "tx-byte": "0"} for w in (self.wifi_ifaces() if self.has_wifi else [])]
+            return self.t["/interface"] + extra
+        return self.t.get(path)
+
+    # -- export ------------------------------------------------------------
+    def export(self) -> str:
+        ident = self.single["/system/identity"]["name"]
+        lines = [f"# {time.strftime('%Y-%m-%d %H:%M:%S')} by RouterOS {self.version}", "# software id = TK7C-DEMO", "#",
+                 f"# model = {self.board}", f"# serial number = HG{self.mac_prefix[-2:]}0A1B2C"]
+        skip = {".id", "dynamic", "running", "builtin", "master", "default-name", "radio-mac", "mac-address", "bound", "inactive"}
+        for path in EXPORT_ORDER:
+            rows = [r for r in self.t.get(path, []) if r.get("dynamic") != "true" and r.get("builtin") != "true"]
+            if path == "/ip/dhcp-server/lease":
+                rows = list(self.static_leases.values())
+            if not rows:
+                continue
+            lines.append(path.replace("/", " ").replace(" ", "/", 1))
+            for r in rows:
+                kv = " ".join(f'{k}={v if v and " " not in v else chr(34) + v + chr(34)}' for k, v in sorted(r.items())
+                              if k not in skip and not (k == "passphrase"))
+                lines.append(f"add {kv}")
+        for path, s in sorted(self.single.items()):
+            if path.startswith("/interface/wifi/"):
+                lines += [path.replace("/", " ").replace(" ", "/", 1), "set " + " ".join(f"{k}={v}" for k, v in sorted(s.items()) if v)]
+        lines += ["/system identity", f'set name="{ident}"']
+        return "\n".join(lines) + "\n"
+
+
+class World:
+    def __init__(self):
+        self.t0 = time.time()
+        self.devs: dict[str, Dev] = {}
+        self.clients: list[dict] = []
+        # child device -> (parent device, port on the parent); every child uplinks on ether1
+        self.links = {"crs": ("router", "ether2"), "hexpoe": ("crs", "ether2"), "ap1": ("hexpoe", "ether2"),
+                      "ap2": ("hexpoe", "ether3")}
+        self._build()
+
+    def _build(self):
+        p = BASE_PORT
+        d = self.devs
+        d["router"] = Dev(self, "router", p, "hAP-ax2-meterkast", "hAP ax^2", "arm64", "192.168.88.1", "48:A9:8A:10",
+                          [f"ether{i}" for i in range(1, 6)], radios=[("wifi1", "5g"), ("wifi2", "2g")], uptime=19 * 86400 + 7000)
+        d["crs"] = Dev(self, "crs", p + 1, "CRS310-kantoor", "CRS310-8G+2S+", "arm", "192.168.88.2", "48:A9:8A:20",
+                       [f"ether{i}" for i in range(1, 9)] + ["sfp-sfpplus1", "sfp-sfpplus2"], has_wifi=False,
+                       exec_as_string=False, uptime=41 * 86400, fw=("7.19.4", "7.20.1"))
+        d["hexpoe"] = Dev(self, "hexpoe", p + 2, "hEX-PoE-zolder", "hEX PoE", "mipsbe", "192.168.88.3", "48:A9:8A:30",
+                          [f"ether{i}" for i in range(1, 6)] + ["sfp1"], poe=["ether2", "ether3", "ether4", "ether5"],
+                          has_wifi=False, uptime=41 * 86400)
+        d["ap1"] = Dev(self, "ap1", p + 3, "cAP-ax-woonkamer", "cAP ax", "arm64", "192.168.88.11", "48:A9:8A:41",
+                       ["ether1", "ether2"], radios=[("wifi1", "5g"), ("wifi2", "2g")], uptime=12 * 86400)
+        d["ap2"] = Dev(self, "ap2", p + 4, "cAP-ax-overloop", "cAP ax", "arm64", "192.168.88.12", "48:A9:8A:42",
+                       ["ether1", "ether2"], radios=[("wifi1", "5g"), ("wifi2", "2g")], uptime=12 * 86400)
+
+        r = d["router"]
+        r.t["/interface/list"] += [{".id": r.nid(), "name": "WAN", "builtin": "false"}, {".id": r.nid(), "name": "LAN", "builtin": "false"}]
+        r.t["/interface/list/member"] = [{".id": r.nid(), "list": "WAN", "interface": "ether1"},
+                                         {".id": r.nid(), "list": "LAN", "interface": "bridge"}]
+        r.t["/ip/address"] = [{".id": r.nid(), "address": "192.168.88.1/24", "network": "192.168.88.0", "interface": "bridge",
+                               "comment": "defconf", "dynamic": "false", "disabled": "false"},
+                              {".id": r.nid(), "address": "203.0.113.42/24", "network": "203.0.113.0", "interface": "ether1",
+                               "dynamic": "true", "disabled": "false"}]
+        r.t["/ip/pool"] = [{".id": r.nid(), "name": "default-dhcp", "ranges": "192.168.88.10-192.168.88.254"}]
+        r.t["/ip/dhcp-server"] = [{".id": r.nid(), "name": "defconf", "interface": "bridge", "address-pool": "default-dhcp",
+                                   "disabled": "false"}]
+        r.t["/ip/dhcp-server/network"] = [{".id": r.nid(), "address": "192.168.88.0/24", "gateway": "192.168.88.1",
+                                           "dns-server": "192.168.88.1", "comment": "defconf"}]
+        r.t["/ip/route"] = [{".id": "*8000", "dst-address": "0.0.0.0/0", "gateway": "203.0.113.1",
+                             "immediate-gw": "203.0.113.1%ether1", "active": "true", "dynamic": "true", "distance": "1"}]
+        r.t["/ip/route"].append({".id": "*8001", "dst-address": "0.0.0.0/0", "gateway": "10.64.0.1",
+                                 "immediate-gw": "10.64.0.1%lte1", "active": "false", "dynamic": "true", "distance": "2"})
+        r.t["/interface"].append({".id": r.nid(), "name": "lte1", "type": "lte", "mtu": "1500", "mac-address": "",
+                                  "running": "true", "disabled": "false", "rx-byte": "123456789", "tx-byte": "23456789"})
+        r.t["/ipv6/firewall/filter"] = []
+        r.t["/ip/kid-control"] = []
+        r.t["/ip/kid-control/device"] = []
+        r.t["/ip/firewall/address-list"] = []
+        r.t["/ip/firewall/filter"] = [
+            {".id": r.nid(), "chain": "input", "action": "accept", "connection-state": "established,related,untracked", "comment": "defconf: accept established,related,untracked"},
+            {".id": r.nid(), "chain": "input", "action": "drop", "in-interface-list": "!LAN", "comment": "defconf: drop all not coming from LAN"},
+            {".id": r.nid(), "chain": "forward", "action": "fasttrack-connection", "connection-state": "established,related", "comment": "defconf: fasttrack"},
+            {".id": r.nid(), "chain": "forward", "action": "accept", "connection-state": "established,related,untracked", "comment": "defconf: accept established,related, untracked"},
+            {".id": r.nid(), "chain": "forward", "action": "drop", "connection-state": "invalid", "comment": "defconf: drop invalid"},
+            {".id": r.nid(), "chain": "forward", "action": "drop", "connection-nat-state": "!dstnat", "in-interface-list": "WAN", "comment": "defconf: drop all from WAN not DSTNATed"}]
+        r.t["/ip/dns/static"] = [{".id": r.nid(), "name": "router.lan", "address": "192.168.88.1", "type": "A", "comment": "defconf"}]
+        for dev in d.values():
+            if dev is not r:
+                dev.t["/ip/address"] = [{".id": dev.nid(), "address": f"{dev.ip}/24", "network": "192.168.88.0",
+                                         "interface": "bridge", "dynamic": "true", "disabled": "false"}]
+
+        def wifi(host, ap, band, ssid, ip, signal, bps=2e5):
+            self.clients.append({"n": len(self.clients), "type": "wifi", "host": host, "ap": ap, "band": band, "ssid": ssid,
+                                 "ip": ip, "signal": signal, "bps": bps, "mac": mac("D6:3A:91:5C", 0x100 + len(self.clients) * 7)})
+
+        def wired(host, dev, port, ip):
+            self.clients.append({"n": len(self.clients), "type": "wired", "host": host, "dev": dev, "port": port, "ip": ip,
+                                 "mac": mac("00:E0:4C:68", 0x200 + len(self.clients) * 5)})
+
+        wifi("iPhone", "ap1", "5g", "Thuis", "192.168.88.101", -52, 9e5)
+        wifi("Pixel-8", "ap2", "5g", "Thuis", "192.168.88.102", -61, 4e5)
+        wifi("MacBook-Air", "router", "5g", "Thuis", "192.168.88.103", -47, 3e6)
+        wifi("iPad", "ap1", "5g", "Thuis", "192.168.88.104", -58, 6e5)
+        wifi("Galaxy-Tab-S9", "ap2", "5g", "Thuis", "192.168.88.105", -66, 2e5)
+        wifi("Steam-Deck", "ap1", "5g", "Thuis", "192.168.88.106", -55, 1.5e6)
+        wifi("shelly-plug-keuken", "ap1", "2g", "Thuis-IoT", "192.168.30.21", -63, 2e3)
+        wifi("esp32-display", "router", "2g", "Thuis-IoT", "192.168.30.22", -44, 3e3)
+        wifi("tasmota-wasmachine", "ap2", "2g", "Thuis-IoT", "192.168.30.23", -71, 2e3)
+        wifi("roborock-s8", "ap1", "2g", "Thuis-IoT", "192.168.30.24", -68, 8e3)
+        wifi("sonos-woonkamer", "ap1", "5g", "Thuis-IoT", "192.168.30.25", -50, 3e5)
+        wifi("p1-meter", "router", "2g", "Thuis-IoT", "192.168.30.26", -57, 1e3)
+        wifi("OnePlus-Nord", "ap2", "5g", "Thuis-Gast", "192.168.40.31", -64, 5e5)
+        wired("nas", "crs", "ether3", "192.168.88.20")
+        wired("homeassistant", "crs", "ether4", "192.168.88.21")
+        wired("werk-pc", "crs", "ether5", "192.168.88.22")
+        wired("adguard", "crs", "ether6", "192.168.88.23")
+        wired("tv-woonkamer", "hexpoe", "ether4", "192.168.88.24")
+        wired("printer", "hexpoe", "ether5", "192.168.88.25")
+        for c in self.clients:   # main LAN gets IPv6 (SLAAC: a global address plus link-local)
+            if c["ip"].startswith("192.168.88."):
+                tail = c["mac"].replace(":", "").lower()
+                c["ipv6"] = [f"2a02:a46b:1c2f:10:{tail[0:4]}:{tail[4:8]}:{tail[8:12]}:1", f"fe80::{tail[6:10]}:{tail[10:12]}ff:fe01"]
+
+    # -- topology helpers --------------------------------------------------
+    def subtree(self, key: str) -> set[str]:
+        out = {key}
+        for child, (parent, _) in self.links.items():
+            if parent == key:
+                out |= self.subtree(child)
+        return out
+
+    def _port_towards(self, dev: Dev, target: str) -> str | None:
+        if target == dev.key:
+            return None
+        for child, (parent, port) in self.links.items():
+            if parent == dev.key and target in self.subtree(child):
+                return port
+        return "ether1" if dev.key in self.links else None
+
+    def linked_ports(self, dev: Dev) -> dict[str, float]:
+        """port -> typical bit rate, for every port that has link."""
+        out = {}
+        if dev.key == "router":
+            out["ether1"] = 38e6
+        if dev.key in self.links:
+            out["ether1"] = 6e6
+        for child, (parent, port) in self.links.items():
+            if parent == dev.key:
+                out[port] = 6e6 if child in ("crs", "hexpoe") else 2.5e6
+        for c in self.clients:
+            if c["type"] == "wired" and c["dev"] == dev.key:
+                out[c["port"]] = 1.2e6
+        return out
+
+    def reachable(self, dev: Dev) -> bool:
+        """MikroManager reaches every device over the management VLAN (untagged, VLAN 1) through the
+        bridges on the way from the router. Cutting that path makes the device stop answering."""
+        def port_ok(d: Dev, port: str) -> bool:
+            gen = next((i for i in d.t["/interface"] if i["name"] == port), None)
+            bp = next((b for b in d.t["/interface/bridge/port"] if b.get("interface") == port), None)
+            return bool(gen and gen.get("disabled") != "true" and bp and bp.get("disabled") != "true"
+                        and bp.get("pvid", "1") == "1" and bp.get("frame-types", "admit-all") != "admit-only-vlan-tagged")
+        key = dev.key
+        while key in self.links:
+            parent_key, pport = self.links[key]
+            parent, child = self.devs[parent_key], self.devs[key]
+            if not port_ok(parent, pport) or not port_ok(child, "ether1"):
+                return False
+            poe = next((p for p in parent.t.get("/interface/ethernet/poe", []) if p["name"] == pport), None)
+            if poe and poe.get("poe-out") == "off" and child.key.startswith("ap"):
+                return False
+            key = parent_key
+        return True
+
+    def learned(self, dev: Dev) -> dict[str, str]:
+        """MAC -> port for the bridge host table of `dev`."""
+        out = {}
+        ctrl = self.devs["router"]
+        online = {r["mac-address"]: r["interface"] for r in ctrl.reg_table()}
+        for other in self.devs.values():
+            port = self._port_towards(dev, other.key)
+            if port:
+                out[other.base_mac] = port
+        for c in self.clients:
+            if c["type"] == "wired":
+                port = c["port"] if c["dev"] == dev.key else self._port_towards(dev, c["dev"])
+            elif c["mac"] in online:
+                port = ("wifi1" if c["band"] == "5g" else "wifi2") if c["ap"] == dev.key else self._port_towards(dev, c["ap"])
+            else:
+                continue
+            if port:
+                out[c["mac"]] = port
+        return out
+
+
+def err(status: int, detail: str):
+    msg = {400: "Bad Request", 401: "Unauthorized", 404: "Not Found", 406: "Not Acceptable"}.get(status, "Error")
+    return JSONResponse({"error": status, "message": msg, "detail": detail}, status_code=status)
+
+
+def make_app(dev: Dev) -> FastAPI:
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+    expected = "Basic " + base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode()
+
+    def find(rows, ident):
+        return next((r for r in rows if r.get(".id") == ident or r.get("name") == ident), None)
+
+    def validate(path: str, data: dict, current: dict | None = None):
+        allowed = ALLOWED.get(path)
+        if allowed:
+            bad = [k for k in data if k not in allowed]
+            if bad:
+                return f"unknown parameter {bad[0]}"
+        merged = {**(current or {}), **data}
+        if "name" in data and any(r.get("name") == data["name"] and r is not current for r in dev.t.get(path, [])):
+            return "failure: already have such name"
+        if path == "/interface/wifi/configuration":
+            for key, ref in WIFI_REFS.items():
+                if merged.get(key) and not find(dev.t[ref], merged[key]):
+                    return f"input does not match any value of {key}"
+        if path == "/interface/wifi/provisioning":
+            names = [merged.get("master-configuration", "")] + merged.get("slave-configurations", "").split(",")
+            for n in filter(None, names):
+                if not find(dev.t["/interface/wifi/configuration"], n):
+                    return "input does not match any value of configuration"
+            if not merged.get("master-configuration") and merged.get("action") != "none":
+                return "master-configuration required"
+        if path == "/interface/vlan" and merged.get("interface") and not find(dev.table("/interface"), merged["interface"]):
+            return "input does not match any value of interface"
+        if path == "/interface/wifi/datapath" and str(merged.get("vlan-id", "")) not in ("", "none") \
+                and not str(merged["vlan-id"]).isdigit():
+            return "invalid value for argument vlan-id"
+        return None
+
+    def in_use(path: str, rec: dict) -> bool:
+        name = rec.get("name")
+        if path in WIFI_REFS.values():
+            key = next(k for k, v in WIFI_REFS.items() if v == path)
+            return any(c.get(key) == name for c in dev.t["/interface/wifi/configuration"])
+        if path == "/interface/wifi/configuration":
+            return any(name == r.get("master-configuration") or name in r.get("slave-configurations", "").split(",")
+                       for r in dev.t["/interface/wifi/provisioning"])
+        if path == "/ip/pool":
+            return any(s.get("address-pool") == name for s in dev.t.get("/ip/dhcp-server", []))
+        if path == "/interface/vlan":
+            return any(a.get("interface") == name for a in dev.t.get("/ip/address", []))
+        return False
+
+    def store(rec: dict, data: dict):
+        for k, v in data.items():
+            v = norm(v)
+            if v == "" and k not in ("passphrase", "authentication-types", "comment"):
+                rec.pop(k, None)
+            elif k == "vlan-id" and v == "none":
+                rec.pop(k, None)
+            else:
+                rec[k] = v
+
+    async def command(path: str, body: dict):
+        menu, _, cmd = path.rpartition("/")
+        if path == "/system/package/update/check-for-updates":
+            await asyncio.sleep(0.3)
+            up = dev.single["/system/package/update"]
+            up.update({"latest-version": LATEST, "status": "New version is available" if dev.version != LATEST
+                       else "System is already up to date"})
+            return [{".section": "0", "status": "finding out latest version..."}, {".section": "1", **up}]
+        if path == "/system/package/update/install":
+            if dev.single["/system/package/update"].get("latest-version", dev.version) == dev.version:
+                return err(400, "System is already up to date")
+
+            def done():
+                dev.version = LATEST
+                dev.single["/system/package/update"]["installed-version"] = LATEST
+                dev.fw_new = LATEST
+                for p in dev.t["/system/package"]:
+                    p["version"] = LATEST
+            dev.reboot(done)
+            return []
+        if path == "/system/reboot":
+            def done():
+                if dev.fw_pending:
+                    dev.fw_cur, dev.fw_pending = dev.fw_new, False
+            dev.reboot(done)
+            return []
+        if path == "/system/routerboard/upgrade":
+            dev.fw_pending = True
+            return []
+        if path == "/system/identity/set":
+            dev.single["/system/identity"]["name"] = body.get("name", "MikroTik")
+            return []
+        if path == "/execute":
+            if not dev.exec_as_string or "as-string" not in body:
+                return err(400, "unknown parameter as-string") if "as-string" in body else {"ret": "*1F"}
+            return {"ret": dev.export() if "/export" in body.get("script", "") else ""}
+        if path == "/export":
+            name = body.get("file", "export") + ".rsc"
+            dev.files[:] = [f for f in dev.files if f["name"] != name]
+            text = dev.export()
+            dev.files.append({".id": dev.nid(), "name": name, "type": "script", "size": str(len(text)), "contents": text})
+            return []
+        if path == "/interface/ethernet/monitor":
+            ifs = {i["name"]: i for i in dev.t["/interface"]}
+            out = []
+            for n in body.get("numbers", "").split(","):
+                up = ifs.get(n, {}).get("running") == "true"
+                speed = "10Gbps" if n.startswith("sfp") else "1Gbps" if "tv" not in n else "100Mbps"
+                out.append({"name": n, "status": "link-ok" if up else "no-link", **({"rate": speed, "full-duplex": "true"} if up else {})})
+            return out
+        if path == "/interface/ethernet/poe/monitor":
+            feeds = {port for child, (parent, port) in dev.world.links.items() if parent == dev.key}
+            setting = {p["name"]: p.get("poe-out") for p in dev.t["/interface/ethernet/poe"]}
+            return [{"name": n, "poe-out": setting.get(n, "auto-on"),
+                     **({"poe-out-status": "disabled"} if setting.get(n) == "off" else
+                        {"poe-out-status": "powered-on", "poe-out-voltage": "24.0", "poe-out-current": str(280 + 13 * i),
+                         "poe-out-power": f"{6.7 + 0.4 * i:.1f}"} if n in feeds else {"poe-out-status": "waiting-for-load"})}
+                    for i, n in enumerate(body.get("numbers", "").split(","))]
+        if not dev.has_wifi and path.startswith("/interface/wifi"):
+            return err(400, "no such command or directory (wifi)")
+        if path == "/interface/wifi/monitor":
+            ifs = {i["name"]: i for i in dev.wifi_ifaces()}
+            reg = dev.reg_table()
+            owner_band = {rmac: band for _o, _n, band, rmac, _l in dev.all_radios()}
+            out = []
+            for i, n in enumerate(body.get("numbers", "").split(",")):
+                if n not in ifs:
+                    return err(400, f"input does not match any value of numbers")
+                band = owner_band.get(ifs[n].get("radio-mac"), "5g")
+                ch = ["5180/ax/Ceee", "5500/ax/Ceee", "5260/ax/eCee"][i % 3] if band == "5g" else ["2412/ax", "2437/ax", "2462/ax"][i % 3]
+                cfg = next((c for c in dev.t["/interface/wifi/configuration"] if c.get("name") == ifs[n].get("configuration")), {})
+                chp = next((c for c in dev.t["/interface/wifi/channel"] if c.get("name") == cfg.get("channel")), {})
+                if chp.get("frequency"):        # a fixed channel list: the radio uses the first one
+                    ch = f"{chp['frequency'].split(',')[0].split('-')[0]}/ax" + ("/Ceee" if band == "5g" and "80" in chp.get("width", "") else "")
+                out.append({"state": "running", "channel": ch, "tx-power": cfg.get("tx-power") or ("23" if band == "5g" else "20"),
+                            "registered-peers": str(sum(1 for r in reg if r["interface"].startswith(n))),
+                            "authorized-peers": "0"})
+            return out
+        if path in ("/interface/wifi/capsman/remote-cap/provision",):
+            return []
+        if path == "/interface/wifi/radio/provision":
+            radio = find(dev.radio_table(), body.get("numbers"))
+            if radio and radio.get("local") == "true":
+                enabled = [r for r in dev.t["/interface/wifi/provisioning"] if r.get("disabled") != "true"]
+                dev.local_provisioned = bool(enabled)
+                if not enabled:
+                    # manual: provisioning with the rules disabled "returns local interfaces to an unconfigured state"
+                    for w in dev.t["/interface/wifi"]:
+                        if not w.get("master-interface"):
+                            for k in [k for k in w if k == "configuration" or (k.startswith(("configuration.", "security."))
+                                                                            and k != "configuration.manager")]:
+                                w.pop(k)
+            return []
+        if path == "/ip/dhcp-server/lease/make-static":
+            lease = find(dev.leases(), body.get(".id") or body.get("numbers"))
+            if not lease:
+                return err(400, "no such item")
+            dev.static_leases[lease["mac-address"]] = {**lease, ".id": dev.nid(), "dynamic": "false"}
+            return []
+        if path == "/ip/kid-control/device/update-stats" and "/ip/kid-control" in dev.t:
+            return []
+        if path in ("/ip/kid-control/pause", "/ip/kid-control/resume") and "/ip/kid-control" in dev.t:
+            kid = find(dev.t["/ip/kid-control"], body.get("numbers"))
+            if not kid:
+                return err(400, "no such item")
+            kid["paused"] = "true" if path.endswith("pause") else "false"
+            return []
+        if path == "/ping":
+            iface = body.get("interface")
+            if iface and not find(dev.table("/interface"), iface):
+                return err(400, "input does not match any value of interface")
+            count = int(body.get("count", "4"))
+            base = 2.1 if body.get("address", "").startswith(("203.", "10.")) else (38.0 if iface == "lte1" else 11.4)
+            if iface == "lte1":
+                base = 9.0
+            rows, rtts, now = [], [], time.time()
+            for i in range(count):
+                lost = random.random() < (0.03 if iface == "lte1" else 0.005)
+                rtt = base * (1 + 0.25 * math.sin(now / 45 + i) + random.random() * 0.3)
+                if not lost:
+                    rtts.append(rtt)
+                row = {"seq": str(i), "host": body.get("address", ""), "sent": str(i + 1), "received": str(len(rtts)),
+                       "packet-loss": str(round(100 * (i + 1 - len(rtts)) / (i + 1)))}
+                if lost:
+                    row["status"] = "timeout"
+                else:
+                    us = int(rtt * 1000)
+                    row.update(size="56", ttl="57", time=f"{us // 1000}ms{us % 1000}us")
+                if rtts:
+                    fmt = lambda v: f"{int(v * 1000) // 1000}ms{int(v * 1000) % 1000}us"
+                    row.update({"min-rtt": fmt(min(rtts)), "avg-rtt": fmt(sum(rtts) / len(rtts)), "max-rtt": fmt(max(rtts))})
+                rows.append(row)
+            await asyncio.sleep(0.05)
+            return rows
+        if path == "/tool/wol":
+            if not body.get("mac") or not find(dev.table("/interface"), body.get("interface", "")):
+                return err(400, "input does not match any value of interface")
+            dev.wol_sent.append((body["mac"], body["interface"]))
+            return []
+        if path in ("/ip/firewall/filter/move", "/ipv6/firewall/filter/move"):
+            rows = dev.t[path[:-len("/move")]]
+            rec, dest = find(rows, body.get("numbers")), find(rows, body.get("destination"))
+            if not rec or not dest:
+                return err(400, "no such item")
+            rows.remove(rec)
+            rows.insert(rows.index(dest), rec)
+            return []
+
+        # generic verbs
+        if cmd == "print":
+            if menu in dev.single:
+                return dev.single[menu]
+            rows = dev.table(menu)
+            return rows if rows is not None else err(400, "no such command or directory")
+        if cmd == "set" and menu in dev.single:
+            store(dev.single[menu], body)
+            return []
+        if cmd == "unset":
+            rows = dev.t.get(menu)
+            rec = find(rows or [], body.get(".id") or body.get("numbers"))
+            if not rec:
+                return err(400, "no such item")
+            rec.pop(body.get("value-name", ""), None)
+            return []
+        return err(400, f"no such command or directory ({cmd})")
+
+    @app.api_route("/rest/{path:path}", methods=["GET", "PUT", "PATCH", "DELETE", "POST"])
+    async def rest(path: str, request: Request):
+        for d in dev.world.devs.values():
+            d.run_schedulers()
+        if not dev.world.reachable(dev):
+            await asyncio.sleep(0.3)
+            return Response(status_code=503)
+        if dev.rebooting:
+            return Response(status_code=503)
+        if request.headers.get("authorization") != expected:
+            return err(401, "")
+        dev.tick()
+        path = "/" + path.strip("/")
+        method = request.method
+        body = {}
+        if method in ("PUT", "PATCH", "POST"):
+            try:
+                body = await request.json()
+            except ValueError:
+                body = {}
+        if method == "POST":
+            result = await command(path, body)
+            return result if isinstance(result, Response) else JSONResponse(result)
+
+        if method == "GET":
+            if path == "/system/resource":
+                return dev.resource()
+            if path == "/system/clock":
+                return dev.clock()
+            if path == "/system/routerboard":
+                return {"routerboard": "true", "model": dev.board, "serial-number": f"HG{dev.mac_prefix[-2:]}0A1B2C",
+                        "current-firmware": dev.fw_cur, "upgrade-firmware": dev.fw_new, "firmware-type": "ipq6000"}
+            if path in dev.single:
+                return dev.single[path]
+            rows = dev.table(path)
+            if rows is not None:
+                flt = {k: v for k, v in request.query_params.items() if not k.startswith(".")}
+                return [r for r in rows if all(r.get(k) == v for k, v in flt.items())]
+            menu, _, ident = path.rpartition("/")
+            rows = dev.table(menu)
+            if rows is None:
+                return err(400, "no such command or directory")
+            rec = find(rows, ident)
+            return rec if rec else err(404, "")
+
+        if method == "PUT":
+            rows = dev.t.get(path)
+            if rows is None or (path.startswith("/interface/wifi") and not dev.has_wifi):
+                return err(400, "no such command or directory (add)")
+            data = {k: norm(v) for k, v in body.items()}
+            problem = validate(path, data)
+            if problem:
+                return err(400, problem)
+            rec = {".id": dev.nid(), "dynamic": "false"}
+            if path == "/interface/wifi" and "name" not in data:
+                base = data.get("master-interface", "wifi")
+                n = 1
+                while any(r.get("name") == f"{base}-v{n}" for r in rows):
+                    n += 1
+                data["name"] = f"{base}-v{n}"
+            if path not in ("/interface/wifi/security", "/interface/wifi/datapath", "/interface/wifi/channel",
+                            "/interface/wifi/configuration", "/ip/pool"):
+                rec["disabled"] = "false"
+            store(rec, data)
+            rows.append(rec)
+            return rec
+
+        menu, _, ident = path.rpartition("/")
+        if menu == "/interface/wifi/registration-table" and method == "DELETE":
+            reg = find(dev.reg_table(), ident)
+            if not reg:
+                return err(404, "")
+            dev.kicked[reg["mac-address"]] = time.time() + 12
+            return Response(status_code=204)
+        if menu == "/ip/dhcp-server/lease":
+            rec = next((l for l in dev.static_leases.values() if l[".id"] == ident), None)
+            if not rec:
+                return err(400, "can not change dynamic lease" if method == "PATCH" else "no such item")
+            if method == "DELETE":
+                dev.static_leases.pop(rec["mac-address"])
+                return Response(status_code=204)
+            store(rec, body)
+            return rec
+        rows = dev.files if menu == "/file" else dev.t.get(menu)
+        rec = find(rows or [], ident)
+        if rec is None and menu == "/interface" and method == "PATCH":
+            # generic interface menu also reaches VLAN and wifi interfaces
+            for sub in ("/interface/vlan", "/interface/wifi"):
+                rec = find(dev.t.get(sub, []), ident)
+                if rec:
+                    menu = sub
+                    break
+        if rec is None:
+            return err(404, "")
+        if method == "PATCH":
+            data = {k: norm(v) for k, v in body.items()}
+            problem = validate(menu, data, rec)
+            if problem:
+                return err(400, problem)
+            store(rec, data)
+            dev.sync_interface(menu, rec)
+            return rec
+        if in_use(menu, rec):
+            return err(400, "can not remove - object is in use")
+        if menu == "/file":
+            dev.files.remove(rec)
+        else:
+            rows.remove(rec)
+        return Response(status_code=204)
+
+    return app
+
+
+class MockServer:
+    """Runs all mock devices in a background thread with its own event loop."""
+
+    def __init__(self):
+        self.world = World()
+        self.servers: list[uvicorn.Server] = []
+        self.thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        async def main():
+            self.servers = [uvicorn.Server(uvicorn.Config(make_app(d), host="127.0.0.1", port=d.port, log_level="warning",
+                                                          access_log=False)) for d in self.world.devs.values()]
+            await asyncio.gather(*(s.serve() for s in self.servers))
+        self.thread = threading.Thread(target=lambda: asyncio.run(main()), daemon=True, name="mock-routeros")
+        self.thread.start()
+
+    def stop(self) -> None:
+        for s in self.servers:
+            s.should_exit = True
+
+
+if __name__ == "__main__":
+    srv = MockServer()
+    srv.start()
+    for d in srv.world.devs.values():
+        print(f"{d.key:8s} http://127.0.0.1:{d.port}/rest  ({d.board})  user={USER} password={PASSWORD}")
+    try:
+        while True:
+            time.sleep(3600)
+    except KeyboardInterrupt:
+        srv.stop()
