@@ -1,0 +1,48 @@
+[Unit]
+Description=MikroManager - beheer voor MikroTik-netwerken
+Documentation=https://github.com/Timmexk/MikroManager
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=mikromanager
+Group=mikromanager
+EnvironmentFile=/etc/mikromanager/mikromanager.env
+WorkingDirectory=/opt/mikromanager
+ExecStart=/opt/mikromanager/venv/bin/uvicorn app.main:app --app-dir /opt/mikromanager \
+    --host ${MM_HOST} --port ${MM_PORT} --no-server-header --proxy-headers \
+    --forwarded-allow-ips ${MM_TRUSTED_PROXIES}
+Restart=on-failure
+RestartSec=5
+
+# Data in /var/lib/mikromanager, door systemd aangemaakt met de juiste eigenaar
+StateDirectory=mikromanager
+StateDirectoryMode=0700
+UMask=0077
+
+# Afscherming: de app mag alleen in zijn eigen datamap schrijven
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+# Alleen nodig als MM_PORT onder 1024 ligt (bijv. 443):
+# AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
