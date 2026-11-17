@@ -118,6 +118,15 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   clients weg, en blijven de andere CAP's ongemoeid?
 - [ ] **[gedrag] Diagnosebestand (v0.3).** Eén keer het anonieme bestand van een echte router nalopen: staat
   er niets herleidbaars meer in, en zijn alle menu's gevuld?
+- [ ] **[gedrag] Eigen radio's zonder CAPsMAN (v0.4).** Profiel direct op wifi1/wifi2 terwijl CAPsMAN aan staat voor
+  de CAP's: blijft `configuration.manager=local` staan, en zet het datapath de virtuele interfaces in de bridge met de
+  PVID van het VLAN? Wat gebeurt er als wifi1 al een vaste bridge-poort is (defconf): wint die van het datapath?
+- [ ] **[REST] Wees-bridge-poorten (v0.4).** Hoe toont `GET /rest/interface/bridge/port` een poort waarvan de
+  interface is verwijderd: `interface=*1F`, en met `invalid`/`inactive`? Lukt verwijderen via REST?
+- [ ] **[REST] Unset van inline-instellingen (v0.4).** Werkt `POST /rest/interface/wifi/unset` met
+  `value-name=configuration.ssid` (en `security.*`, `channel.*`) op een eigen radio?
+- [ ] **[gedrag] Topologie (v0.4).** Klopt de boom die uit de bridge-host-tabellen volgt, ook met een onbeheerde
+  switch of een UniFi-AP ertussen?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
