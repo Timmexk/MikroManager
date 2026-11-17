@@ -127,6 +127,16 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   `value-name=configuration.ssid` (en `security.*`, `channel.*`) op een eigen radio?
 - [ ] **[gedrag] Topologie (v0.4).** Klopt de boom die uit de bridge-host-tabellen volgt, ook met een onbeheerde
   switch of een UniFi-AP ertussen?
+- [ ] **[REST] Scans via REST (v0.5).** Geeft `POST /rest/interface/wifi/scan` met `numbers=wifi1` en `rounds=1` na één
+  ronde antwoord, en in welk formaat (lijst met `address`, `ssid`, `channel`, `signal`, `sta-count`)? Idem
+  `frequency-scan` (`channel`, `networks`, `load`, `nf`). Hoe lang zijn de clients weg, en werkt het op een CAP?
+- [ ] **[gedrag] Radio van een CAP uit (v0.5).** Maakt een provisioning-regel met `radio-mac` en `action=none` de
+  radio echt stil na `provision`, en komt hij terug als de regel weg is?
+- [ ] **[REST] Inline wifi-eigenschappen (v0.5).** Accepteert `PATCH /rest/interface/wifi/<id>` de namen met punt
+  (`configuration.ssid`, `security.passphrase`, `channel.frequency`, `datapath.vlan-id`), en toont `print` ze zo terug?
+  Geeft `print` het wachtwoord (`security.passphrase`) terug aan een gebruiker met volledige rechten?
+- [ ] **[gedrag] Zelfstandig maken (v0.5).** Na het omzetten van profiel naar inline-eigenschappen: blijven de clients
+  verbonden (zelfde SSID en wachtwoord), en blijven de virtuele interfaces in hun VLAN?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
