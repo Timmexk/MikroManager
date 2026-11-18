@@ -10,8 +10,8 @@ opgezet zoals UniFi Network en Omada, met de vaktermen die je uit RouterOS kent.
 > **Stand van zaken: het ontwerp is klaar, de bouw is nog niet gestart.**
 > De eerste versie richt zich op het beheren van je eigen MikroTik-netwerk op locatie. Externe sites
 > koppelen is uitgewerkt in het ontwerp, maar blijft een functie voor later.
-> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en vijf proefversies (v0.1 t/m v0.5; v0.5
-> met beheer van lokale wifi-radio's, losse access points en radio-inzicht). Die draaien alleen tegen een simulator en zijn nog nooit op echte
+> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en zes proefversies (v0.1 t/m v0.6; v0.6
+> met de radio's van de router per radio als site-netwerken voor naadloos roamen). Die draaien alleen tegen een simulator en zijn nog nooit op echte
 > hardware getest.
 
 ![Overzicht van de site Thuis](docs/schermen/overzicht.webp)
@@ -102,7 +102,8 @@ die de externe router zelf opzet en die alleen de REST API doorlaat.
 | [`v0.2/`](v0.2/) | Tweede proefversie: v0.1 plus interfacebeheer per apparaat (snelheid, PoE, bridge/VLAN, VLAN-interfaces) met veilige modus |
 | [`v0.3/`](v0.3/) | Derde proefversie: fabrikant en historie per client, bedrade clients blokkeren, kanaal per radio, QR-code per SSID, diagnosebestand |
 | [`v0.4/`](v0.4/) | Vierde proefversie: eigen radio's direct en CAPsMAN alleen voor access points, wifi-controle van radio tot DHCP met reparaties, netwerk en bereik per SSID, nieuw overzicht met topologie |
-| [`v0.5/`](v0.5/) | Vijfde proefversie (aanbevolen): per radio SSID's kiezen en aan/uit, losse access points en radio's van de router zelfstandig instellen, clients per radio, netwerkscan en kanaalbezetting |
+| [`v0.5/`](v0.5/) | Vijfde proefversie: per radio SSID's kiezen en aan/uit, losse access points en radio's van de router zelfstandig instellen, clients per radio, netwerkscan en kanaalbezetting |
+| [`v0.6/`](v0.6/) | Zesde proefversie (aanbevolen): radio's van de router per radio als site-netwerken (zelfde instellingen als de AP's, inline), zelfstandig of niet beheerd; afwijking zien en teruglezen; overzicht naadloos roamen; 802.11k/v |
 
 ## Hoe verder
 
