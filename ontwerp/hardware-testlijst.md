@@ -137,6 +137,13 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   Geeft `print` het wachtwoord (`security.passphrase`) terug aan een gebruiker met volledige rechten?
 - [ ] **[gedrag] Zelfstandig maken (v0.5).** Na het omzetten van profiel naar inline-eigenschappen: blijven de clients
   verbonden (zelfde SSID en wachtwoord), en blijven de virtuele interfaces in hun VLAN?
+- [ ] **[gedrag] Router-radio's als site-netwerken (v0.6).** Na toepassen op een hAP ax²: staan op wifi1/wifi2 zowel
+  `configuration=mm-…` als de inline-waarden, en zendt de radio exact hetzelfde uit als de cAP's? Komt er bij
+  *Toepassen* een regel "Controle … wijkt na toepassen nog af"? Zo ja: welke eigenschappen (diagnosebestand mee).
+- [ ] **[gedrag] Naadloos roamen router ↔ cAP (v0.6).** Loopt een telefoon met 802.11r over zonder dat de verbinding
+  (bijv. een videogesprek) wegvalt? Zelfde `ft-mobility-domain` (standaardwaarde) op router en cAP's?
+- [ ] **[REST] Steering (v0.6).** Bestaat `/interface/wifi/steering` met `rrm`/`wnm`, en maakt RouterOS zelf
+  neighbor-groups aan voor interfaces met dezelfde SSID (ook de lokale radio's van de controller)?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
