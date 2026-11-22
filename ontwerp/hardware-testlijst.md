@@ -144,6 +144,12 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   (bijv. een videogesprek) wegvalt? Zelfde `ft-mobility-domain` (standaardwaarde) op router en cAP's?
 - [ ] **[REST] Steering (v0.6).** Bestaat `/interface/wifi/steering` met `rrm`/`wnm`, en maakt RouterOS zelf
   neighbor-groups aan voor interfaces met dezelfde SSID (ook de lokale radio's van de controller)?
+- [ ] **[gedrag] Direct toepassen en terugdraaien (v0.7).** Een wijziging die RouterOS weigert (bijv. een land dat
+  niet bestaat): komt de oude toestand echt terug, ook op de CAP's?
+- [ ] **[REST] Kanaalplan (v0.7).** Geeft `scan` op een CAP-radio (op de CAP zelf) de BSSID's van de andere eigen AP's
+  met signaal? Is de BSSID van een virtuele SSID terug te herleiden tot zijn radio (via `mac-address`)?
+- [ ] **[gedrag] Update-wachtrij (v0.7).** Komt een apparaat binnen 10 minuten terug op de nieuwe versie (ook met
+  firmware erna)? Gaat de wachtrij goed verder na een herstart van MikroManager midden in een ronde?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 
