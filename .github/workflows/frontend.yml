@@ -13,6 +13,7 @@ on:
       - "v0.4/frontend/**"
       - "v0.5/frontend/**"
       - "v0.6/frontend/**"
+      - "v0.7/frontend/**"
       - ".github/workflows/frontend.yml"
     tags: ["v*"]
   workflow_dispatch:
@@ -43,6 +44,8 @@ jobs:
             asset: mikromanager-frontend-v0.5
           - dir: v0.6
             asset: mikromanager-frontend-v0.6
+          - dir: v0.7
+            asset: mikromanager-frontend-v0.7
     steps:
       - uses: actions/checkout@v4
 
