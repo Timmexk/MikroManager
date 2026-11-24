@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>MikroManager</Name>
+  <Repository>ghcr.io/timmexk/mikromanager:edge</Repository>
+  <Registry>https://github.com/users/Timmexk/packages/container/package/mikromanager</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Timmexk/MikroManager/issues</Support>
+  <Project>https://github.com/Timmexk/MikroManager</Project>
+  <Overview>Zelf gehoste beheeromgeving voor MikroTik-netwerken: routers, switches en access points in één webapp, opgezet zoals UniFi Network en Omada. Praat met RouterOS 7 via de REST API; er draait niets op de router en er is geen cloud nodig. Proefversie: alleen getest tegen de meegeleverde simulator.</Overview>
+  <Category>Network:Management Network:Other Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/Timmexk/MikroManager/main/unraid/mikromanager.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Timmexk/MikroManager/main/docs/img/icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>Een router met RouterOS 7.13 of nieuwer, met de service www-ssl (REST API) aan.</Requires>
+  <Config Name="Web UI" Target="8080" Default="8080" Mode="tcp" Description="Poort van de webinterface. Kies een vrije poort op je server (8080 is op Unraid vaak al bezet)." Type="Port" Display="always" Required="true" Mask="false">8090</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/mikromanager" Mode="rw" Description="Database, secret.key en back-ups. Bewaar secret.key samen met de database: zonder die sleutel zijn de opgeslagen wachtwoorden van de apparaten niet te lezen." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mikromanager</Config>
+  <Config Name="Tijdzone" Target="TZ" Default="Europe/Amsterdam" Mode="" Description="De nachtelijke back-up en de update-wachtrij gebruiken de lokale tijd." Type="Variable" Display="always" Required="false" Mask="false">Europe/Amsterdam</Config>
+  <Config Name="Demomodus" Target="MIKROMANAGER_DEMO" Default="0|1" Mode="" Description="1 = gesimuleerde routers om alles uit te proberen; de data wordt bij elke start gewist. 0 = je echte netwerk." Type="Variable" Display="always" Required="false" Mask="false">1</Config>
+  <Config Name="Poll-interval" Target="MIKROMANAGER_POLL" Default="15" Mode="" Description="Seconden tussen twee keer uitlezen van elk apparaat." Type="Variable" Display="advanced" Required="false" Mask="false">15</Config>
+  <Config Name="Veilige cookie" Target="MIKROMANAGER_SECURE_COOKIE" Default="0|1" Mode="" Description="Zet op 1 als je MikroManager via https bereikt (achter een reverse proxy)." Type="Variable" Display="advanced" Required="false" Mask="false">0</Config>
+</Container>

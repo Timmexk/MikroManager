@@ -7,13 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "v0.1/frontend/**"
-      - "v0.2/frontend/**"
-      - "v0.3/frontend/**"
-      - "v0.4/frontend/**"
-      - "v0.5/frontend/**"
-      - "v0.6/frontend/**"
-      - "v0.7/frontend/**"
+      - "app/frontend/**"
       - ".github/workflows/frontend.yml"
     tags: ["v*"]
   workflow_dispatch:
@@ -25,27 +19,12 @@ concurrency:
   group: frontend-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  ASSET: mikromanager-frontend-app
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1          # both versions upload to the same release
-      matrix:
-        include:
-          - dir: v0.1
-            asset: mikromanager-frontend      # name kept for existing v0.1 installs
-          - dir: v0.2
-            asset: mikromanager-frontend-v0.2
-          - dir: v0.3
-            asset: mikromanager-frontend-v0.3
-          - dir: v0.4
-            asset: mikromanager-frontend-v0.4
-          - dir: v0.5
-            asset: mikromanager-frontend-v0.5
-          - dir: v0.6
-            asset: mikromanager-frontend-v0.6
-          - dir: v0.7
-            asset: mikromanager-frontend-v0.7
     steps:
       - uses: actions/checkout@v4
 
@@ -53,10 +32,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: ${{ matrix.dir }}/frontend/package-lock.json
+          cache-dependency-path: app/frontend/package-lock.json
 
       - name: Bouwen
-        working-directory: ${{ matrix.dir }}/frontend
+        working-directory: app/frontend
         run: |
           npm ci --no-audit --no-fund
           npm run build
@@ -64,8 +43,8 @@ jobs:
       - name: Inpakken
         run: |
           tar --owner=0 --group=0 --mode='u+rwX,go+rX,go-w' \
-              -czf ${{ matrix.asset }}.tar.gz -C ${{ matrix.dir }}/backend/static .
-          sha256sum ${{ matrix.asset }}.tar.gz > ${{ matrix.asset }}.tar.gz.sha256
+              -czf $ASSET.tar.gz -C app/backend/static .
+          sha256sum $ASSET.tar.gz > $ASSET.tar.gz.sha256
 
       - name: Publiceren als frontend-latest
         if: github.ref == 'refs/heads/main'
@@ -74,9 +53,9 @@ jobs:
         run: |
           gh release view frontend-latest >/dev/null 2>&1 || \
             gh release create frontend-latest --title "Frontend (laatste build van main)" \
-              --notes "Automatisch gebouwd. Wordt gebruikt door v0.1/linux/install.sh." --prerelease --target main
+              --notes "Automatisch gebouwd. Wordt gebruikt door app/linux/install.sh." --prerelease --target main
           git tag -f frontend-latest && git push -f origin frontend-latest
-          gh release upload frontend-latest ${{ matrix.asset }}.tar.gz ${{ matrix.asset }}.tar.gz.sha256 --clobber
+          gh release upload frontend-latest $ASSET.tar.gz $ASSET.tar.gz.sha256 --clobber
 
       - name: Toevoegen aan versie-release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -84,4 +63,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" ${{ matrix.asset }}.tar.gz ${{ matrix.asset }}.tar.gz.sha256 --clobber
+          gh release upload "$GITHUB_REF_NAME" $ASSET.tar.gz $ASSET.tar.gz.sha256 --clobber

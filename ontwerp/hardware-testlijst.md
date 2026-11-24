@@ -77,7 +77,7 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
 
 - [ ] **[blokkerend] Plan blijft wijzigingen tonen na toepassen.** Dan geeft RouterOS een eigenschap anders
   terug dan de app hem zet, bijvoorbeeld een standaardwaarde die wordt weggelaten. De vergelijking staat in
-  `v0.1/backend/app/wifi.py` (`_norm`, `DEFAULTS`).
+  `app/backend/app/wifi.py` (`_norm`, `DEFAULTS`).
 - [ ] **[blokkerend] Radio's van de controller overnemen** gebruikt `/interface/wifi/radio/provision`. Volgens
   de documentatie kan de interfacenaam daarbij veranderen, waardoor statische bridge-poorten naar `wifi1` en
   `wifi2` ongeldig worden. Doe dit bekabeld.
@@ -150,6 +150,9 @@ Overgenomen uit de proefversie, aangevuld met wat het nieuwe ontwerp nodig heeft
   met signaal? Is de BSSID van een virtuele SSID terug te herleiden tot zijn radio (via `mac-address`)?
 - [ ] **[gedrag] Update-wachtrij (v0.7).** Komt een apparaat binnen 10 minuten terug op de nieuwe versie (ook met
   firmware erna)? Gaat de wachtrij goed verder na een herstart van MikroManager midden in een ronde?
+- [ ] **[gedrag] Netwerk op een deel van de AP's (v0.8).** Zet in het netwerkvenster één SSID alleen op de router.
+  Krijgen de cAP's daarna een eigen provisioning-regel met `radio-mac` zonder dat SSID, en blijven hun clients op de
+  andere SSID's verbonden? Komt het SSID terug na *Alle access points*, en verdwijnen de regels per radio dan weer?
 - [ ] **[REST] Linksnelheid.** In welk formaat geeft de registration-table `tx-rate`/`rx-rate` via REST
   (getal in bit/s of tekst als `866.7Mbps-80MHz/2S/SGI`)? De app kan beide aan.
 

@@ -10,9 +10,9 @@ opgezet zoals UniFi Network en Omada, met de vaktermen die je uit RouterOS kent.
 > **Stand van zaken: het ontwerp is klaar, de bouw is nog niet gestart.**
 > De eerste versie richt zich op het beheren van je eigen MikroTik-netwerk op locatie. Externe sites
 > koppelen is uitgewerkt in het ontwerp, maar blijft een functie voor later.
-> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en zeven proefversies (v0.1 t/m v0.7; v0.7
-> met direct toepassen, een eenvoudigere wifi, een automatisch kanaalplan en een update-wachtrij). Die draaien alleen tegen een simulator en zijn nog nooit op echte
-> hardware getest.
+> Deze repository bevat het ontwerp, de ontwerpbesluiten, het bouwplan en de proefversie in [`app/`](app/) (v0.8:
+> één radiopaneel per access point, per netwerk kiezen op welke access points het uitzendt). Die draait alleen tegen een
+> simulator en is nog nooit op echte hardware getest. Proberen kan met Docker of op Unraid, zie [app/README.md](app/README.md).
 
 ![Overzicht van de site Thuis](docs/schermen/overzicht.webp)
 
@@ -98,13 +98,11 @@ die de externe router zelf opzet en die alleen de REST API doorlaat.
 |---|---|
 | [`ontwerp/`](ontwerp/) | Ontwerpbesluiten, bouwplan, testlijst voor echte hardware, alle schermen en de bronbestanden van het ontwerp |
 | [`docs/`](docs/) | De projectwebsite voor GitHub Pages, met de schermafbeeldingen |
-| [`v0.1/`](v0.1/) | De eerste proefversie onder de oude werknaam TikControl: FastAPI, React en een RouterOS-simulator |
-| [`v0.2/`](v0.2/) | Tweede proefversie: v0.1 plus interfacebeheer per apparaat (snelheid, PoE, bridge/VLAN, VLAN-interfaces) met veilige modus |
-| [`v0.3/`](v0.3/) | Derde proefversie: fabrikant en historie per client, bedrade clients blokkeren, kanaal per radio, QR-code per SSID, diagnosebestand |
-| [`v0.4/`](v0.4/) | Vierde proefversie: eigen radio's direct en CAPsMAN alleen voor access points, wifi-controle van radio tot DHCP met reparaties, netwerk en bereik per SSID, nieuw overzicht met topologie |
-| [`v0.5/`](v0.5/) | Vijfde proefversie: per radio SSID's kiezen en aan/uit, losse access points en radio's van de router zelfstandig instellen, clients per radio, netwerkscan en kanaalbezetting |
-| [`v0.6/`](v0.6/) | Zesde proefversie: radio's van de router per radio als site-netwerken (zelfde instellingen als de AP's, inline), zelfstandig of niet beheerd; afwijking zien en teruglezen; overzicht naadloos roamen; 802.11k/v |
-| [`v0.7/`](v0.7/) | Zevende proefversie (aanbevolen): wifi direct toepassen met terugdraaien, kort netwerkvenster, router als gewone AP met AP-paneel, automatisch kanaalplan, update-wachtrij |
+| [`app/`](app/) | De proefversie (v0.8): FastAPI-backend, React-frontend, RouterOS-simulator, Linux-installatie en Docker. Wat er per versie bij kwam staat in [app/CHANGELOG.md](app/CHANGELOG.md) |
+| [`unraid/`](unraid/) | Template voor *Docker → Add Container* op Unraid, met het image van `ghcr.io/timmexk/mikromanager` |
+
+De eerdere proefversies v0.1 t/m v0.7 stonden hier als losse mappen. Ze zijn bewaard onder de git-tag
+[`proefversies-v0.1-v0.7`](https://github.com/Timmexk/MikroManager/tree/proefversies-v0.1-v0.7).
 
 ## Hoe verder
 

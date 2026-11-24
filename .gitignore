@@ -5,4 +5,3 @@ dist/
 data/
 *.zip
 .DS_Store
-v0.1/backend/static/
