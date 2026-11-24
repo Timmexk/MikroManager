@@ -101,8 +101,8 @@ die de externe router zelf opzet en die alleen de REST API doorlaat.
 | [`app/`](app/) | De proefversie (v0.8): FastAPI-backend, React-frontend, RouterOS-simulator, Linux-installatie en Docker. Wat er per versie bij kwam staat in [app/CHANGELOG.md](app/CHANGELOG.md) |
 | [`unraid/`](unraid/) | Template voor *Docker → Add Container* op Unraid, met het image van `ghcr.io/timmexk/mikromanager` |
 
-De eerdere proefversies v0.1 t/m v0.7 stonden hier als losse mappen. Ze zijn bewaard onder de git-tag
-[`proefversies-v0.1-v0.7`](https://github.com/Timmexk/MikroManager/tree/proefversies-v0.1-v0.7).
+De eerdere proefversies v0.1 t/m v0.7 stonden hier als losse mappen. Ze zijn bewaard in de branch
+[`archief/proefversies-v0.1-v0.7`](https://github.com/Timmexk/MikroManager/tree/archief/proefversies-v0.1-v0.7).
 
 ## Hoe verder
 

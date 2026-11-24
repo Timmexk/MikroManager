@@ -1,7 +1,7 @@
 # Wijzigingen
 
 Wat er per proefversie bij kwam. De mappen v0.1 t/m v0.7 staan sinds v0.8 niet meer los in de repository;
-ze zijn bewaard onder de git-tag [`proefversies-v0.1-v0.7`](https://github.com/Timmexk/MikroManager/tree/proefversies-v0.1-v0.7).
+ze zijn bewaard in de branch [`archief/proefversies-v0.1-v0.7`](https://github.com/Timmexk/MikroManager/tree/archief/proefversies-v0.1-v0.7).
 
 ## v0.8
 
@@ -22,7 +22,7 @@ Opgeruimde wifi en één app-map.
 - **API.** `POST /api/sites/{id}/wifi/radios` slaat meerdere radio's in één keer op en past ze in één keer toe.
   `PATCH /api/wlans/{id}` en `POST /api/sites/{id}/wifi/wlans` nemen `radios` (lijst van radio-MAC's, `null` = alle).
   `POST /api/sites/{id}/wifi/radios/{mac}` laat de netwerken op de radio met rust als `ssids` ontbreekt.
-- **Repository.** De code staat in `app/`; de losse mappen v0.1 t/m v0.7 zijn weg (zie de tag hierboven). Een
+- **Repository.** De code staat in `app/`; de losse mappen v0.1 t/m v0.7 zijn weg (zie de branch hierboven). Een
   Docker-image staat op `ghcr.io/timmexk/mikromanager`, met een Unraid-template in `unraid/`.
 
 ## v0.7
